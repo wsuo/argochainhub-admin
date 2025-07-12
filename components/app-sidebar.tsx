@@ -21,116 +21,116 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 
-// Menu items organized by user role
+// 按用户角色组织的菜单项
 const menuItems = [
   {
-    title: "Dashboard",
+    title: "仪表盘",
     url: "/",
     icon: Home,
     roles: ["super_admin", "operations_manager", "customer_support"],
   },
   {
-    title: "Enterprise Management",
+    title: "企业管理",
     icon: Building2,
     roles: ["super_admin", "operations_manager"],
     items: [
       {
-        title: "All Enterprises",
+        title: "全部企业",
         url: "/enterprises",
       },
       {
-        title: "Buyers",
+        title: "采购商",
         url: "/enterprises/buyers",
       },
       {
-        title: "Suppliers",
+        title: "供应商",
         url: "/enterprises/suppliers",
       },
       {
-        title: "Pending Reviews",
+        title: "待审核",
         url: "/enterprises/pending",
         badge: "23",
       },
     ],
   },
   {
-    title: "Content Management",
+    title: "内容管理",
     icon: FileText,
     roles: ["super_admin", "operations_manager"],
     items: [
       {
-        title: "Product Review",
+        title: "产品审核",
         url: "/content/products",
         badge: "8",
       },
       {
-        title: "Supplier Review",
+        title: "供应商审核",
         url: "/content/suppliers",
         badge: "15",
       },
       {
-        title: "AI Knowledge Base",
+        title: "AI知识库",
         url: "/content/knowledge",
       },
     ],
   },
   {
-    title: "Business Operations",
+    title: "业务运营",
     icon: Activity,
     roles: ["super_admin", "operations_manager", "customer_support"],
     items: [
       {
-        title: "Inquiry Management",
+        title: "询价管理",
         url: "/operations/inquiries",
       },
       {
-        title: "Sample Management",
+        title: "样品管理",
         url: "/operations/samples",
       },
       {
-        title: "Registration Management",
+        title: "登记管理",
         url: "/operations/registrations",
       },
     ],
   },
   {
-    title: "Financial Management",
+    title: "财务管理",
     icon: DollarSign,
     roles: ["super_admin", "operations_manager"],
     items: [
       {
-        title: "Membership Plans",
+        title: "会员套餐",
         url: "/finance/plans",
       },
       {
-        title: "Order Management",
+        title: "订单管理",
         url: "/finance/orders",
       },
       {
-        title: "Revenue Reports",
+        title: "收入报表",
         url: "/finance/reports",
       },
     ],
   },
   {
-    title: "System Management",
+    title: "系统管理",
     icon: Settings,
     roles: ["super_admin"],
     items: [
       {
-        title: "Admin Accounts",
+        title: "管理员账户",
         url: "/system/accounts",
       },
       {
-        title: "Roles & Permissions",
+        title: "角色权限",
         url: "/system/roles",
       },
       {
-        title: "Data Dictionary",
+        title: "数据字典",
         url: "/system/dictionary",
       },
       {
-        title: "Operation Logs",
+        title: "操作日志",
         url: "/system/logs",
       },
     ],
@@ -139,9 +139,9 @@ const menuItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar()
-  const currentUserRole = "operations_manager" // This would come from auth context
+  const currentUserRole = "operations_manager" // 这将来自认证上下文
 
-  // Filter menu items based on user role
+  // 根据用户角色过滤菜单项
   const filteredMenuItems = menuItems.filter((item) => item.roles.includes(currentUserRole))
 
   return (
@@ -155,8 +155,8 @@ export function AppSidebar() {
                   <Shield className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Argochainhub</span>
-                  <span className="truncate text-xs">Admin Portal</span>
+                  <span className="truncate font-semibold">ArgoChainHub</span>
+                  <span className="truncate text-xs">管理后台</span>
                 </div>
               </div>
             </SidebarMenuButton>
@@ -166,7 +166,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Platform Management</SidebarGroupLabel>
+          <SidebarGroupLabel>平台管理</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {filteredMenuItems.map((item) => (
@@ -224,7 +224,7 @@ export function AppSidebar() {
                   <AvatarFallback className="rounded-lg">OM</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Operations Manager</span>
+                  <span className="truncate font-semibold">运营经理</span>
                   <span className="truncate text-xs">admin@argochainhub.com</span>
                 </div>
               </div>

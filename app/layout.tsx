@@ -18,9 +18,9 @@ import {
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Argochainhub Admin Portal",
-  description: "Smart Agricultural Chemical Procurement Platform Management System",
-    generator: 'v0.dev'
+  title: "ArgoChainHub 管理后台",
+  description: "智慧农化采购平台后台管理系统",
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body className={inter.className}>
         <SidebarProvider>
           <AppSidebar />
@@ -41,11 +41,11 @@ export default function RootLayout({
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
+                      <BreadcrumbLink href="/">仪表盘</BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator className="hidden md:block" />
                     <BreadcrumbItem>
-                      <BreadcrumbPage>Overview</BreadcrumbPage>
+                      <BreadcrumbPage>概览</BreadcrumbPage>
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>

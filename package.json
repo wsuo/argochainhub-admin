@@ -1,6 +1,7 @@
 {
-  "name": "my-v0-project",
+  "name": "argochainhub-admin",
   "version": "0.1.0",
+  "description": "ArgoChainHub智慧农化采购平台后台管理系统",
   "private": true,
   "scripts": {
     "build": "next build",
