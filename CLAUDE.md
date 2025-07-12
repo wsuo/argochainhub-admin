@@ -9,18 +9,33 @@ ArgoChainHub智慧农化采购平台后台管理系统 - An admin dashboard for 
 ## Development Commands
 
 ```bash
-# Start development server
+# Start development server (runs on port 3020)
+npm run dev
+# or
 pnpm dev
 
 # Build for production  
+npm run build
+# or
 pnpm build
 
-# Start production server
+# Start production server (runs on port 3020)
+npm run start
+# or
 pnpm start
 
 # Run linting
+npm run lint
+# or
 pnpm lint
 ```
+
+## Development Server
+
+- **Frontend URL**: http://localhost:3020
+- **Backend API URL**: http://localhost:3010/api/v1
+- **Backend Swagger Docs**: http://localhost:3010/api/docs
+- **Package Manager**: npm (with legacy-peer-deps for compatibility)
 
 ## Architecture & Structure
 
