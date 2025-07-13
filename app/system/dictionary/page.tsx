@@ -369,7 +369,7 @@ export default function DictionaryPage() {
                       <TableCell>{getSystemBadge(category.isSystem)}</TableCell>
                       <TableCell>{getStatusBadge(category.isActive)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{category.itemCount || 0}</Badge>
+                        <Badge variant="outline">{category.itemCount ?? 0}</Badge>
                       </TableCell>
                       <TableCell>{category.sortOrder}</TableCell>
                       <TableCell>
