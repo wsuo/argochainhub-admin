@@ -1,8 +1,9 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
+import { NavigationProvider } from "@/components/navigation-provider"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -75,6 +76,7 @@ function generateBreadcrumbs(pathname: string) {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const isLoginPage = pathname === '/login'
 
   if (isLoginPage) {
@@ -87,36 +89,44 @@ export function MainLayout({ children }: MainLayoutProps) {
   // 主应用使用侧边栏布局
   return (
     <ProtectedRoute>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {breadcrumbs.map((breadcrumb, index) => (
-                    <div key={breadcrumb.href || breadcrumb.title} className="flex items-center">
-                      {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
-                      <BreadcrumbItem className="hidden md:block">
-                        {breadcrumb.href && index < breadcrumbs.length - 1 ? (
-                          <BreadcrumbLink href={breadcrumb.href}>
-                            {breadcrumb.title}
-                          </BreadcrumbLink>
-                        ) : (
-                          <BreadcrumbPage>{breadcrumb.title}</BreadcrumbPage>
-                        )}
-                      </BreadcrumbItem>
-                    </div>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-          </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
-        </SidebarInset>
-      </SidebarProvider>
+      <NavigationProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+              <div className="flex items-center gap-2 px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-2 h-4" />
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    {breadcrumbs.map((breadcrumb, index) => (
+                      <div key={breadcrumb.href || breadcrumb.title} className="flex items-center">
+                        {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
+                        <BreadcrumbItem className="hidden md:block">
+                          {breadcrumb.href && index < breadcrumbs.length - 1 ? (
+                            <BreadcrumbLink 
+                              href={breadcrumb.href}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                router.push(breadcrumb.href!)
+                              }}
+                            >
+                              {breadcrumb.title}
+                            </BreadcrumbLink>
+                          ) : (
+                            <BreadcrumbPage>{breadcrumb.title}</BreadcrumbPage>
+                          )}
+                        </BreadcrumbItem>
+                      </div>
+                    ))}
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
+            </header>
+            <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+          </SidebarInset>
+        </SidebarProvider>
+      </NavigationProvider>
     </ProtectedRoute>
   )
 }

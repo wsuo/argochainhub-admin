@@ -67,6 +67,11 @@ const label = getDictionaryLabel(businessTypes, 'manufacturing')
 
 在开发新功能时，优先使用这些字典工具和组件，避免重复实现下拉框数据获取逻辑。
 
+在数据管理页面，筛选条件组件中，一般有搜索输入框和下拉筛选框，搜索框和筛选框都要靠左，右侧是搜索按钮和重置按钮。其中的操作逻辑如下：
+1. 搜索输入框，用户输入内容后点击搜索按钮或者按下回车键，调用接口；
+2. 筛选框，用户下拉选择后，立即调用接口搜索；
+3. 重置按钮，重置所有搜索条件。
+
 ## Project Overview
 
 ArgoChainHub智慧农化采购平台后台管理系统 - An admin dashboard for a smart agricultural chemical procurement platform built with Next.js 15, TypeScript, and Tailwind CSS.

@@ -1,8 +1,9 @@
 "use client"
-import { Building2, FileText, DollarSign, Settings, Shield, Activity, ChevronRight, Home } from "lucide-react"
-import Link from "next/link"
+import { Badge } from "@/components/ui/badge"
+import { Shield, ChevronRight } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
+import { useNavigation, navigationConfig } from "@/components/navigation-provider"
 
 import {
   Sidebar,
@@ -20,137 +21,35 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-
-// 按用户角色组织的菜单项
-const menuItems = [
-  {
-    title: "仪表盘",
-    url: "/",
-    icon: Home,
-    roles: ["super_admin", "operations_manager", "customer_support"],
-  },
-  {
-    title: "企业管理",
-    icon: Building2,
-    roles: ["super_admin", "operations_manager"],
-    items: [
-      {
-        title: "全部企业",
-        url: "/enterprises",
-      },
-      {
-        title: "采购商",
-        url: "/enterprises/buyers",
-      },
-      {
-        title: "供应商",
-        url: "/enterprises/suppliers",
-      },
-      {
-        title: "待审核",
-        url: "/enterprises/pending",
-        badge: "23",
-      },
-    ],
-  },
-  {
-    title: "内容管理",
-    icon: FileText,
-    roles: ["super_admin", "operations_manager"],
-    items: [
-      {
-        title: "产品审核",
-        url: "/content/products",
-        badge: "8",
-      },
-      {
-        title: "供应商审核",
-        url: "/content/suppliers",
-        badge: "15",
-      },
-      {
-        title: "AI知识库",
-        url: "/content/knowledge",
-      },
-    ],
-  },
-  {
-    title: "业务运营",
-    icon: Activity,
-    roles: ["super_admin", "operations_manager", "customer_support"],
-    items: [
-      {
-        title: "询价管理",
-        url: "/operations/inquiries",
-      },
-      {
-        title: "样品管理",
-        url: "/operations/samples",
-      },
-      {
-        title: "登记管理",
-        url: "/operations/registrations",
-      },
-    ],
-  },
-  {
-    title: "财务管理",
-    icon: DollarSign,
-    roles: ["super_admin", "operations_manager"],
-    items: [
-      {
-        title: "会员套餐",
-        url: "/finance/plans",
-      },
-      {
-        title: "订单管理",
-        url: "/finance/orders",
-      },
-      {
-        title: "收入报表",
-        url: "/finance/reports",
-      },
-    ],
-  },
-  {
-    title: "系统管理",
-    icon: Settings,
-    roles: ["super_admin"],
-    items: [
-      {
-        title: "管理员账户",
-        url: "/system/accounts",
-      },
-      {
-        title: "角色权限",
-        url: "/system/roles",
-      },
-      {
-        title: "数据字典",
-        url: "/system/dictionary",
-      },
-      {
-        title: "操作日志",
-        url: "/system/logs",
-      },
-    ],
-  },
-]
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 export function AppSidebar() {
+  const { user } = useAuth()
   const { state } = useSidebar()
   const pathname = usePathname()
   const router = useRouter()
+  const { isPathActive, isSectionExpanded, toggleSection } = useNavigation()
   
-  // 从认证上下文获取用户信息
-  const { user } = useAuth()
   const currentUserRole = user?.role || "operations_manager"
 
-  // 根据用户角色过滤菜单项
-  const filteredMenuItems = menuItems.filter((item) => item.roles.includes(currentUserRole))
+  // 根据用户角色过滤可访问的导航项
+  const allowedSections = navigationConfig.rolePermissions[currentUserRole] || []
+  const filteredSections = Object.entries(navigationConfig.sections)
+    .filter(([key]) => allowedSections.includes(key))
+
+  const handleNavigation = (path: string, sectionKey?: string) => {
+    router.push(path)
+    if (sectionKey) {
+      // 确保相关section处于展开状态
+      if (!isSectionExpanded(sectionKey)) {
+        toggleSection(sectionKey)
+      }
+    }
+  }
 
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -177,38 +76,45 @@ export function AppSidebar() {
           <SidebarGroupLabel>平台管理</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  {item.items ? (
-                    <Collapsible defaultOpen className="group/collapsible">
+              {filteredSections.map(([sectionKey, section]) => (
+                <SidebarMenuItem key={sectionKey}>
+                  {section.items ? (
+                    <Collapsible 
+                      open={isSectionExpanded(sectionKey)} 
+                      onOpenChange={() => toggleSection(sectionKey)}
+                      className="group/collapsible"
+                    >
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton 
-                          tooltip={item.title}
+                          tooltip={section.title}
                           onClick={() => {
                             // 在折叠状态下点击图标跳转到第一个子项
-                            if (state === 'collapsed' && item.items && item.items.length > 0) {
-                              router.push(item.items[0].url)
+                            if (state === 'collapsed' && section.items && section.items.length > 0) {
+                              handleNavigation(section.items[0].path, sectionKey)
                             }
                           }}
                         >
-                          {item.icon && <item.icon />}
-                          <span>{item.title}</span>
+                          {section.icon && <section.icon />}
+                          <span>{section.title}</span>
                           <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                          {item.items.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                                <Link href={subItem.url} className="flex items-center justify-between">
+                          {section.items.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.key}>
+                              <SidebarMenuSubButton asChild isActive={isPathActive(subItem.path)}>
+                                <button 
+                                  onClick={() => handleNavigation(subItem.path, sectionKey)}
+                                  className="w-full flex items-center justify-between text-left"
+                                >
                                   <span>{subItem.title}</span>
                                   {subItem.badge && (
                                     <Badge variant="secondary" className="ml-auto text-xs">
                                       {subItem.badge}
                                     </Badge>
                                   )}
-                                </Link>
+                                </button>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                           ))}
@@ -216,11 +122,18 @@ export function AppSidebar() {
                       </CollapsibleContent>
                     </Collapsible>
                   ) : (
-                    <SidebarMenuButton tooltip={item.title} asChild isActive={pathname === item.url}>
-                      <Link href={item.url}>
-                        {item.icon && <item.icon />}
-                        <span>{item.title}</span>
-                      </Link>
+                    <SidebarMenuButton 
+                      tooltip={section.title} 
+                      asChild 
+                      isActive={isPathActive(section.path!)}
+                    >
+                      <button 
+                        onClick={() => handleNavigation(section.path!, sectionKey)}
+                        className="w-full flex items-center gap-2 text-left"
+                      >
+                        {section.icon && <section.icon />}
+                        <span>{section.title}</span>
+                      </button>
                     </SidebarMenuButton>
                   )}
                 </SidebarMenuItem>
@@ -233,20 +146,14 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton asChild>
               <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Admin" />
-                  <AvatarFallback className="rounded-lg">
-                    {user?.role === 'super_admin' ? 'SA' : user?.role === 'operations_manager' ? 'OM' : 'CS'}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+                  <Shield className="size-4" />
+                </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate font-semibold">
-                    {user?.role === 'super_admin' ? '超级管理员' : 
-                     user?.role === 'operations_manager' ? '运营经理' : '客服支持'}
-                  </span>
-                  <span className="truncate text-xs">{user?.username || 'admin'}@argochainhub.com</span>
+                  <span className="truncate font-semibold">{user?.username || 'Admin'}</span>
+                  <span className="truncate text-xs">{user?.role === 'super_admin' ? '超级管理员' : user?.role === 'operations_manager' ? '运营管理员' : '客服'}</span>
                 </div>
               </div>
             </SidebarMenuButton>
