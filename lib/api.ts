@@ -46,7 +46,7 @@ export const authApi = {
     apiClient.post('/auth/admin/login', data),
 
   // 获取当前用户信息
-  getCurrentUser: (): Promise<{ admin: Admin }> =>
+  getCurrentUser: (): Promise<Admin> =>
     apiClient.get('/auth/me'),
 
   // 登出

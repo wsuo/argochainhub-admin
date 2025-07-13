@@ -36,9 +36,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (hasToken && !user) {
         // 如果有token但没有用户信息，调用API获取用户信息
         try {
-          const response = await apiClient.get<{ admin: Admin }>('/auth/me')
-          if (response.admin) {
-            setUser(response.admin)
+          const admin = await apiClient.get<Admin>('/auth/me')
+          if (admin) {
+            setUser(admin)
           }
         } catch (error) {
           // 如果获取用户信息失败，清除token
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (isLoading) {
       checkAuth()
     }
-  }, [isLoading, user]) // 依赖 isLoading 和 user
+  }, [isLoading]) // 只依赖 isLoading，避免循环调用
 
   // 路由保护
   useEffect(() => {
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         router.push('/')
       }
     }
-  }, [isAuthenticated, isLoading, pathname, router, user])
+  }, [isAuthenticated, isLoading, pathname, router]) // 移除user依赖
 
   const login = (token: string, admin: Admin) => {
     apiClient.setAuth(token)
