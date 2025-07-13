@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useDictionary, useCountriesWithFlags } from '@/hooks/use-api'
+import { getCountryFlag } from './country-utils'
 import type { DictionaryItem } from './types'
 
 /**
@@ -41,6 +42,7 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
         extra: {
           labelEn: item.labelEn,
           labelEs: item.labelEs,
+          flag: getCountryFlag(item.extra, { 'zh-CN': item.labelZh, 'en': item.labelEn }, item.value),
           ...item.extra
         }
       }))
@@ -68,10 +70,10 @@ export function useCountryOptions(includeDisabled = false): DictionaryOption[] {
         extra: {
           labelEn: item.labelEn,
           labelEs: item.labelEs,
-          flag: item.extra?.flag,
+          flag: getCountryFlag(item.extra, { 'zh-CN': item.labelZh, 'en': item.labelEn }, item.value),
           iso2: item.extra?.iso2,
           iso3: item.extra?.iso3,
-          phoneCode: item.extra?.phoneCode,
+          phoneCode: item.extra?.countryCode,
           ...item.extra
         }
       }))

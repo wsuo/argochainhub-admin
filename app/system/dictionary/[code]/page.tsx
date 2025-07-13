@@ -63,6 +63,7 @@ import type {
   UpdateDictionaryItemRequest 
 } from '@/lib/types'
 import { toast } from 'sonner'
+import { getCountryFlag, getCountryDisplayName, isTaiwanRegion } from '@/lib/country-utils'
 
 export default function DictionaryItemsPage() {
   const params = useParams()
@@ -509,17 +510,27 @@ export default function DictionaryItemsPage() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-semibold">{item.name[currentLang] || item.name['zh-CN']}</div>
+                          <div className="font-semibold">
+                            {isCountriesCategory 
+                              ? getCountryDisplayName(item.name, currentLang)
+                              : (item.name[currentLang] || item.name['zh-CN'])
+                            }
+                          </div>
                           {currentLang !== 'zh-CN' && item.name['zh-CN'] && (
                             <div className="text-sm text-muted-foreground">
-                              {item.name['zh-CN']}
+                              {isCountriesCategory 
+                                ? getCountryDisplayName(item.name, 'zh-CN')
+                                : item.name['zh-CN']
+                              }
                             </div>
                           )}
                         </div>
                       </TableCell>
                       {isCountriesCategory && (
                         <TableCell>
-                          <span className="text-2xl">{item.extraData?.flag}</span>
+                          <span className="text-2xl" title={`${getCountryDisplayName(item.name, 'zh-CN')}国旗`}>
+                            {getCountryFlag(item.extraData, item.name, item.code)}
+                          </span>
                         </TableCell>
                       )}
                       {isCountriesCategory && (
