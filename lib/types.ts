@@ -324,3 +324,93 @@ export interface CreateSubscriptionRequest {
   startDate: string
   giftReason: string
 }
+
+// 字典管理相关类型
+export interface MultiLangText {
+  'zh-CN': string
+  'en': string
+  'es'?: string
+}
+
+export interface DictionaryCategory {
+  id: number
+  code: string
+  name: MultiLangText
+  description?: MultiLangText
+  isSystem: boolean
+  isActive: boolean
+  sortOrder: number
+  itemCount?: number
+  items?: DictionaryItem[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface DictionaryItem {
+  id: number
+  code: string
+  name: MultiLangText
+  description?: MultiLangText
+  extraData?: {
+    iso2?: string
+    iso3?: string
+    countryCode?: string
+    continent?: string
+    flagIcon?: string
+    flag?: string
+    [key: string]: any
+  }
+  isSystem: boolean
+  isActive: boolean
+  sortOrder: number
+  parentId?: number
+  categoryId: number
+  categoryCode?: string
+  children?: DictionaryItem[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+// 字典查询参数
+export interface DictionaryCategoryQuery {
+  page?: number
+  limit?: number
+  search?: string
+  isSystem?: boolean
+  isActive?: boolean
+}
+
+export interface DictionaryItemQuery {
+  page?: number
+  limit?: number
+  search?: string
+  isActive?: boolean
+  parentId?: number
+}
+
+// 字典创建/更新请求
+export interface CreateDictionaryCategoryRequest {
+  code: string
+  name: MultiLangText
+  description?: MultiLangText
+  isActive?: boolean
+  sortOrder?: number
+}
+
+export interface UpdateDictionaryCategoryRequest extends Partial<CreateDictionaryCategoryRequest> {}
+
+export interface CreateDictionaryItemRequest {
+  code: string
+  name: MultiLangText
+  description?: MultiLangText
+  extraData?: Record<string, any>
+  isActive?: boolean
+  sortOrder?: number
+  parentId?: number
+}
+
+export interface UpdateDictionaryItemRequest extends Partial<CreateDictionaryItemRequest> {}
+
+export interface BatchImportDictionaryItemRequest {
+  items: CreateDictionaryItemRequest[]
+}

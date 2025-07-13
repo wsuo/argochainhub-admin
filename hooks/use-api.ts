@@ -16,6 +16,13 @@ import type {
   CreateSubscriptionRequest,
   TranslateRequest,
   DetectLanguageRequest,
+  DictionaryCategoryQuery,
+  DictionaryItemQuery,
+  CreateDictionaryCategoryRequest,
+  UpdateDictionaryCategoryRequest,
+  CreateDictionaryItemRequest,
+  UpdateDictionaryItemRequest,
+  BatchImportDictionaryItemRequest,
 } from '@/lib/types'
 
 // 查询键常量
@@ -46,6 +53,13 @@ export const queryKeys = {
   
   // 会员计划
   plans: (query?: PlanQuery) => ['plans', query] as const,
+  
+  // 字典管理
+  dictionaryCategories: (query?: DictionaryCategoryQuery) => ['dictionary', 'categories', query] as const,
+  dictionaryCategory: (code: string) => ['dictionary', 'categories', code] as const,
+  dictionaryItems: (code: string, query?: DictionaryItemQuery) => ['dictionary', 'items', code, query] as const,
+  dictionary: (code: string) => ['dictionary', code] as const,
+  countriesWithFlags: ['dictionary', 'countries', 'with-flags'] as const,
 }
 
 // 仪表盘相关hooks
@@ -314,6 +328,158 @@ export const useDetectLanguage = () => {
     mutationFn: (data: DetectLanguageRequest) => api.utility.detectLanguage(data),
     onError: (error: any) => {
       toast.error(error.message || '语言检测失败')
+    },
+  })
+}
+
+// 字典管理相关hooks
+export const useDictionaryCategories = (query: DictionaryCategoryQuery = {}) => {
+  return useQuery({
+    queryKey: queryKeys.dictionaryCategories(query),
+    queryFn: () => api.dictionary.getCategories(query),
+  })
+}
+
+export const useDictionaryCategory = (code: string) => {
+  return useQuery({
+    queryKey: queryKeys.dictionaryCategory(code),
+    queryFn: () => api.dictionary.getCategory(code),
+    enabled: !!code,
+  })
+}
+
+export const useDictionaryItems = (code: string, query: DictionaryItemQuery = {}) => {
+  return useQuery({
+    queryKey: queryKeys.dictionaryItems(code, query),
+    queryFn: () => api.dictionary.getCategoryItems(code, query),
+    enabled: !!code,
+  })
+}
+
+export const useDictionary = (code: string) => {
+  return useQuery({
+    queryKey: queryKeys.dictionary(code),
+    queryFn: () => api.dictionary.getDictionary(code),
+    enabled: !!code,
+  })
+}
+
+export const useCountriesWithFlags = () => {
+  return useQuery({
+    queryKey: queryKeys.countriesWithFlags,
+    queryFn: () => api.dictionary.getCountriesWithFlags(),
+  })
+}
+
+export const useCreateDictionaryCategory = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreateDictionaryCategoryRequest) => api.dictionary.createCategory(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'categories'] })
+      toast.success('字典分类创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '字典分类创建失败')
+    },
+  })
+}
+
+export const useUpdateDictionaryCategory = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateDictionaryCategoryRequest }) => 
+      api.dictionary.updateCategory(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'categories'] })
+      toast.success('字典分类更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '字典分类更新失败')
+    },
+  })
+}
+
+export const useDeleteDictionaryCategory = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.dictionary.deleteCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'categories'] })
+      toast.success('字典分类删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '字典分类删除失败')
+    },
+  })
+}
+
+export const useCreateDictionaryItem = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ code, data }: { code: string; data: CreateDictionaryItemRequest }) => 
+      api.dictionary.createItem(code, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'items', variables.code] })
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'categories'] })
+      toast.success('字典项创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '字典项创建失败')
+    },
+  })
+}
+
+export const useUpdateDictionaryItem = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateDictionaryItemRequest }) => 
+      api.dictionary.updateItem(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'items'] })
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'categories'] })
+      toast.success('字典项更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '字典项更新失败')
+    },
+  })
+}
+
+export const useDeleteDictionaryItem = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.dictionary.deleteItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'items'] })
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'categories'] })
+      toast.success('字典项删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '字典项删除失败')
+    },
+  })
+}
+
+export const useBatchImportDictionaryItems = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ code, data }: { code: string; data: BatchImportDictionaryItemRequest }) => 
+      api.dictionary.batchImport(code, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'items', variables.code] })
+      queryClient.invalidateQueries({ queryKey: ['dictionary', 'categories'] })
+      toast.success('字典项批量导入成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '字典项批量导入失败')
     },
   })
 }

@@ -27,6 +27,15 @@ import type {
   TranslateResponse,
   DetectLanguageRequest,
   DetectLanguageResponse,
+  DictionaryCategory,
+  DictionaryCategoryQuery,
+  DictionaryItem,
+  DictionaryItemQuery,
+  CreateDictionaryCategoryRequest,
+  UpdateDictionaryCategoryRequest,
+  CreateDictionaryItemRequest,
+  UpdateDictionaryItemRequest,
+  BatchImportDictionaryItemRequest,
 } from './types'
 
 // 认证相关API
@@ -174,6 +183,48 @@ export const utilityApi = {
     apiClient.post('/admin/utilities/detect-language', data),
 }
 
+// 字典管理相关API
+export const dictionaryApi = {
+  // 字典分类管理
+  getCategories: (query: DictionaryCategoryQuery = {}): Promise<ApiResponse<DictionaryCategory[]>> =>
+    apiClient.get('/admin/dictionaries/categories', filterQueryParams(query)),
+
+  getCategory: (code: string): Promise<DictionaryCategory> =>
+    apiClient.get(`/admin/dictionaries/categories/${code}`),
+
+  createCategory: (data: CreateDictionaryCategoryRequest): Promise<DictionaryCategory> =>
+    apiClient.post('/admin/dictionaries/categories', data),
+
+  updateCategory: (id: number, data: UpdateDictionaryCategoryRequest): Promise<DictionaryCategory> =>
+    apiClient.put(`/admin/dictionaries/categories/${id}`, data),
+
+  deleteCategory: (id: number): Promise<void> =>
+    apiClient.delete(`/admin/dictionaries/categories/${id}`),
+
+  // 字典项管理
+  getCategoryItems: (code: string, query: DictionaryItemQuery = {}): Promise<ApiResponse<DictionaryItem[]>> =>
+    apiClient.get(`/admin/dictionaries/${code}/items`, filterQueryParams(query)),
+
+  createItem: (code: string, data: CreateDictionaryItemRequest): Promise<DictionaryItem> =>
+    apiClient.post(`/admin/dictionaries/${code}/items`, data),
+
+  updateItem: (id: number, data: UpdateDictionaryItemRequest): Promise<DictionaryItem> =>
+    apiClient.put(`/admin/dictionaries/items/${id}`, data),
+
+  deleteItem: (id: number): Promise<void> =>
+    apiClient.delete(`/admin/dictionaries/items/${id}`),
+
+  batchImport: (code: string, data: BatchImportDictionaryItemRequest): Promise<DictionaryItem[]> =>
+    apiClient.post(`/admin/dictionaries/${code}/batch`, data),
+
+  // 前端查询接口（无需认证）
+  getDictionary: (code: string): Promise<DictionaryItem[]> =>
+    apiClient.get(`/dictionaries/${code}`),
+
+  getCountriesWithFlags: (): Promise<DictionaryItem[]> =>
+    apiClient.get('/dictionaries/countries/with-flags'),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
@@ -185,6 +236,7 @@ export const api = {
   plan: planApi,
   subscription: subscriptionApi,
   utility: utilityApi,
+  dictionary: dictionaryApi,
 }
 
 export default api

@@ -35,6 +35,7 @@ const routeMap: Record<string, { title: string; parent?: string }> = {
   '/finance/revenue': { title: '收入统计', parent: '财务管理' },
   '/system/admins': { title: '管理员账户', parent: '系统管理' },
   '/system/roles': { title: '角色权限', parent: '系统管理' },
+  '/system/dictionary': { title: '数据字典', parent: '系统管理' },
   '/system/logs': { title: '操作日志', parent: '系统管理' },
 }
 
@@ -45,6 +46,8 @@ function generateBreadcrumbs(pathname: string) {
   if (!route) {
     if (pathname.startsWith('/enterprises/') && pathname !== '/enterprises/new') {
       route = { title: '企业详情', parent: '企业管理' }
+    } else if (pathname.startsWith('/system/dictionary/') && pathname !== '/system/dictionary/new') {
+      route = { title: '字典项管理', parent: '系统管理' }
     }
   }
   
