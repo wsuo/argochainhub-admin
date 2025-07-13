@@ -34,14 +34,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const hasToken = apiClient.isAuthenticated()
       
       if (hasToken && !user) {
-        // 如果有token但没有用户信息，设置一个默认用户
-        // 在实际应用中，这里应该调用API获取用户信息
-        const defaultUser = {
-          id: 1,
-          username: 'admin',
-          role: 'operations_manager' as const
-        }
-        setUser(defaultUser)
+        // 如果有token但没有用户信息，这里应该调用API获取用户信息
+        // 暂时不设置默认用户，等待真实登录
+        // 或者可以调用 API 获取当前用户信息
+        console.log('User has token but no user info - should fetch user info from API')
       } else if (!hasToken && user) {
         setUser(null)
       }

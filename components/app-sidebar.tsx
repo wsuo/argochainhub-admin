@@ -2,6 +2,7 @@
 import { Building2, FileText, DollarSign, Settings, Shield, Activity, ChevronRight, Home } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-provider"
 
 import {
   Sidebar,
@@ -143,7 +144,10 @@ export function AppSidebar() {
   const { state } = useSidebar()
   const pathname = usePathname()
   const router = useRouter()
-  const currentUserRole = "operations_manager" // 这将来自认证上下文
+  
+  // 从认证上下文获取用户信息
+  const { user } = useAuth()
+  const currentUserRole = user?.role || "operations_manager"
 
   // 根据用户角色过滤菜单项
   const filteredMenuItems = menuItems.filter((item) => item.roles.includes(currentUserRole))
@@ -233,11 +237,16 @@ export function AppSidebar() {
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Admin" />
-                  <AvatarFallback className="rounded-lg">OM</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user?.role === 'super_admin' ? 'SA' : user?.role === 'operations_manager' ? 'OM' : 'CS'}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate font-semibold">运营经理</span>
-                  <span className="truncate text-xs">admin@argochainhub.com</span>
+                  <span className="truncate font-semibold">
+                    {user?.role === 'super_admin' ? '超级管理员' : 
+                     user?.role === 'operations_manager' ? '运营经理' : '客服支持'}
+                  </span>
+                  <span className="truncate text-xs">{user?.username || 'admin'}@argochainhub.com</span>
                 </div>
               </div>
             </SidebarMenuButton>
