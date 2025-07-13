@@ -112,7 +112,7 @@ export function MultiLangInput({
                 size="sm"
                 className={cn(
                   "h-7 px-2 text-xs",
-                  isActive && "bg-primary text-primary-foreground",
+                  isActive && "bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-150 hover:text-slate-800",
                   !isActive && hasText && "border-green-500 bg-green-50 text-green-700"
                 )}
                 onClick={() => setActiveLanguage(lang as keyof MultiLangText)}
