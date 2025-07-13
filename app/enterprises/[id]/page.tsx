@@ -40,7 +40,7 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { companyApi } from '@/lib/api'
-import type { Company, ReviewRequest, UpdateCompanyRequest } from '@/lib/types'
+import type { Company, ReviewRequest, UpdateCompanyRequest, MultiLangText } from '@/lib/types'
 import { toast } from 'sonner'
 
 export default function CompanyDetailPage() {
@@ -53,6 +53,28 @@ export default function CompanyDetailPage() {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false)
   const [reviewReason, setReviewReason] = useState('')
   const [editData, setEditData] = useState<UpdateCompanyRequest>({})
+
+  // 获取多语言文本的辅助函数
+  const getMultiLangText = (text: MultiLangText | { zh: string; en?: string; 'zh-CN'?: string } | undefined, lang: 'zh-CN' | 'en' = 'zh-CN'): string => {
+    if (!text) return ''
+    // 新格式 MultiLangText
+    if ('zh-CN' in text) {
+      return lang === 'en' ? text.en || '' : text['zh-CN'] || ''
+    }
+    // 旧格式向后兼容
+    if ('zh' in text) {
+      return lang === 'en' ? text.en || '' : text.zh || text['zh-CN'] || ''
+    }
+    return ''
+  }
+
+  // 设置多语言文本的辅助函数
+  const setMultiLangText = (text: string, lang: 'zh-CN' | 'en' = 'zh-CN'): MultiLangText => {
+    if (lang === 'en') {
+      return { 'zh-CN': '', en: text }
+    }
+    return { 'zh-CN': text }
+  }
 
   // 获取企业详情
   const { data: company, isLoading, error } = useQuery({
@@ -108,9 +130,18 @@ export default function CompanyDetailPage() {
       setEditData({})
     } else {
       setEditData({
-        name: company?.name,
+        name: company?.name ? {
+          'zh-CN': getMultiLangText(company.name, 'zh-CN'),
+          en: getMultiLangText(company.name, 'en')
+        } : undefined,
         type: company?.type,
-        profile: company?.profile,
+        profile: company?.profile ? {
+          ...company.profile,
+          description: company.profile.description ? {
+            'zh-CN': getMultiLangText(company.profile.description, 'zh-CN'),
+            en: getMultiLangText(company.profile.description, 'en')
+          } : undefined
+        } : undefined,
         rating: company?.rating,
         isTop100: company?.isTop100,
         email: company?.email
@@ -206,9 +237,9 @@ export default function CompanyDetailPage() {
           <div className="flex items-center gap-3">
             <Building2 className="h-6 w-6" />
             <div>
-              <h1 className="text-2xl font-bold">{company.name['zh-CN'] || company.name.zh}</h1>
-              {company.name.en && (
-                <p className="text-muted-foreground">{company.name.en}</p>
+              <h1 className="text-2xl font-bold">{getMultiLangText(company.name, 'zh-CN')}</h1>
+              {getMultiLangText(company.name, 'en') && (
+                <p className="text-muted-foreground">{getMultiLangText(company.name, 'en')}</p>
               )}
             </div>
           </div>
@@ -392,14 +423,14 @@ export default function CompanyDetailPage() {
                 <div>
                   <Label>中文描述</Label>
                   <Textarea
-                    value={editData.profile?.description?.['zh-CN'] || editData.profile?.description?.zh || company.profile?.description?.['zh-CN'] || company.profile?.description?.zh || ''}
+                    value={editData.profile?.description ? getMultiLangText(editData.profile.description, 'zh-CN') : getMultiLangText(company.profile?.description, 'zh-CN')}
                     onChange={(e) => setEditData(prev => ({
                       ...prev,
                       profile: {
                         ...prev.profile,
                         description: {
-                          ...prev.profile?.description,
-                          'zh-CN': e.target.value
+                          'zh-CN': e.target.value,
+                          en: prev.profile?.description?.en || getMultiLangText(company.profile?.description, 'en')
                         }
                       }
                     }))}
@@ -408,13 +439,13 @@ export default function CompanyDetailPage() {
                 <div>
                   <Label>英文描述</Label>
                   <Textarea
-                    value={editData.profile?.description?.en || company.profile?.description?.en || ''}
+                    value={editData.profile?.description ? getMultiLangText(editData.profile.description, 'en') : getMultiLangText(company.profile?.description, 'en')}
                     onChange={(e) => setEditData(prev => ({
                       ...prev,
                       profile: {
                         ...prev.profile,
                         description: {
-                          ...prev.profile?.description,
+                          'zh-CN': prev.profile?.description?.['zh-CN'] || getMultiLangText(company.profile?.description, 'zh-CN'),
                           en: e.target.value
                         }
                       }
@@ -424,19 +455,19 @@ export default function CompanyDetailPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {(company.profile?.description?.['zh-CN'] || company.profile?.description?.zh) && (
+                {getMultiLangText(company.profile?.description, 'zh-CN') && (
                   <div>
                     <h4 className="text-sm font-medium mb-2">中文描述</h4>
-                    <p className="text-sm text-muted-foreground">{company.profile.description['zh-CN'] || company.profile.description.zh}</p>
+                    <p className="text-sm text-muted-foreground">{getMultiLangText(company.profile?.description, 'zh-CN')}</p>
                   </div>
                 )}
-                {company.profile?.description?.en && (
+                {getMultiLangText(company.profile?.description, 'en') && (
                   <div>
                     <h4 className="text-sm font-medium mb-2">英文描述</h4>
-                    <p className="text-sm text-muted-foreground">{company.profile.description.en}</p>
+                    <p className="text-sm text-muted-foreground">{getMultiLangText(company.profile?.description, 'en')}</p>
                   </div>
                 )}
-                {!(company.profile?.description?.['zh-CN'] || company.profile?.description?.zh) && !company.profile?.description?.en && (
+                {!getMultiLangText(company.profile?.description, 'zh-CN') && !getMultiLangText(company.profile?.description, 'en') && (
                   <p className="text-sm text-muted-foreground">暂无企业描述</p>
                 )}
               </div>
@@ -480,7 +511,7 @@ export default function CompanyDetailPage() {
               {company.subscriptions.map((subscription) => (
                 <div key={subscription.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <p className="font-medium">{subscription.plan?.name?.zh}</p>
+                    <p className="font-medium">{getMultiLangText(subscription.plan?.name, 'zh-CN')}</p>
                     <p className="text-sm text-muted-foreground">
                       {subscription.startDate} - {subscription.endDate}
                     </p>

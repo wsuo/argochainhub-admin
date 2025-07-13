@@ -259,17 +259,11 @@ export interface ReviewRequest {
 
 // 企业创建/更新请求
 export interface CreateCompanyRequest {
-  name: {
-    zh: string
-    en?: string
-  }
+  name: MultiLangText
   type: Company['type']
   status?: Company['status']
   profile?: {
-    description?: {
-      zh: string
-      en?: string
-    }
+    description?: MultiLangText
     address?: string
     phone?: string
     website?: string
@@ -281,22 +275,10 @@ export interface CreateCompanyRequest {
   // 新增扩展字段
   country?: string
   businessCategories?: string[]
-  businessScope?: {
-    'zh-CN': string
-    'en'?: string
-    'es'?: string
-  }
+  businessScope?: MultiLangText
   companySize?: string
-  mainProducts?: {
-    'zh-CN': string
-    'en'?: string
-    'es'?: string
-  }
-  mainSuppliers?: {
-    'zh-CN': string
-    'en'?: string
-    'es'?: string
-  }
+  mainProducts?: MultiLangText
+  mainSuppliers?: MultiLangText
   annualImportExportValue?: number
   registrationNumber?: string
   taxNumber?: string
@@ -360,7 +342,7 @@ export interface CreateSubscriptionRequest {
 // 字典管理相关类型
 export interface MultiLangText {
   'zh-CN': string
-  'en': string
+  'en'?: string
   'es'?: string
 }
 

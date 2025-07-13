@@ -24,6 +24,7 @@ import { CompanyNameInput, MultiLangInput } from '@/components/multi-lang-input'
 import { EnhancedCountrySelect } from '@/components/enhanced-country-select'
 import { BusinessTypesMultiSelect, CompanySizeSelect, CompanyStatusSelect } from '@/components/dictionary-components'
 import { ImageUpload } from '@/components/file-upload'
+import { StarRating } from '@/components/star-rating'
 
 export default function NewCompanyPage() {
   const router = useRouter()
@@ -31,15 +32,13 @@ export default function NewCompanyPage() {
 
   const [formData, setFormData] = useState<CreateCompanyRequest>({
     name: {
-      zh: '',
-      en: ''
+      'zh-CN': ''
     },
     type: 'supplier',
     status: 'active',
     profile: {
       description: {
-        zh: '',
-        en: ''
+        'zh-CN': ''
       },
       address: '',
       phone: '',
@@ -52,20 +51,14 @@ export default function NewCompanyPage() {
     country: '',
     businessCategories: [],
     businessScope: {
-      'zh-CN': '',
-      'en': '',
-      'es': ''
+      'zh-CN': ''
     },
     companySize: '',
     mainProducts: {
-      'zh-CN': '',
-      'en': '',
-      'es': ''
+      'zh-CN': ''
     },
     mainSuppliers: {
-      'zh-CN': '',
-      'en': '',
-      'es': ''
+      'zh-CN': ''
     },
     annualImportExportValue: 0,
     registrationNumber: '',
@@ -86,11 +79,29 @@ export default function NewCompanyPage() {
     }
   })
 
+  // 清理多语言字段的辅助函数
+  const cleanMultiLangText = (multiLangText?: MultiLangText): MultiLangText | undefined => {
+    if (!multiLangText) return undefined
+    
+    const cleaned: Record<string, string> = {}
+    
+    // 遍历所有可能的语言键
+    Object.keys(multiLangText).forEach(key => {
+      const value = multiLangText[key as keyof MultiLangText]
+      if (value && value.trim()) {
+        cleaned[key] = value.trim()
+      }
+    })
+    
+    // 如果没有任何有效内容，返回undefined
+    return Object.keys(cleaned).length > 0 ? cleaned as MultiLangText : undefined
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // 基本验证
-    if (!formData.name.zh.trim()) {
+    // 验证必填的多语言字段
+    if (!formData.name['zh-CN']?.trim()) {
       toast.error('请填写企业中文名称')
       return
     }
@@ -101,44 +112,27 @@ export default function NewCompanyPage() {
     }
 
     // 清理空值并格式化数据
+    const cleanedName = cleanMultiLangText(formData.name)
+    if (!cleanedName || !cleanedName['zh-CN']) {
+      toast.error('企业名称中文版本为必填项')
+      return
+    }
+
+    // 清理空值并格式化数据
     const cleanData = {
       ...formData,
-      name: {
-        zh: formData.name.zh.trim(),
-        en: formData.name.en?.trim() || undefined
-      },
+      name: cleanedName,
       email: formData.email?.trim(),
       profile: {
-        description: {
-          zh: formData.profile?.description?.zh?.trim() || '',
-          en: formData.profile?.description?.en?.trim() || ''
-        },
+        description: cleanMultiLangText(formData.profile?.description),
         address: formData.profile?.address?.trim() || undefined,
         phone: formData.profile?.phone?.trim() || undefined,
         website: formData.profile?.website?.trim() || undefined
       },
-      // 清理多语言字段空值
-      businessScope: Object.keys(formData.businessScope || {}).reduce((acc, key) => {
-        const value = formData.businessScope?.[key as keyof typeof formData.businessScope]
-        if (value && value.trim()) {
-          acc[key as keyof typeof acc] = value.trim()
-        }
-        return acc
-      }, {} as any),
-      mainProducts: Object.keys(formData.mainProducts || {}).reduce((acc, key) => {
-        const value = formData.mainProducts?.[key as keyof typeof formData.mainProducts]
-        if (value && value.trim()) {
-          acc[key as keyof typeof acc] = value.trim()
-        }
-        return acc
-      }, {} as any),
-      mainSuppliers: Object.keys(formData.mainSuppliers || {}).reduce((acc, key) => {
-        const value = formData.mainSuppliers?.[key as keyof typeof formData.mainSuppliers]
-        if (value && value.trim()) {
-          acc[key as keyof typeof acc] = value.trim()
-        }
-        return acc
-      }, {} as any),
+      // 清理多语言字段
+      businessScope: cleanMultiLangText(formData.businessScope),
+      mainProducts: cleanMultiLangText(formData.mainProducts),
+      mainSuppliers: cleanMultiLangText(formData.mainSuppliers),
       // 清理其他字段
       country: formData.country || undefined,
       companySize: formData.companySize || undefined,
@@ -407,27 +401,18 @@ export default function NewCompanyPage() {
             <CardDescription>企业的详细介绍信息</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="desc-zh">中文描述</Label>
-              <Textarea
-                id="desc-zh"
-                value={formData.profile?.description?.zh || ''}
-                onChange={(e) => updateFormData('profile.description.zh', e.target.value)}
-                placeholder="请输入企业中文描述"
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="desc-en">英文描述</Label>
-              <Textarea
-                id="desc-en"
-                value={formData.profile?.description?.en || ''}
-                onChange={(e) => updateFormData('profile.description.en', e.target.value)}
-                placeholder="请输入企业英文描述（可选）"
-                rows={4}
-              />
-            </div>
+            <MultiLangInput
+              label="企业描述"
+              value={formData.profile?.description}
+              onChange={(value) => updateFormData('profile.description', value)}
+              variant="textarea"
+              rows={4}
+              placeholder={{
+                'zh-CN': '请输入企业中文描述',
+                'en': 'Please enter company description in English',
+                'es': 'Por favor ingrese la descripción de la empresa en español'
+              }}
+            />
           </CardContent>
         </Card>
 
@@ -475,16 +460,15 @@ export default function NewCompanyPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="rating">企业评分</Label>
-                <Input
-                  id="rating"
-                  type="number"
-                  min="0"
-                  max="5"
-                  step="0.1"
-                  value={formData.rating || 4.0}
-                  onChange={(e) => updateFormData('rating', parseFloat(e.target.value))}
-                />
-                <p className="text-sm text-muted-foreground mt-1">评分范围：0-5分</p>
+                <div className="mt-2">
+                  <StarRating
+                    value={formData.rating || 4.0}
+                    onChange={(value) => updateFormData('rating', value)}
+                    size="lg"
+                    showValue={true}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">点击星星设置评分</p>
               </div>
 
               <div className="flex items-center space-x-2">
