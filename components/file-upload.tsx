@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import Cookies from 'js-cookie'
 import { Button } from '@/components/ui/button'
@@ -62,6 +62,22 @@ export function FileUpload({
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewUrl, setPreviewUrl] = useState('')
   const [previewTitle, setPreviewTitle] = useState('')
+
+  // 处理模态框打开时的页面滚动锁定
+  useEffect(() => {
+    if (previewOpen) {
+      // 锁定页面滚动
+      document.body.style.overflow = 'hidden'
+    } else {
+      // 恢复页面滚动
+      document.body.style.overflow = 'unset'
+    }
+
+    // 清理函数：组件卸载时恢复滚动
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [previewOpen])
 
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData()
@@ -158,19 +174,19 @@ export function FileUpload({
 
   const handleDownload = async (url: string, filename: string) => {
     try {
-      const response = await fetch(url)
-      const blob = await response.blob()
-      const downloadUrl = window.URL.createObjectURL(blob)
+      // 对于外部CDN链接，直接使用a标签下载，避免CORS问题
       const link = document.createElement('a')
-      link.href = downloadUrl
+      link.href = url
       link.download = filename
+      link.target = '_blank' // 防止某些浏览器阻止下载
+      
+      // 添加到DOM，触发点击，然后移除
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      window.URL.revokeObjectURL(downloadUrl)
     } catch (error) {
       console.error('下载失败:', error)
-      // 如果下载失败，降级为打开新窗口
+      // 如果下载失败，尝试直接打开链接
       window.open(url, '_blank')
     }
   }
