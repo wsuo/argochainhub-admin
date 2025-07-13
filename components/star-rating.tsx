@@ -25,7 +25,9 @@ export function StarRating({
 }: StarRatingProps) {
   const [hoverValue, setHoverValue] = useState<number | null>(null)
 
-  const displayValue = hoverValue !== null ? hoverValue : value
+  // 安全处理空值，确保 value 是有效数字
+  const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0
+  const displayValue = hoverValue !== null ? hoverValue : safeValue
 
   const sizeClasses = {
     sm: 'h-4 w-4',
@@ -110,9 +112,12 @@ export function StarDisplay({
   showValue = true,
   className
 }: StarDisplayProps) {
+  // 安全处理空值，确保 value 是有效数字
+  const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0
+  
   return (
     <StarRating
-      value={value}
+      value={safeValue}
       maxStars={maxStars}
       size={size}
       readonly={true}

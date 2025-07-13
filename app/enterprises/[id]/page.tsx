@@ -178,21 +178,22 @@ export default function CompanyDetailPage() {
             en: getMultiLangText(company.profile.description, 'en')
           } : undefined
         } : undefined,
-        rating: company?.rating,
-        isTop100: company?.isTop100,
+        // 为历史数据设置默认值
+        rating: typeof company?.rating === 'number' ? company.rating : 4.0,
+        isTop100: company?.isTop100 || false,
         email: company?.email,
-        // 新增字段
-        country: company?.country,
-        businessCategories: company?.businessCategories,
-        businessScope: company?.businessScope,
-        companySize: company?.companySize,
-        mainProducts: company?.mainProducts,
-        mainSuppliers: company?.mainSuppliers,
-        annualImportExportValue: company?.annualImportExportValue,
-        registrationNumber: company?.registrationNumber,
-        taxNumber: company?.taxNumber,
-        businessLicenseUrl: company?.businessLicenseUrl,
-        companyPhotosUrls: company?.companyPhotosUrls
+        // 新增字段，为历史数据设置默认值
+        country: company?.country || '',
+        businessCategories: company?.businessCategories || [],
+        businessScope: company?.businessScope || { 'zh-CN': '' },
+        companySize: company?.companySize || '',
+        mainProducts: company?.mainProducts || { 'zh-CN': '' },
+        mainSuppliers: company?.mainSuppliers || { 'zh-CN': '' },
+        annualImportExportValue: typeof company?.annualImportExportValue === 'number' ? company.annualImportExportValue : 0,
+        registrationNumber: company?.registrationNumber || '',
+        taxNumber: company?.taxNumber || '',
+        businessLicenseUrl: company?.businessLicenseUrl || '',
+        companyPhotosUrls: company?.companyPhotosUrls || []
       })
     }
     setIsEditMode(!isEditMode)
@@ -512,85 +513,135 @@ export default function CompanyDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* 所在国家 */}
-            {company.country && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">所在国家</span>
-                {isEditMode ? (
-                  <EnhancedCountrySelect
-                    value={editData.country || company.country}
-                    onValueChange={(value) => setEditData(prev => ({ ...prev, country: value }))}
-                    showFlag={true}
-                    className="w-48"
-                  />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span>{getDictionaryLabel(countries, company.country)}</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 公司规模 */}
-            {company.companySize && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">公司规模</span>
-                {isEditMode ? (
-                  <CompanySizeSelect
-                    value={editData.companySize || company.companySize}
-                    onValueChange={(value) => setEditData(prev => ({ ...prev, companySize: value }))}
-                  />
-                ) : (
-                  <span className="text-sm">{getDictionaryLabel(companySizes, company.companySize)}</span>
-                )}
-              </div>
-            )}
-
-            {/* 业务类别 */}
-            {company.businessCategories && company.businessCategories.length > 0 && (
-              <div>
-                <span className="text-sm font-medium mb-2 block">业务类别</span>
-                {isEditMode ? (
-                  <BusinessTypesMultiSelect
-                    value={editData.businessCategories || company.businessCategories}
-                    onValueChange={(value) => setEditData(prev => ({ ...prev, businessCategories: value }))}
-                    maxItems={5}
-                  />
-                ) : (
-                  <div className="flex flex-wrap gap-1">
-                    {company.businessCategories.map((category, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {getDictionaryLabel(businessTypes, category)}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 年进出口额 */}
-            {company.annualImportExportValue && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">年{company.type === 'supplier' ? '出口' : '进口'}额</span>
-                {isEditMode ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={editData.annualImportExportValue || company.annualImportExportValue}
-                      onChange={(e) => setEditData(prev => ({ ...prev, annualImportExportValue: parseFloat(e.target.value) || 0 }))}
-                      className="w-32"
+            {isEditMode ? (
+              /* 编辑模式：使用网格布局，两两一行 */
+              <div className="space-y-6">
+                {/* 第一行：所在国家 + 年进出口额 */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* 所在国家 */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">所在国家</span>
+                    <EnhancedCountrySelect
+                      value={editData.country || company.country || ''}
+                      onValueChange={(value) => setEditData(prev => ({ ...prev, country: value }))}
+                      showFlag={true}
+                      className="w-48"
                     />
-                    <span className="text-sm text-muted-foreground">美元</span>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">{safeParseFloat(company.annualImportExportValue).toLocaleString()} 美元</span>
+
+                  {/* 年进出口额 */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">年{company.type === 'supplier' ? '出口' : '进口'}额</span>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={editData.annualImportExportValue !== undefined ? editData.annualImportExportValue : (company.annualImportExportValue || 0)}
+                        onChange={(e) => setEditData(prev => ({ ...prev, annualImportExportValue: parseFloat(e.target.value) || 0 }))}
+                        className="w-32"
+                      />
+                      <span className="text-sm text-muted-foreground">美元</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 第二行：公司规模 + 业务类别 */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* 公司规模 */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">公司规模</span>
+                    <CompanySizeSelect
+                      value={editData.companySize || company.companySize || ''}
+                      onValueChange={(value) => setEditData(prev => ({ ...prev, companySize: value }))}
+                      className="w-48"
+                    />
+                  </div>
+
+                  {/* 业务类别 */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">业务类别</span>
+                    <BusinessTypesMultiSelect
+                      value={editData.businessCategories || company.businessCategories || []}
+                      onValueChange={(value) => setEditData(prev => ({ ...prev, businessCategories: value }))}
+                      maxItems={3}
+                      className="w-48"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* 查看模式：保持原有布局 */
+              <>
+                {/* 所在国家 */}
+                {company.country && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">所在国家</span>
+                    <div className="flex items-center gap-2">
+                      <span>{getDictionaryLabel(countries, company.country)}</span>
+                    </div>
                   </div>
                 )}
-              </div>
+
+                {/* 公司规模 */}
+                {company.companySize && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">公司规模</span>
+                    <span className="text-sm">{getDictionaryLabel(companySizes, company.companySize)}</span>
+                  </div>
+                )}
+
+                {/* 业务类别 */}
+                {company.businessCategories && company.businessCategories.length > 0 && (
+                  <div>
+                    <span className="text-sm font-medium mb-2 block">业务类别</span>
+                    <div className="flex flex-wrap gap-1">
+                      {company.businessCategories.map((category, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {getDictionaryLabel(businessTypes, category)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 年进出口额 */}
+                {company.annualImportExportValue && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">年{company.type === 'supplier' ? '出口' : '进口'}额</span>
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">{safeParseFloat(company.annualImportExportValue).toLocaleString()} 美元</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 显示未设置的字段 */}
+                {!company.country && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">所在国家</span>
+                    <span className="text-sm text-muted-foreground">未设置</span>
+                  </div>
+                )}
+                {!company.companySize && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">公司规模</span>
+                    <span className="text-sm text-muted-foreground">未设置</span>
+                  </div>
+                )}
+                {(!company.businessCategories || company.businessCategories.length === 0) && (
+                  <div>
+                    <span className="text-sm font-medium mb-2 block">业务类别</span>
+                    <span className="text-sm text-muted-foreground">未设置</span>
+                  </div>
+                )}
+                {!company.annualImportExportValue && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">年{company.type === 'supplier' ? '出口' : '进口'}额</span>
+                    <span className="text-sm text-muted-foreground">未设置</span>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -605,39 +656,43 @@ export default function CompanyDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* 注册证号 */}
-            {company.registrationNumber && (
+            {(company.registrationNumber || isEditMode) && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">注册证号</span>
                 {isEditMode ? (
                   <Input
-                    value={editData.registrationNumber || company.registrationNumber}
+                    value={editData.registrationNumber || company.registrationNumber || ''}
                     onChange={(e) => setEditData(prev => ({ ...prev, registrationNumber: e.target.value }))}
                     className="w-48"
                   />
-                ) : (
+                ) : company.registrationNumber ? (
                   <span className="text-sm font-mono bg-muted px-2 py-1 rounded">{company.registrationNumber}</span>
+                ) : (
+                  <span className="text-sm text-muted-foreground">未设置</span>
                 )}
               </div>
             )}
 
             {/* 税号 */}
-            {company.taxNumber && (
+            {(company.taxNumber || isEditMode) && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">税号</span>
                 {isEditMode ? (
                   <Input
-                    value={editData.taxNumber || company.taxNumber}
+                    value={editData.taxNumber || company.taxNumber || ''}
                     onChange={(e) => setEditData(prev => ({ ...prev, taxNumber: e.target.value }))}
                     className="w-48"
                   />
-                ) : (
+                ) : company.taxNumber ? (
                   <span className="text-sm font-mono bg-muted px-2 py-1 rounded">{company.taxNumber}</span>
+                ) : (
+                  <span className="text-sm text-muted-foreground">未设置</span>
                 )}
               </div>
             )}
 
             {/* 营业执照 */}
-            {company.businessLicenseUrl && (
+            {(company.businessLicenseUrl || isEditMode) && (
               <div>
                 <span className="text-sm font-medium mb-2 block">营业执照</span>
                 {isEditMode ? (
@@ -647,7 +702,7 @@ export default function CompanyDetailPage() {
                     maxFiles={1}
                     fileType="company_certificate"
                   />
-                ) : (
+                ) : company.businessLicenseUrl ? (
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <Button
@@ -671,6 +726,8 @@ export default function CompanyDetailPage() {
                       </a>
                     </Button>
                   </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">未上传</span>
                 )}
               </div>
             )}
@@ -681,7 +738,7 @@ export default function CompanyDetailPage() {
       {/* 业务范围和产品信息 */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* 业务范围 */}
-        {company.businessScope && (
+        {(company.businessScope || isEditMode) && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -693,12 +750,12 @@ export default function CompanyDetailPage() {
               {isEditMode ? (
                 <MultiLangInput
                   label=""
-                  value={editData.businessScope || company.businessScope}
+                  value={editData.businessScope || company.businessScope || { 'zh-CN': '' }}
                   onChange={(value) => setEditData(prev => ({ ...prev, businessScope: value }))}
                   variant="textarea"
                   rows={4}
                 />
-              ) : (
+              ) : company.businessScope && (getMultiLangText(company.businessScope, 'zh-CN') || getMultiLangText(company.businessScope, 'en')) ? (
                 <div className="space-y-3">
                   {getMultiLangText(company.businessScope, 'zh-CN') && (
                     <div>
@@ -713,13 +770,15 @@ export default function CompanyDetailPage() {
                     </div>
                   )}
                 </div>
+              ) : (
+                <span className="text-sm text-muted-foreground">未设置</span>
               )}
             </CardContent>
           </Card>
         )}
 
         {/* 主要产品 */}
-        {company.mainProducts && (
+        {(company.mainProducts || isEditMode) && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -731,12 +790,12 @@ export default function CompanyDetailPage() {
               {isEditMode ? (
                 <MultiLangInput
                   label=""
-                  value={editData.mainProducts || company.mainProducts}
+                  value={editData.mainProducts || company.mainProducts || { 'zh-CN': '' }}
                   onChange={(value) => setEditData(prev => ({ ...prev, mainProducts: value }))}
                   variant="textarea"
                   rows={4}
                 />
-              ) : (
+              ) : company.mainProducts && (getMultiLangText(company.mainProducts, 'zh-CN') || getMultiLangText(company.mainProducts, 'en')) ? (
                 <div className="space-y-3">
                   {getMultiLangText(company.mainProducts, 'zh-CN') && (
                     <div>
@@ -751,6 +810,8 @@ export default function CompanyDetailPage() {
                     </div>
                   )}
                 </div>
+              ) : (
+                <span className="text-sm text-muted-foreground">未设置</span>
               )}
             </CardContent>
           </Card>
@@ -758,7 +819,7 @@ export default function CompanyDetailPage() {
       </div>
 
       {/* 主要供应商（采购商才显示） */}
-      {company.type === 'buyer' && company.mainSuppliers && (
+      {company.type === 'buyer' && (company.mainSuppliers || isEditMode) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -770,12 +831,12 @@ export default function CompanyDetailPage() {
             {isEditMode ? (
               <MultiLangInput
                 label=""
-                value={editData.mainSuppliers || company.mainSuppliers}
+                value={editData.mainSuppliers || company.mainSuppliers || { 'zh-CN': '' }}
                 onChange={(value) => setEditData(prev => ({ ...prev, mainSuppliers: value }))}
                 variant="textarea"
                 rows={4}
               />
-            ) : (
+            ) : company.mainSuppliers && (getMultiLangText(company.mainSuppliers, 'zh-CN') || getMultiLangText(company.mainSuppliers, 'en')) ? (
               <div className="space-y-3">
                 {getMultiLangText(company.mainSuppliers, 'zh-CN') && (
                   <div>
@@ -790,13 +851,15 @@ export default function CompanyDetailPage() {
                   </div>
                 )}
               </div>
+            ) : (
+              <span className="text-sm text-muted-foreground">未设置</span>
             )}
           </CardContent>
         </Card>
       )}
 
       {/* 公司照片 */}
-      {company.companyPhotosUrls && company.companyPhotosUrls.length > 0 && (
+      {(company.companyPhotosUrls && company.companyPhotosUrls.length > 0) || isEditMode ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -807,12 +870,12 @@ export default function CompanyDetailPage() {
           <CardContent>
             {isEditMode ? (
               <ImageUpload
-                value={editData.companyPhotosUrls || company.companyPhotosUrls}
+                value={editData.companyPhotosUrls || company.companyPhotosUrls || []}
                 onChange={(urls) => setEditData(prev => ({ ...prev, companyPhotosUrls: urls }))}
                 maxFiles={5}
                 fileType="company_certificate"
               />
-            ) : (
+            ) : company.companyPhotosUrls && company.companyPhotosUrls.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {company.companyPhotosUrls.map((url, index) => (
                   <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border">
@@ -844,10 +907,12 @@ export default function CompanyDetailPage() {
                   </div>
                 ))}
               </div>
+            ) : (
+              <span className="text-sm text-muted-foreground">未上传</span>
             )}
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {/* 关联用户 */}
       {company.users && company.users.length > 0 && (
