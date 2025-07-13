@@ -2,6 +2,7 @@
 
 import React, { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
+import Cookies from 'js-cookie'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -66,10 +67,13 @@ export function FileUpload({
       formData.append('relatedId', relatedId.toString())
     }
 
-    const response = await fetch('/api/v1/uploads', {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010/api/v1'
+    const token = Cookies.get('auth_token')
+    
+    const response = await fetch(`${API_BASE_URL}/uploads`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        'Authorization': `Bearer ${token}`
       },
       body: formData
     })
