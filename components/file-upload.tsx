@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
   Upload, 
   File, 
@@ -58,6 +59,9 @@ export function FileUpload({
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewTitle, setPreviewTitle] = useState('')
 
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData()
@@ -144,6 +148,31 @@ export function FileUpload({
     const updatedUrls = value.filter(url => url !== urlToRemove)
     onChange?.(updatedUrls)
     setUploadedFiles(prev => prev.filter(file => file.url !== urlToRemove))
+  }
+
+  const handlePreview = (url: string, filename: string) => {
+    setPreviewUrl(url)
+    setPreviewTitle(filename)
+    setPreviewOpen(true)
+  }
+
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(downloadUrl)
+    } catch (error) {
+      console.error('下载失败:', error)
+      // 如果下载失败，降级为打开新窗口
+      window.open(url, '_blank')
+    }
   }
 
   const getFileIcon = (url: string) => {
@@ -262,7 +291,7 @@ export function FileUpload({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(url, '_blank')}
+                            onClick={() => handlePreview(url, getFileName(url))}
                             title="预览"
                           >
                             <Eye className="h-4 w-4" />
@@ -272,7 +301,7 @@ export function FileUpload({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(url, '_blank')}
+                          onClick={() => handleDownload(url, getFileName(url))}
                           title="下载"
                         >
                           <Download className="h-4 w-4" />
@@ -297,6 +326,28 @@ export function FileUpload({
           </CardContent>
         </Card>
       )}
+
+      {/* 图片预览模态框 */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-lg font-medium truncate">
+              {previewTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-6 pt-4">
+            <img
+              src={previewUrl}
+              alt={previewTitle}
+              className="max-w-full max-h-[70vh] object-contain rounded-lg"
+              onError={(e) => {
+                console.error('图片加载失败:', previewUrl)
+                e.currentTarget.src = '/placeholder-image.svg'
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
