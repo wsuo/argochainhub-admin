@@ -30,14 +30,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // 初始化时检查认证状态
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const hasToken = apiClient.isAuthenticated()
       
       if (hasToken && !user) {
-        // 如果有token但没有用户信息，这里应该调用API获取用户信息
-        // 暂时不设置默认用户，等待真实登录
-        // 或者可以调用 API 获取当前用户信息
-        console.log('User has token but no user info - should fetch user info from API')
+        // 如果有token但没有用户信息，调用API获取用户信息
+        try {
+          const response = await apiClient.get<{ admin: Admin }>('/auth/me')
+          if (response.admin) {
+            setUser(response.admin)
+          }
+        } catch (error) {
+          // 如果获取用户信息失败，清除token
+          console.error('Failed to fetch user info:', error)
+          apiClient.clearAuth()
+          setUser(null)
+        }
       } else if (!hasToken && user) {
         setUser(null)
       }
@@ -49,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (isLoading) {
       checkAuth()
     }
-  }, [isLoading]) // 只依赖 isLoading
+  }, [isLoading, user]) // 依赖 isLoading 和 user
 
   // 路由保护
   useEffect(() => {

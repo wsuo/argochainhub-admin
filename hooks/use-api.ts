@@ -54,6 +54,9 @@ export const queryKeys = {
   // 会员计划
   plans: (query?: PlanQuery) => ['plans', query] as const,
   
+  // 认证
+  currentUser: ['auth', 'current-user'] as const,
+  
   // 字典管理
   dictionaryCategories: (query?: DictionaryCategoryQuery) => ['dictionary', 'categories', query] as const,
   dictionaryCategory: (code: string) => ['dictionary', 'categories', code] as const,
@@ -90,6 +93,15 @@ export const useLogin = () => {
     onError: (error: any) => {
       toast.error(error.message || '登录失败')
     },
+  })
+}
+
+export const useCurrentUser = () => {
+  return useQuery({
+    queryKey: queryKeys.currentUser,
+    queryFn: api.auth.getCurrentUser,
+    retry: false, // 如果401错误不重试
+    staleTime: 5 * 60 * 1000, // 5分钟内不重新请求
   })
 }
 

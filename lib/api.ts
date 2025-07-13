@@ -1,6 +1,7 @@
 import { apiClient } from './api-client'
 import { filterQueryParams } from './query-utils'
 import type {
+  Admin,
   AdminLoginRequest,
   AdminLoginResponse,
   ApiResponse,
@@ -43,6 +44,10 @@ export const authApi = {
   // 管理员登录
   login: (data: AdminLoginRequest): Promise<AdminLoginResponse> =>
     apiClient.post('/auth/admin/login', data),
+
+  // 获取当前用户信息
+  getCurrentUser: (): Promise<{ admin: Admin }> =>
+    apiClient.get('/auth/me'),
 
   // 登出
   logout: () => {

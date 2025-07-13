@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+请你尽可能的复用组件，本项目 /components 文件夹下面是封装的组件。多复用组件，多复用工具类，要想实现一个功能之前先检查其它模块有没有实现，有没有已经存在的，如果实在没有，在考虑新建。
+
 ## Project Overview
 
 ArgoChainHub智慧农化采购平台后台管理系统 - An admin dashboard for a smart agricultural chemical procurement platform built with Next.js 15, TypeScript, and Tailwind CSS.
