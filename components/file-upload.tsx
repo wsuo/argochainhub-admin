@@ -207,17 +207,29 @@ export function FileUpload({
   }
 
   const handleDownload = async (url: string, filename: string) => {
+    // 保存当前滚动位置
+    const currentScrollY = window.scrollY
+    
     try {
       // 对于外部CDN链接，直接使用a标签下载，避免CORS问题
       const link = document.createElement('a')
       link.href = url
       link.download = filename
       
-      // 策略：隐藏式下载
+      // 策略：隐藏式下载，避免影响页面布局和焦点
       link.style.display = 'none'
+      link.style.position = 'fixed'
+      link.style.top = '-9999px'
+      link.style.left = '-9999px'
+      
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+      
+      // 确保滚动位置没有变化
+      if (window.scrollY !== currentScrollY) {
+        window.scrollTo(0, currentScrollY)
+      }
       
     } catch (error) {
       console.error('下载失败:', error)
@@ -225,6 +237,11 @@ export function FileUpload({
       const newWindow = window.open(url, '_blank')
       if (!newWindow) {
         console.error('无法打开新窗口 - 可能被弹窗拦截器阻止')
+      }
+      
+      // 确保滚动位置没有变化
+      if (window.scrollY !== currentScrollY) {
+        window.scrollTo(0, currentScrollY)
       }
     }
   }
