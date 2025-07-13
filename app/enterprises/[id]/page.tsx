@@ -36,12 +36,26 @@ import {
   MapPin,
   Globe,
   Star,
-  Crown
+  Crown,
+  Factory,
+  Package,
+  Users,
+  DollarSign,
+  FileText,
+  Camera,
+  Download,
+  Eye
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { companyApi } from '@/lib/api'
 import type { Company, ReviewRequest, UpdateCompanyRequest, MultiLangText } from '@/lib/types'
 import { toast } from 'sonner'
+import { StarRating, StarDisplay } from '@/components/star-rating'
+import { EnhancedCountrySelect } from '@/components/enhanced-country-select'
+import { BusinessTypesMultiSelect, CompanySizeSelect } from '@/components/dictionary-components'
+import { MultiLangInput } from '@/components/multi-lang-input'
+import { ImageUpload } from '@/components/file-upload'
+import { useCountryOptions, useDictionaryOptions, getDictionaryLabel, getDictionaryLabels } from '@/lib/dictionary-utils'
 
 export default function CompanyDetailPage() {
   const params = useParams()
@@ -53,6 +67,11 @@ export default function CompanyDetailPage() {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false)
   const [reviewReason, setReviewReason] = useState('')
   const [editData, setEditData] = useState<UpdateCompanyRequest>({})
+
+  // 字典数据
+  const countries = useCountryOptions()
+  const businessTypes = useDictionaryOptions('business_type')
+  const companySizes = useDictionaryOptions('company_size')
 
   // 获取多语言文本的辅助函数
   const getMultiLangText = (text: MultiLangText | { zh: string; en?: string; 'zh-CN'?: string } | undefined, lang: 'zh-CN' | 'en' = 'zh-CN'): string => {
@@ -144,7 +163,19 @@ export default function CompanyDetailPage() {
         } : undefined,
         rating: company?.rating,
         isTop100: company?.isTop100,
-        email: company?.email
+        email: company?.email,
+        // 新增字段
+        country: company?.country,
+        businessCategories: company?.businessCategories,
+        businessScope: company?.businessScope,
+        companySize: company?.companySize,
+        mainProducts: company?.mainProducts,
+        mainSuppliers: company?.mainSuppliers,
+        annualImportExportValue: company?.annualImportExportValue,
+        registrationNumber: company?.registrationNumber,
+        taxNumber: company?.taxNumber,
+        businessLicenseUrl: company?.businessLicenseUrl,
+        companyPhotosUrls: company?.companyPhotosUrls
       })
     }
     setIsEditMode(!isEditMode)
@@ -346,22 +377,20 @@ export default function CompanyDetailPage() {
             {company.rating !== undefined && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">企业评分</span>
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  {isEditMode ? (
-                    <Input
-                      type="number"
-                      min="0"
-                      max="5"
-                      step="0.1"
-                      value={editData.rating || company.rating}
-                      onChange={(e) => setEditData(prev => ({ ...prev, rating: parseFloat(e.target.value) }))}
-                      className="w-20"
-                    />
-                  ) : (
-                    <span>{company.rating}</span>
-                  )}
-                </div>
+                {isEditMode ? (
+                  <StarRating
+                    value={editData.rating !== undefined ? editData.rating : parseFloat(company.rating.toString()) || 0}
+                    onChange={(value) => setEditData(prev => ({ ...prev, rating: value }))}
+                    size="md"
+                    showValue={true}
+                  />
+                ) : (
+                  <StarDisplay
+                    value={parseFloat(company.rating.toString()) || 0}
+                    size="sm"
+                    showValue={true}
+                  />
+                )}
               </div>
             )}
 
@@ -419,40 +448,19 @@ export default function CompanyDetailPage() {
           </CardHeader>
           <CardContent>
             {isEditMode ? (
-              <div className="space-y-4">
-                <div>
-                  <Label>中文描述</Label>
-                  <Textarea
-                    value={editData.profile?.description ? getMultiLangText(editData.profile.description, 'zh-CN') : getMultiLangText(company.profile?.description, 'zh-CN')}
-                    onChange={(e) => setEditData(prev => ({
-                      ...prev,
-                      profile: {
-                        ...prev.profile,
-                        description: {
-                          'zh-CN': e.target.value,
-                          en: prev.profile?.description?.en || getMultiLangText(company.profile?.description, 'en')
-                        }
-                      }
-                    }))}
-                  />
-                </div>
-                <div>
-                  <Label>英文描述</Label>
-                  <Textarea
-                    value={editData.profile?.description ? getMultiLangText(editData.profile.description, 'en') : getMultiLangText(company.profile?.description, 'en')}
-                    onChange={(e) => setEditData(prev => ({
-                      ...prev,
-                      profile: {
-                        ...prev.profile,
-                        description: {
-                          'zh-CN': prev.profile?.description?.['zh-CN'] || getMultiLangText(company.profile?.description, 'zh-CN'),
-                          en: e.target.value
-                        }
-                      }
-                    }))}
-                  />
-                </div>
-              </div>
+              <MultiLangInput
+                label=""
+                value={(editData.profile?.description || company.profile?.description) as MultiLangText}
+                onChange={(value) => setEditData(prev => ({
+                  ...prev,
+                  profile: {
+                    ...prev.profile,
+                    description: value
+                  }
+                }))}
+                variant="textarea"
+                rows={4}
+              />
             ) : (
               <div className="space-y-4">
                 {getMultiLangText(company.profile?.description, 'zh-CN') && (
@@ -475,6 +483,358 @@ export default function CompanyDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 扩展信息 */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* 业务信息 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Factory className="h-5 w-5" />
+              业务信息
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* 所在国家 */}
+            {company.country && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">所在国家</span>
+                {isEditMode ? (
+                  <EnhancedCountrySelect
+                    value={editData.country || company.country}
+                    onValueChange={(value) => setEditData(prev => ({ ...prev, country: value }))}
+                    showFlag={true}
+                    className="w-48"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span>{getDictionaryLabel(countries, company.country)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 公司规模 */}
+            {company.companySize && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">公司规模</span>
+                {isEditMode ? (
+                  <CompanySizeSelect
+                    value={editData.companySize || company.companySize}
+                    onValueChange={(value) => setEditData(prev => ({ ...prev, companySize: value }))}
+                  />
+                ) : (
+                  <span className="text-sm">{getDictionaryLabel(companySizes, company.companySize)}</span>
+                )}
+              </div>
+            )}
+
+            {/* 业务类别 */}
+            {company.businessCategories && company.businessCategories.length > 0 && (
+              <div>
+                <span className="text-sm font-medium mb-2 block">业务类别</span>
+                {isEditMode ? (
+                  <BusinessTypesMultiSelect
+                    value={editData.businessCategories || company.businessCategories}
+                    onValueChange={(value) => setEditData(prev => ({ ...prev, businessCategories: value }))}
+                    maxItems={5}
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {company.businessCategories.map((category, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {getDictionaryLabel(businessTypes, category)}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 年进出口额 */}
+            {company.annualImportExportValue && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">年{company.type === 'supplier' ? '出口' : '进口'}额</span>
+                {isEditMode ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editData.annualImportExportValue || company.annualImportExportValue}
+                      onChange={(e) => setEditData(prev => ({ ...prev, annualImportExportValue: parseFloat(e.target.value) || 0 }))}
+                      className="w-32"
+                    />
+                    <span className="text-sm text-muted-foreground">美元</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                    <span className="text-sm">{parseFloat(company.annualImportExportValue.toString()).toLocaleString()} 美元</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 认证信息 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              认证信息
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* 注册证号 */}
+            {company.registrationNumber && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">注册证号</span>
+                {isEditMode ? (
+                  <Input
+                    value={editData.registrationNumber || company.registrationNumber}
+                    onChange={(e) => setEditData(prev => ({ ...prev, registrationNumber: e.target.value }))}
+                    className="w-48"
+                  />
+                ) : (
+                  <span className="text-sm font-mono bg-muted px-2 py-1 rounded">{company.registrationNumber}</span>
+                )}
+              </div>
+            )}
+
+            {/* 税号 */}
+            {company.taxNumber && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">税号</span>
+                {isEditMode ? (
+                  <Input
+                    value={editData.taxNumber || company.taxNumber}
+                    onChange={(e) => setEditData(prev => ({ ...prev, taxNumber: e.target.value }))}
+                    className="w-48"
+                  />
+                ) : (
+                  <span className="text-sm font-mono bg-muted px-2 py-1 rounded">{company.taxNumber}</span>
+                )}
+              </div>
+            )}
+
+            {/* 营业执照 */}
+            {company.businessLicenseUrl && (
+              <div>
+                <span className="text-sm font-medium mb-2 block">营业执照</span>
+                {isEditMode ? (
+                  <ImageUpload
+                    value={editData.businessLicenseUrl ? [editData.businessLicenseUrl] : company.businessLicenseUrl ? [company.businessLicenseUrl] : []}
+                    onChange={(urls) => setEditData(prev => ({ ...prev, businessLicenseUrl: urls[0] || '' }))}
+                    maxFiles={1}
+                    fileType="company_certificate"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="text-xs"
+                    >
+                      <a href={company.businessLicenseUrl} target="_blank" rel="noopener noreferrer">
+                        <Eye className="h-3 w-3 mr-1" />
+                        查看
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="text-xs"
+                    >
+                      <a href={company.businessLicenseUrl} download>
+                        <Download className="h-3 w-3 mr-1" />
+                        下载
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 业务范围和产品信息 */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* 业务范围 */}
+        {company.businessScope && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                业务范围
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditMode ? (
+                <MultiLangInput
+                  label=""
+                  value={editData.businessScope || company.businessScope}
+                  onChange={(value) => setEditData(prev => ({ ...prev, businessScope: value }))}
+                  variant="textarea"
+                  rows={4}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {getMultiLangText(company.businessScope, 'zh-CN') && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">中文</h4>
+                      <p className="text-sm text-muted-foreground">{getMultiLangText(company.businessScope, 'zh-CN')}</p>
+                    </div>
+                  )}
+                  {getMultiLangText(company.businessScope, 'en') && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">English</h4>
+                      <p className="text-sm text-muted-foreground">{getMultiLangText(company.businessScope, 'en')}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 主要产品 */}
+        {company.mainProducts && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                主要{company.type === 'supplier' ? '产品' : '采购产品'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditMode ? (
+                <MultiLangInput
+                  label=""
+                  value={editData.mainProducts || company.mainProducts}
+                  onChange={(value) => setEditData(prev => ({ ...prev, mainProducts: value }))}
+                  variant="textarea"
+                  rows={4}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {getMultiLangText(company.mainProducts, 'zh-CN') && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">中文</h4>
+                      <p className="text-sm text-muted-foreground">{getMultiLangText(company.mainProducts, 'zh-CN')}</p>
+                    </div>
+                  )}
+                  {getMultiLangText(company.mainProducts, 'en') && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">English</h4>
+                      <p className="text-sm text-muted-foreground">{getMultiLangText(company.mainProducts, 'en')}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* 主要供应商（采购商才显示） */}
+      {company.type === 'buyer' && company.mainSuppliers && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              主要供应商
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isEditMode ? (
+              <MultiLangInput
+                label=""
+                value={editData.mainSuppliers || company.mainSuppliers}
+                onChange={(value) => setEditData(prev => ({ ...prev, mainSuppliers: value }))}
+                variant="textarea"
+                rows={4}
+              />
+            ) : (
+              <div className="space-y-3">
+                {getMultiLangText(company.mainSuppliers, 'zh-CN') && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-1">中文</h4>
+                    <p className="text-sm text-muted-foreground">{getMultiLangText(company.mainSuppliers, 'zh-CN')}</p>
+                  </div>
+                )}
+                {getMultiLangText(company.mainSuppliers, 'en') && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-1">English</h4>
+                    <p className="text-sm text-muted-foreground">{getMultiLangText(company.mainSuppliers, 'en')}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 公司照片 */}
+      {company.companyPhotosUrls && company.companyPhotosUrls.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              公司照片
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isEditMode ? (
+              <ImageUpload
+                value={editData.companyPhotosUrls || company.companyPhotosUrls}
+                onChange={(urls) => setEditData(prev => ({ ...prev, companyPhotosUrls: urls }))}
+                maxFiles={5}
+                fileType="company_certificate"
+              />
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {company.companyPhotosUrls.map((url, index) => (
+                  <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border">
+                    <img
+                      src={url}
+                      alt={`公司照片 ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        asChild
+                        className="text-xs"
+                      >
+                        <a href={url} target="_blank" rel="noopener noreferrer">
+                          <Eye className="h-3 w-3" />
+                        </a>
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        asChild
+                        className="text-xs"
+                      >
+                        <a href={url} download>
+                          <Download className="h-3 w-3" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 关联用户 */}
       {company.users && company.users.length > 0 && (
