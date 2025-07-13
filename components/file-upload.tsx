@@ -63,25 +63,11 @@ export function FileUpload({
   const [previewUrl, setPreviewUrl] = useState('')
   const [previewTitle, setPreviewTitle] = useState('')
 
-  // 初始渲染日志
-  console.log('🏗️ [FileUpload] Component rendered with:', {
-    valueCount: value.length,
-    maxFiles,
-    previewOpen,
-    disabled,
-    uploading
-  })
-
   // 处理模态框打开时的页面滚动锁定
   useEffect(() => {
-    console.log('🔍 [Preview Effect] previewOpen changed:', previewOpen)
-    console.log('🔍 [Preview Effect] Current body overflow:', document.body.style.overflow)
-    
     if (previewOpen) {
-      console.log('🔒 [Preview Effect] Locking page scroll...')
       // 记录当前滚动位置
       const currentScrollY = window.scrollY
-      console.log('🔍 [Preview Effect] Current scroll position:', currentScrollY)
       
       // 保存当前滚动位置到自定义属性
       document.body.setAttribute('data-scroll-lock-offset', currentScrollY.toString())
@@ -91,20 +77,9 @@ export function FileUpload({
       document.body.style.position = 'fixed'
       document.body.style.top = `-${currentScrollY}px`
       document.body.style.width = '100%'
-      
-      console.log('🔍 [Preview Effect] After lock - body styles:', {
-        overflow: document.body.style.overflow,
-        position: document.body.style.position,
-        top: document.body.style.top,
-        width: document.body.style.width,
-        savedOffset: document.body.getAttribute('data-scroll-lock-offset')
-      })
     } else {
-      console.log('🔓 [Preview Effect] Unlocking page scroll...')
-      
       // 获取之前保存的滚动位置
       const savedOffset = document.body.getAttribute('data-scroll-lock-offset')
-      console.log('🔍 [Preview Effect] Saved scroll offset:', savedOffset)
       
       // 恢复页面滚动
       document.body.style.overflow = 'unset'
@@ -115,25 +90,15 @@ export function FileUpload({
       // 恢复滚动位置
       if (savedOffset) {
         const scrollPosition = parseInt(savedOffset, 10)
-        console.log('🔍 [Preview Effect] Restoring to position:', scrollPosition)
         window.scrollTo(0, scrollPosition)
-        console.log('🔍 [Preview Effect] Scrolled to position:', scrollPosition)
         
         // 清除保存的偏移量
         document.body.removeAttribute('data-scroll-lock-offset')
       }
-      
-      console.log('🔍 [Preview Effect] After unlock - body styles:', {
-        overflow: document.body.style.overflow,
-        position: document.body.style.position,
-        top: document.body.style.top,
-        width: document.body.style.width
-      })
     }
 
     // 清理函数：组件卸载时恢复滚动
     return () => {
-      console.log('🧹 [Preview Effect] Cleanup - restoring scroll...')
       const savedOffset = document.body.getAttribute('data-scroll-lock-offset')
       if (savedOffset) {
         document.body.style.overflow = 'unset'
@@ -236,57 +201,30 @@ export function FileUpload({
   }
 
   const handlePreview = (url: string, filename: string) => {
-    console.log('👁️ [Preview] Opening preview for:', filename)
-    console.log('👁️ [Preview] URL:', url)
-    console.log('👁️ [Preview] Current previewOpen state:', previewOpen)
-    
     setPreviewUrl(url)
     setPreviewTitle(filename)
     setPreviewOpen(true)
-    
-    console.log('👁️ [Preview] Set previewOpen to true')
   }
 
   const handleDownload = async (url: string, filename: string) => {
-    console.log('⬇️ [Download] Starting download for:', filename)
-    console.log('⬇️ [Download] URL:', url)
-    
     try {
       // 对于外部CDN链接，直接使用a标签下载，避免CORS问题
-      console.log('⬇️ [Download] Creating download link...')
-      
       const link = document.createElement('a')
       link.href = url
       link.download = filename
       
-      // 尝试不同的下载策略
-      console.log('⬇️ [Download] Link created with attributes:', {
-        href: link.href,
-        download: link.download
-      })
-      
-      // 策略1：隐藏式下载
+      // 策略：隐藏式下载
       link.style.display = 'none'
       document.body.appendChild(link)
-      
-      console.log('⬇️ [Download] Triggering click...')
       link.click()
-      
-      console.log('⬇️ [Download] Removing link from DOM...')
       document.body.removeChild(link)
       
-      console.log('⬇️ [Download] Download completed successfully')
-      
     } catch (error) {
-      console.error('❌ [Download] Download failed:', error)
-      console.log('⬇️ [Download] Falling back to window.open...')
-      
+      console.error('下载失败:', error)
       // 如果下载失败，尝试直接打开链接
       const newWindow = window.open(url, '_blank')
-      if (newWindow) {
-        console.log('⬇️ [Download] Opened in new window successfully')
-      } else {
-        console.error('❌ [Download] Failed to open new window - popup blocked?')
+      if (!newWindow) {
+        console.error('无法打开新窗口 - 可能被弹窗拦截器阻止')
       }
     }
   }
@@ -407,13 +345,7 @@ export function FileUpload({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={(e) => {
-                              console.log('🖱️ [Preview Button] Button clicked')
-                              console.log('🖱️ [Preview Button] Event:', e)
-                              e.preventDefault()
-                              e.stopPropagation()
-                              handlePreview(url, getFileName(url))
-                            }}
+                            onClick={() => handlePreview(url, getFileName(url))}
                             title="预览"
                           >
                             <Eye className="h-4 w-4" />
@@ -423,13 +355,7 @@ export function FileUpload({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            console.log('🖱️ [Download Button] Button clicked')
-                            console.log('🖱️ [Download Button] Event:', e)
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleDownload(url, getFileName(url))
-                          }}
+                          onClick={() => handleDownload(url, getFileName(url))}
                           title="下载"
                         >
                           <Download className="h-4 w-4" />
@@ -456,15 +382,7 @@ export function FileUpload({
       )}
 
       {/* 图片预览模态框 */}
-      <Dialog 
-        open={previewOpen} 
-        onOpenChange={(open) => {
-          console.log('🔄 [Dialog] onOpenChange called with:', open)
-          console.log('🔄 [Dialog] Current previewOpen state:', previewOpen)
-          setPreviewOpen(open)
-          console.log('🔄 [Dialog] Set previewOpen to:', open)
-        }}
-      >
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle className="text-lg font-medium truncate">
@@ -476,11 +394,8 @@ export function FileUpload({
               src={previewUrl}
               alt={previewTitle}
               className="max-w-full max-h-[70vh] object-contain rounded-lg"
-              onLoad={() => {
-                console.log('🖼️ [Preview Image] Image loaded successfully:', previewUrl)
-              }}
               onError={(e) => {
-                console.error('❌ [Preview Image] Image failed to load:', previewUrl)
+                console.error('图片加载失败:', previewUrl)
                 e.currentTarget.src = '/placeholder-image.svg'
               }}
             />
