@@ -18,6 +18,58 @@ interface MainLayoutProps {
   children: React.ReactNode
 }
 
+// 路由映射配置
+const routeMap: Record<string, { title: string; parent?: string }> = {
+  '/': { title: '概览' },
+  '/enterprises': { title: '企业管理', parent: '企业管理' },
+  '/enterprises/pending': { title: '待审核企业', parent: '企业管理' },
+  '/enterprises/new': { title: '新增企业', parent: '企业管理' },
+  '/content/products': { title: '产品审核', parent: '内容管理' },
+  '/content/suppliers': { title: '供应商审核', parent: '内容管理' },
+  '/content/ai-knowledge': { title: 'AI知识库', parent: '内容管理' },
+  '/business/inquiries': { title: '询盘管理', parent: '业务运营' },
+  '/business/samples': { title: '样品管理', parent: '业务运营' },
+  '/business/registrations': { title: '注册审核', parent: '业务运营' },
+  '/finance/plans': { title: '会员计划', parent: '财务管理' },
+  '/finance/orders': { title: '订单管理', parent: '财务管理' },
+  '/finance/revenue': { title: '收入统计', parent: '财务管理' },
+  '/system/admins': { title: '管理员账户', parent: '系统管理' },
+  '/system/roles': { title: '角色权限', parent: '系统管理' },
+  '/system/logs': { title: '操作日志', parent: '系统管理' },
+}
+
+function generateBreadcrumbs(pathname: string) {
+  let route = routeMap[pathname]
+  
+  // 处理动态路由，如 /enterprises/123
+  if (!route) {
+    if (pathname.startsWith('/enterprises/') && pathname !== '/enterprises/new') {
+      route = { title: '企业详情', parent: '企业管理' }
+    }
+  }
+  
+  if (!route) {
+    return [{ title: '未知页面', href: pathname }]
+  }
+
+  const breadcrumbs = []
+  
+  // 添加仪表盘首页
+  if (pathname !== '/') {
+    breadcrumbs.push({ title: '仪表盘', href: '/' })
+  }
+  
+  // 添加父级菜单
+  if (route.parent) {
+    breadcrumbs.push({ title: route.parent })
+  }
+  
+  // 添加当前页面
+  breadcrumbs.push({ title: route.title, href: pathname })
+  
+  return breadcrumbs
+}
+
 export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname()
   const isLoginPage = pathname === '/login'
@@ -26,6 +78,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     // 登录页面使用简单布局
     return <>{children}</>
   }
+
+  const breadcrumbs = generateBreadcrumbs(pathname)
 
   // 主应用使用侧边栏布局
   return (
@@ -39,13 +93,20 @@ export function MainLayout({ children }: MainLayoutProps) {
               <Separator orientation="vertical" className="mr-2 h-4" />
               <Breadcrumb>
                 <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/">仪表盘</BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>概览</BreadcrumbPage>
-                  </BreadcrumbItem>
+                  {breadcrumbs.map((breadcrumb, index) => (
+                    <div key={breadcrumb.href || breadcrumb.title} className="flex items-center">
+                      {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
+                      <BreadcrumbItem className="hidden md:block">
+                        {breadcrumb.href && index < breadcrumbs.length - 1 ? (
+                          <BreadcrumbLink href={breadcrumb.href}>
+                            {breadcrumb.title}
+                          </BreadcrumbLink>
+                        ) : (
+                          <BreadcrumbPage>{breadcrumb.title}</BreadcrumbPage>
+                        )}
+                      </BreadcrumbItem>
+                    </div>
+                  ))}
                 </BreadcrumbList>
               </Breadcrumb>
             </div>

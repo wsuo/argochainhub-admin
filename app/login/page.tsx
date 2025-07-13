@@ -41,8 +41,11 @@ export default function LoginPage() {
     try {
       const response = await loginMutation.mutateAsync(data)
       
-      // 使用AuthProvider的login方法
-      login(response.access_token, response.admin)
+      if (response && (response.access_token || response.accessToken) && response.admin) {
+        // 使用AuthProvider的login方法  
+        const token = response.access_token || response.accessToken
+        login(token, response.admin)
+      }
     } catch (error) {
       // 错误已经在mutation中处理了
       console.error('Login failed:', error)
@@ -133,9 +136,13 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            <p>测试账户信息：</p>
-            <p>用户名: admin</p>
-            <p>密码: password123</p>
+            <p className="font-medium mb-2">测试账户信息：</p>
+            <div className="bg-gray-50 p-3 rounded-md text-xs space-y-1">
+              <p><strong>超级管理员</strong></p>
+              <p>用户名: superadmin</p>
+              <p>密码: Admin123!</p>
+              <p className="text-green-600">权限: 系统最高权限</p>
+            </div>
           </div>
         </CardContent>
       </Card>

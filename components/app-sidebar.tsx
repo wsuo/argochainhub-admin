@@ -1,5 +1,7 @@
 "use client"
 import { Building2, FileText, DollarSign, Settings, Shield, Activity, ChevronRight, Home } from "lucide-react"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 
 import {
   Sidebar,
@@ -139,13 +141,15 @@ const menuItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar()
+  const pathname = usePathname()
+  const router = useRouter()
   const currentUserRole = "operations_manager" // 这将来自认证上下文
 
   // 根据用户角色过滤菜单项
   const filteredMenuItems = menuItems.filter((item) => item.roles.includes(currentUserRole))
 
   return (
-    <Sidebar variant="inset">
+    <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -154,7 +158,7 @@ export function AppSidebar() {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Shield className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">ArgoChainHub</span>
                   <span className="truncate text-xs">管理后台</span>
                 </div>
@@ -174,7 +178,15 @@ export function AppSidebar() {
                   {item.items ? (
                     <Collapsible defaultOpen className="group/collapsible">
                       <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title}>
+                        <SidebarMenuButton 
+                          tooltip={item.title}
+                          onClick={() => {
+                            // 在折叠状态下点击图标跳转到第一个子项
+                            if (state === 'collapsed' && item.items && item.items.length > 0) {
+                              router.push(item.items[0].url)
+                            }
+                          }}
+                        >
                           {item.icon && <item.icon />}
                           <span>{item.title}</span>
                           <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -184,15 +196,15 @@ export function AppSidebar() {
                         <SidebarMenuSub>
                           {item.items.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton asChild>
-                                <a href={subItem.url} className="flex items-center justify-between">
+                              <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
+                                <Link href={subItem.url} className="flex items-center justify-between">
                                   <span>{subItem.title}</span>
                                   {subItem.badge && (
                                     <Badge variant="secondary" className="ml-auto text-xs">
                                       {subItem.badge}
                                     </Badge>
                                   )}
-                                </a>
+                                </Link>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                           ))}
@@ -200,11 +212,11 @@ export function AppSidebar() {
                       </CollapsibleContent>
                     </Collapsible>
                   ) : (
-                    <SidebarMenuButton tooltip={item.title} asChild>
-                      <a href={item.url}>
+                    <SidebarMenuButton tooltip={item.title} asChild isActive={pathname === item.url}>
+                      <Link href={item.url}>
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   )}
                 </SidebarMenuItem>
@@ -223,7 +235,7 @@ export function AppSidebar() {
                   <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Admin" />
                   <AvatarFallback className="rounded-lg">OM</AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">运营经理</span>
                   <span className="truncate text-xs">admin@argochainhub.com</span>
                 </div>

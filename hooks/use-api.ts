@@ -9,6 +9,8 @@ import type {
   PlanQuery,
   AdminLoginRequest,
   ReviewRequest,
+  CreateCompanyRequest,
+  UpdateCompanyRequest,
   CreatePlanRequest,
   UpdatePlanRequest,
   CreateSubscriptionRequest,
@@ -136,6 +138,37 @@ export const useToggleCompanyStatus = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '状态更新失败')
+    },
+  })
+}
+
+export const useCreateCompany = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreateCompanyRequest) => api.company.createCompany(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] })
+      toast.success('企业创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '企业创建失败')
+    },
+  })
+}
+
+export const useUpdateCompany = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateCompanyRequest }) => 
+      api.company.updateCompany(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] })
+      toast.success('企业信息已更新')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '企业信息更新失败')
     },
   })
 }

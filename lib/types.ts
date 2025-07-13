@@ -19,7 +19,8 @@ export interface AdminLoginRequest {
 }
 
 export interface AdminLoginResponse {
-  access_token: string
+  access_token?: string
+  accessToken?: string  // 后端实际返回的字段名
   admin: Admin
 }
 
@@ -27,6 +28,7 @@ export interface Admin {
   id: number
   username: string
   role: 'super_admin' | 'operations_manager' | 'customer_support'
+  lastLoginAt?: string
 }
 
 // 企业相关类型
@@ -35,10 +37,22 @@ export interface Company {
   name: {
     zh: string
     en?: string
+    'zh-CN'?: string
   }
-  email: string
-  type: 'manufacturer' | 'distributor' | 'buyer'
+  type: 'supplier' | 'buyer' | 'manufacturer' | 'distributor'
   status: 'pending_review' | 'active' | 'disabled'
+  profile?: {
+    description?: {
+      zh: string
+      en: string
+    }
+    address?: string
+    phone?: string
+    website?: string
+  }
+  rating?: number
+  isTop100?: boolean
+  email?: string
   registrationNumber?: string
   address?: string
   contactPerson?: string
@@ -229,6 +243,36 @@ export interface CompanyQuery {
   type?: Company['type']
   search?: string
 }
+
+// 企业审核请求
+export interface ReviewRequest {
+  approved: boolean
+  reason?: string
+}
+
+// 企业创建/更新请求
+export interface CreateCompanyRequest {
+  name: {
+    zh: string
+    en?: string
+  }
+  type: Company['type']
+  status?: Company['status']
+  profile?: {
+    description?: {
+      zh: string
+      en?: string
+    }
+    address?: string
+    phone?: string
+    website?: string
+  }
+  rating?: number
+  isTop100?: boolean
+  email?: string
+}
+
+export interface UpdateCompanyRequest extends Partial<CreateCompanyRequest> {}
 
 export interface ProductQuery {
   page?: number

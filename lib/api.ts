@@ -1,4 +1,5 @@
 import { apiClient } from './api-client'
+import { filterQueryParams } from './query-utils'
 import type {
   AdminLoginRequest,
   AdminLoginResponse,
@@ -20,6 +21,8 @@ import type {
   Subscription,
   CreateSubscriptionRequest,
   ReviewRequest,
+  CreateCompanyRequest,
+  UpdateCompanyRequest,
   TranslateRequest,
   TranslateResponse,
   DetectLanguageRequest,
@@ -54,11 +57,11 @@ export const dashboardApi = {
 export const companyApi = {
   // 获取所有企业列表
   getCompanies: (query: CompanyQuery = {}): Promise<ApiResponse<Company[]>> =>
-    apiClient.get('/admin/companies', query),
+    apiClient.get('/admin/companies', filterQueryParams(query)),
 
   // 获取待审核企业列表
   getPendingCompanies: (query: Omit<CompanyQuery, 'status'> = {}): Promise<ApiResponse<Company[]>> =>
-    apiClient.get('/admin/companies/pending', query),
+    apiClient.get('/admin/companies/pending', filterQueryParams(query)),
 
   // 获取企业详情
   getCompany: (id: number): Promise<Company> =>
@@ -75,17 +78,25 @@ export const companyApi = {
   // 获取企业订阅历史
   getCompanySubscriptions: (id: number, query: { page?: number; limit?: number } = {}): Promise<ApiResponse<Subscription[]>> =>
     apiClient.get(`/admin/companies/${id}/subscriptions`, query),
+
+  // 创建企业
+  createCompany: (data: CreateCompanyRequest): Promise<Company> =>
+    apiClient.post('/admin/companies', data),
+
+  // 更新企业信息
+  updateCompany: (id: number, data: UpdateCompanyRequest): Promise<Company> =>
+    apiClient.put(`/admin/companies/${id}`, data),
 }
 
 // 产品管理相关API
 export const productApi = {
   // 获取所有产品列表
   getProducts: (query: ProductQuery = {}): Promise<ApiResponse<Product[]>> =>
-    apiClient.get('/admin/products', query),
+    apiClient.get('/admin/products', filterQueryParams(query)),
 
   // 获取待审核产品列表
   getPendingProducts: (query: Omit<ProductQuery, 'status'> = {}): Promise<ApiResponse<Product[]>> =>
-    apiClient.get('/admin/products/pending', query),
+    apiClient.get('/admin/products/pending', filterQueryParams(query)),
 
   // 获取产品详情
   getProduct: (id: number): Promise<Product> =>
@@ -104,7 +115,7 @@ export const productApi = {
 export const userApi = {
   // 获取所有用户列表
   getUsers: (query: UserQuery = {}): Promise<ApiResponse<User[]>> =>
-    apiClient.get('/admin/users', query),
+    apiClient.get('/admin/users', filterQueryParams(query)),
 
   // 获取用户详情
   getUser: (id: number): Promise<User> =>
@@ -115,7 +126,7 @@ export const userApi = {
 export const orderApi = {
   // 获取所有订单列表
   getOrders: (query: OrderQuery = {}): Promise<ApiResponse<Order[]>> =>
-    apiClient.get('/admin/orders', query),
+    apiClient.get('/admin/orders', filterQueryParams(query)),
 
   // 获取订单详情
   getOrder: (id: number): Promise<Order> =>
@@ -126,7 +137,7 @@ export const orderApi = {
 export const planApi = {
   // 获取所有会员计划
   getPlans: (query: PlanQuery = {}): Promise<ApiResponse<Plan[]>> =>
-    apiClient.get('/admin/plans', query),
+    apiClient.get('/admin/plans', filterQueryParams(query)),
 
   // 创建会员计划
   createPlan: (data: CreatePlanRequest): Promise<Plan> =>

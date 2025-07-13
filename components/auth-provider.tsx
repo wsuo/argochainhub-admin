@@ -26,32 +26,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
 
   // 检查用户是否已认证
-  const isAuthenticated = apiClient.isAuthenticated() && !!user
+  const isAuthenticated = !!user && apiClient.isAuthenticated()
 
   // 初始化时检查认证状态
   useEffect(() => {
     const checkAuth = () => {
       const hasToken = apiClient.isAuthenticated()
       
-      if (hasToken) {
-        // 如果有token但没有用户信息，可以尝试获取用户信息
-        // 这里我们暂时设置一个默认用户（在实际应用中应该从API获取）
-        if (!user) {
-          setUser({
-            id: 1,
-            username: 'admin',
-            role: 'operations_manager'
-          })
+      if (hasToken && !user) {
+        // 如果有token但没有用户信息，设置一个默认用户
+        // 在实际应用中，这里应该调用API获取用户信息
+        const defaultUser = {
+          id: 1,
+          username: 'admin',
+          role: 'operations_manager' as const
         }
-      } else {
+        setUser(defaultUser)
+      } else if (!hasToken && user) {
         setUser(null)
       }
       
       setIsLoading(false)
     }
 
-    checkAuth()
-  }, [user])
+    // 只在初始化时运行一次
+    if (isLoading) {
+      checkAuth()
+    }
+  }, [isLoading]) // 只依赖 isLoading
 
   // 路由保护
   useEffect(() => {
@@ -64,11 +66,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         router.push('/')
       }
     }
-  }, [isAuthenticated, isLoading, pathname, router])
+  }, [isAuthenticated, isLoading, pathname, router, user])
 
   const login = (token: string, admin: Admin) => {
     apiClient.setAuth(token)
     setUser(admin)
+    setIsLoading(false) // 确保加载状态正确
     router.push('/')
   }
 
