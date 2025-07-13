@@ -67,6 +67,10 @@ export default function CompanyDetailPage() {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false)
   const [reviewReason, setReviewReason] = useState('')
   const [editData, setEditData] = useState<UpdateCompanyRequest>({})
+  
+  // 图片预览状态
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [previewTitle, setPreviewTitle] = useState('')
 
   // 字典数据
   const countries = useCountryOptions()
@@ -93,6 +97,12 @@ export default function CompanyDetailPage() {
       return { 'zh-CN': '', en: text }
     }
     return { 'zh-CN': text }
+  }
+
+  // 图片预览处理函数
+  const handleImagePreview = (url: string, title: string) => {
+    setPreviewImage(url)
+    setPreviewTitle(title)
   }
 
   // 获取企业详情
@@ -636,13 +646,11 @@ export default function CompanyDetailPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      asChild
+                      onClick={() => handleImagePreview(company.businessLicenseUrl, '营业执照')}
                       className="text-xs"
                     >
-                      <a href={company.businessLicenseUrl} target="_blank" rel="noopener noreferrer">
-                        <Eye className="h-3 w-3 mr-1" />
-                        查看
-                      </a>
+                      <Eye className="h-3 w-3 mr-1" />
+                      查看
                     </Button>
                     <Button
                       variant="outline"
@@ -810,12 +818,10 @@ export default function CompanyDetailPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        asChild
+                        onClick={() => handleImagePreview(url, `公司照片 ${index + 1}`)}
                         className="text-xs"
                       >
-                        <a href={url} target="_blank" rel="noopener noreferrer">
-                          <Eye className="h-3 w-3" />
-                        </a>
+                        <Eye className="h-3 w-3" />
                       </Button>
                       <Button
                         variant="secondary"
@@ -890,6 +896,47 @@ export default function CompanyDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* 图片预览模态框 */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-lg font-medium">
+              {previewTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-6 pt-4">
+            {previewImage && (
+              <img
+                src={previewImage}
+                alt={previewTitle}
+                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                onError={(e) => {
+                  console.error('图片加载失败:', previewImage)
+                  e.currentTarget.src = '/placeholder-image.svg'
+                }}
+              />
+            )}
+          </div>
+          <div className="flex justify-end gap-2 p-6 pt-0">
+            <Button
+              variant="outline"
+              asChild
+            >
+              <a href={previewImage || ''} download>
+                <Download className="h-4 w-4 mr-2" />
+                下载图片
+              </a>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setPreviewImage(null)}
+            >
+              关闭
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -168,15 +168,18 @@ export default function EnterprisesPage() {
     ) : null
   }
 
-  const formatAnnualValue = (value?: number) => {
+  const formatAnnualValue = (value?: number | string) => {
     if (!value || value === 0) return null
     
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`
-    } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`
+    const numValue = typeof value === 'string' ? parseFloat(value) : value
+    if (isNaN(numValue) || numValue === 0) return null
+    
+    if (numValue >= 1000000) {
+      return `$${(numValue / 1000000).toFixed(1)}M`
+    } else if (numValue >= 1000) {
+      return `$${(numValue / 1000).toFixed(1)}K`
     } else {
-      return `$${value.toFixed(0)}`
+      return `$${numValue.toFixed(0)}`
     }
   }
 
