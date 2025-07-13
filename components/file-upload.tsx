@@ -83,6 +83,9 @@ export function FileUpload({
       const currentScrollY = window.scrollY
       console.log('🔍 [Preview Effect] Current scroll position:', currentScrollY)
       
+      // 保存当前滚动位置到自定义属性
+      document.body.setAttribute('data-scroll-lock-offset', currentScrollY.toString())
+      
       // 锁定页面滚动
       document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
@@ -93,14 +96,15 @@ export function FileUpload({
         overflow: document.body.style.overflow,
         position: document.body.style.position,
         top: document.body.style.top,
-        width: document.body.style.width
+        width: document.body.style.width,
+        savedOffset: document.body.getAttribute('data-scroll-lock-offset')
       })
     } else {
       console.log('🔓 [Preview Effect] Unlocking page scroll...')
       
-      // 获取之前的滚动位置
-      const scrollY = document.body.style.top
-      console.log('🔍 [Preview Effect] Restoring scroll to:', scrollY)
+      // 获取之前保存的滚动位置
+      const savedOffset = document.body.getAttribute('data-scroll-lock-offset')
+      console.log('🔍 [Preview Effect] Saved scroll offset:', savedOffset)
       
       // 恢复页面滚动
       document.body.style.overflow = 'unset'
@@ -109,10 +113,14 @@ export function FileUpload({
       document.body.style.width = 'auto'
       
       // 恢复滚动位置
-      if (scrollY) {
-        const scrollPosition = parseInt(scrollY.replace('-', '').replace('px', ''))
+      if (savedOffset) {
+        const scrollPosition = parseInt(savedOffset, 10)
+        console.log('🔍 [Preview Effect] Restoring to position:', scrollPosition)
         window.scrollTo(0, scrollPosition)
         console.log('🔍 [Preview Effect] Scrolled to position:', scrollPosition)
+        
+        // 清除保存的偏移量
+        document.body.removeAttribute('data-scroll-lock-offset')
       }
       
       console.log('🔍 [Preview Effect] After unlock - body styles:', {
@@ -126,10 +134,17 @@ export function FileUpload({
     // 清理函数：组件卸载时恢复滚动
     return () => {
       console.log('🧹 [Preview Effect] Cleanup - restoring scroll...')
-      document.body.style.overflow = 'unset'
-      document.body.style.position = 'static'
-      document.body.style.top = 'auto'
-      document.body.style.width = 'auto'
+      const savedOffset = document.body.getAttribute('data-scroll-lock-offset')
+      if (savedOffset) {
+        document.body.style.overflow = 'unset'
+        document.body.style.position = 'static'
+        document.body.style.top = 'auto'
+        document.body.style.width = 'auto'
+        document.body.removeAttribute('data-scroll-lock-offset')
+        
+        const scrollPosition = parseInt(savedOffset, 10)
+        window.scrollTo(0, scrollPosition)
+      }
     }
   }, [previewOpen])
 
