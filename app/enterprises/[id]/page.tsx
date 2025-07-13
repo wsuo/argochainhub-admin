@@ -105,6 +105,13 @@ export default function CompanyDetailPage() {
     setPreviewTitle(title)
   }
 
+  // 安全的数值转换函数
+  const safeParseFloat = (value: any, defaultValue: number = 0): number => {
+    if (value === null || value === undefined || value === '') return defaultValue
+    const parsed = typeof value === 'string' ? parseFloat(value) : Number(value)
+    return isNaN(parsed) ? defaultValue : parsed
+  }
+
   // 获取企业详情
   const { data: company, isLoading, error } = useQuery({
     queryKey: ['company', companyId],
@@ -389,14 +396,14 @@ export default function CompanyDetailPage() {
                 <span className="text-sm font-medium">企业评分</span>
                 {isEditMode ? (
                   <StarRating
-                    value={editData.rating !== undefined ? editData.rating : parseFloat(company.rating.toString()) || 0}
+                    value={editData.rating !== undefined ? editData.rating : safeParseFloat(company.rating)}
                     onChange={(value) => setEditData(prev => ({ ...prev, rating: value }))}
                     size="md"
                     showValue={true}
                   />
                 ) : (
                   <StarDisplay
-                    value={parseFloat(company.rating.toString()) || 0}
+                    value={safeParseFloat(company.rating)}
                     size="sm"
                     showValue={true}
                   />
@@ -580,7 +587,7 @@ export default function CompanyDetailPage() {
                 ) : (
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">{parseFloat(company.annualImportExportValue.toString()).toLocaleString()} 美元</span>
+                    <span className="text-sm">{safeParseFloat(company.annualImportExportValue).toLocaleString()} 美元</span>
                   </div>
                 )}
               </div>
