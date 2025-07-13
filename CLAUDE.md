@@ -4,6 +4,69 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 请你尽可能的复用组件，本项目 /components 文件夹下面是封装的组件。多复用组件，多复用工具类，要想实现一个功能之前先检查其它模块有没有实现，有没有已经存在的，如果实在没有，在考虑新建。
 
+## 字典数据工具说明
+
+项目提供了完整的字典管理系统和工具函数，用于处理下拉框、选择器等组件的数据源。
+
+### 字典工具函数 (`lib/dictionary-utils.ts`)
+
+**核心Hooks：**
+- `useDictionaryOptions(code, includeDisabled?)` - 获取字典选项列表
+- `useCountryOptions(includeDisabled?)` - 获取国家选项（含国旗）
+
+**工具函数：**
+- `getDictionaryLabel(options, value, defaultLabel?)` - 获取字典标签
+- `getDictionaryExtra(options, value, field)` - 获取额外字段
+- `getDictionaryLabels(options, values, separator?)` - 批量获取标签
+
+**使用示例：**
+```tsx
+// 获取业务类型选项
+const businessTypes = useDictionaryOptions('business_type')
+
+// 获取国家选项（含国旗）
+const countries = useCountryOptions()
+
+// 获取标签文本
+const label = getDictionaryLabel(businessTypes, 'manufacturing')
+```
+
+### 字典组件 (`components/dictionary-components.tsx`)
+
+**预置组件：**
+- `<DictionarySelect />` - 通用字典下拉框
+- `<CountrySelect />` - 国家选择器（含国旗）
+- `<BusinessTypeSelect />` - 业务类型选择器
+
+**使用示例：**
+```tsx
+// 业务类型选择
+<BusinessTypeSelect 
+  value={businessType} 
+  onValueChange={setBusinessType} 
+/>
+
+// 国家选择（含国旗）
+<CountrySelect 
+  value={country} 
+  onValueChange={setCountry}
+  showFlag={true}
+/>
+
+// 自定义字典选择
+<DictionarySelect 
+  code="your_dict_code"
+  value={value}
+  onValueChange={setValue}
+/>
+```
+
+**常用字典分类代码：**
+- `countries` - 国家字典
+- `business_type` - 业务类型
+
+在开发新功能时，优先使用这些字典工具和组件，避免重复实现下拉框数据获取逻辑。
+
 ## Project Overview
 
 ArgoChainHub智慧农化采购平台后台管理系统 - An admin dashboard for a smart agricultural chemical procurement platform built with Next.js 15, TypeScript, and Tailwind CSS.
