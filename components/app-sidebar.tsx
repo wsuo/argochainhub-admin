@@ -95,7 +95,7 @@ export function AppSidebar() {
                           }}
                         >
                           {section.icon && <section.icon />}
-                          <span>{section.title}</span>
+                          <span className="truncate">{section.title}</span>
                           <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
@@ -106,11 +106,11 @@ export function AppSidebar() {
                               <SidebarMenuSubButton asChild isActive={isPathActive(subItem.path)}>
                                 <button 
                                   onClick={() => handleNavigation(subItem.path, sectionKey)}
-                                  className="w-full flex items-center justify-between text-left"
+                                  className="w-full flex items-center gap-2 text-left min-w-0"
                                 >
-                                  <span>{subItem.title}</span>
+                                  <span className="truncate flex-1">{subItem.title}</span>
                                   {subItem.badge && (
-                                    <Badge variant="secondary" className="ml-auto text-xs">
+                                    <Badge variant="secondary" className="text-xs shrink-0">
                                       {subItem.badge}
                                     </Badge>
                                   )}
@@ -129,10 +129,10 @@ export function AppSidebar() {
                     >
                       <button 
                         onClick={() => handleNavigation(section.path!, sectionKey)}
-                        className="w-full flex items-center gap-2 text-left"
+                        className="w-full flex items-center gap-2 text-left min-w-0"
                       >
                         {section.icon && <section.icon />}
-                        <span>{section.title}</span>
+                        <span className="truncate">{section.title}</span>
                       </button>
                     </SidebarMenuButton>
                   )}

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useDictionary, useCountriesWithFlags } from '@/hooks/use-api'
 import { getCountryFlag } from './country-utils'
+import { getDictionaryData } from './mock-dictionary'
 import type { DictionaryItem } from './types'
 
 /**
@@ -30,23 +31,71 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
   const { data: dictionary, isLoading, error } = useDictionary(code)
   
   return useMemo(() => {
-    if (!dictionary?.items) return []
-    
-    return dictionary.items
-      .filter(item => includeDisabled || item.status === 'active')
-      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-      .map(item => ({
-        value: item.value,
-        label: item.labelZh || item.labelEn || item.value,
-        disabled: item.status !== 'active',
-        extra: {
-          labelEn: item.labelEn,
-          labelEs: item.labelEs,
-          flag: getCountryFlag(item.extra, { 'zh-CN': item.labelZh, 'en': item.labelEn }, item.value),
-          ...item.extra
+    // 如果API数据加载成功，使用API数据
+    if (dictionary) {
+      let items = []
+      
+      // 检查数据格式：是否为 { items: [...] } 格式
+      if (dictionary.items && Array.isArray(dictionary.items)) {
+        items = dictionary.items
+      }
+      // 或者直接是数组格式 [...]
+      else if (Array.isArray(dictionary)) {
+        items = dictionary
+      }
+      
+      if (items.length > 0) {
+        // 检测数据结构并适配
+        const firstItem = items[0]
+        const isNewFormat = firstItem?.code !== undefined && firstItem?.name !== undefined
+        
+        if (isNewFormat) {
+          // 新格式：{ code, name: {zh-CN, en, es}, isActive, ... }
+          return items
+            .filter(item => includeDisabled || item.isActive !== false)
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+            .map(item => ({
+              value: item.code,
+              label: item.name?.['zh-CN'] || item.name?.en || item.code,
+              disabled: item.isActive === false,
+              extra: {
+                labelEn: item.name?.en,
+                labelEs: item.name?.es,
+                description: item.description,
+                id: item.id
+              }
+            }))
+        } else {
+          // 旧格式：{ value, labelZh, labelEn, status, ... }
+          return items
+            .filter(item => includeDisabled || item.status === 'active')
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+            .map(item => ({
+              value: item.value,
+              label: item.labelZh || item.labelEn || item.value,
+              disabled: item.status !== 'active',
+              extra: {
+                labelEn: item.labelEn,
+                labelEs: item.labelEs,
+                flag: getCountryFlag(item.extra, { 'zh-CN': item.labelZh, 'en': item.labelEn }, item.value),
+                ...item.extra
+              }
+            }))
         }
-      }))
-  }, [dictionary, includeDisabled])
+      }
+    }
+    
+    // 如果API数据不可用，使用模拟数据
+    const mockData = getDictionaryData(code)
+    return mockData.map(item => ({
+      value: item.value,
+      label: item.label,
+      disabled: false,
+      extra: {
+        description: item.description
+      }
+    }))
+  }, [dictionary, includeDisabled, code])
 }
 
 /**
@@ -58,26 +107,89 @@ export function useCountryOptions(includeDisabled = false): DictionaryOption[] {
   const { data: countries, isLoading, error } = useCountriesWithFlags()
   
   return useMemo(() => {
-    if (!countries) return []
+    // 如果API数据加载成功，使用API数据
+    if (countries && Array.isArray(countries) && countries.length > 0) {
+      // 检查数据结构，适配不同的API响应格式
+      const isNewFormat = countries[0]?.code !== undefined && countries[0]?.name !== undefined
+      
+      if (isNewFormat) {
+        // 新的API格式：{ code, name: {zh-CN, en, es}, flag, isActive, ... }
+        return countries
+          .filter(item => includeDisabled || item.isActive !== false)
+          .map(item => {
+            // 如果API返回的flag是白旗或无效，使用我们的生成函数
+            const apiFlag = item.flag && item.flag !== '🏳️' ? item.flag : null
+            const generatedFlag = getCountryFlag({ iso2: item.iso2 }, item.name, item.code)
+            
+            return {
+              value: item.code || item.value,
+              label: item.name?.['zh-CN'] || item.name?.en || item.code || item.value,
+              disabled: item.isActive === false,
+              extra: {
+                labelEn: item.name?.en,
+                labelEs: item.name?.es,
+                flag: apiFlag || generatedFlag,
+                iso2: item.iso2,
+                iso3: item.iso3,
+                phoneCode: item.countryCode,
+                continent: item.continent
+              }
+            }
+          })
+      } else {
+        // 旧的API格式：{ value, labelZh, labelEn, status, extra }
+        return countries
+          .filter(item => includeDisabled || item.status === 'active')
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+          .map(item => ({
+            value: item.value,
+            label: item.labelZh || item.labelEn || item.value,
+            disabled: item.status !== 'active',
+            extra: {
+              labelEn: item.labelEn,
+              labelEs: item.labelEs,
+              flag: getCountryFlag(item.extra, { 'zh-CN': item.labelZh, 'en': item.labelEn }, item.value),
+              iso2: item.extra?.iso2,
+              iso3: item.extra?.iso3,
+              phoneCode: item.extra?.countryCode,
+              ...item.extra
+            }
+          }))
+      }
+    }
     
-    return countries
-      .filter(item => includeDisabled || item.status === 'active')
-      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-      .map(item => ({
-        value: item.value,
-        label: item.labelZh || item.labelEn || item.value,
-        disabled: item.status !== 'active',
-        extra: {
-          labelEn: item.labelEn,
-          labelEs: item.labelEs,
-          flag: getCountryFlag(item.extra, { 'zh-CN': item.labelZh, 'en': item.labelEn }, item.value),
-          iso2: item.extra?.iso2,
-          iso3: item.extra?.iso3,
-          phoneCode: item.extra?.countryCode,
-          ...item.extra
-        }
-      }))
-  }, [countries, includeDisabled])
+    // 如果正在加载中，返回空数组（不使用模拟数据，避免闪烁）
+    if (isLoading) {
+      return []
+    }
+    
+    // 如果加载失败或无数据，使用模拟数据
+    const mockCountries = [
+      { value: 'CN', label: '中国', iso2: 'CN', iso3: 'CHN' },
+      { value: 'US', label: '美国', iso2: 'US', iso3: 'USA' },
+      { value: 'JP', label: '日本', iso2: 'JP', iso3: 'JPN' },
+      { value: 'DE', label: '德国', iso2: 'DE', iso3: 'DEU' },
+      { value: 'FR', label: '法国', iso2: 'FR', iso3: 'FRA' },
+      { value: 'GB', label: '英国', iso2: 'GB', iso3: 'GBR' },
+      { value: 'IN', label: '印度', iso2: 'IN', iso3: 'IND' },
+      { value: 'BR', label: '巴西', iso2: 'BR', iso3: 'BRA' },
+      { value: 'AU', label: '澳大利亚', iso2: 'AU', iso3: 'AUS' },
+      { value: 'CA', label: '加拿大', iso2: 'CA', iso3: 'CAN' }
+    ]
+    
+    return mockCountries.map(country => ({
+      value: country.value,
+      label: country.label,
+      disabled: false,
+      extra: {
+        labelEn: country.label,
+        flag: getCountryFlag({ iso2: country.iso2 }, { 'zh-CN': country.label }, country.value),
+        iso2: country.iso2,
+        iso3: country.iso3,
+        phoneCode: undefined
+      }
+    }))
+  }, [countries, includeDisabled, isLoading, error])
 }
 
 /**
@@ -135,6 +247,8 @@ export function getDictionaryLabels(
 export const DICTIONARY_CODES = {
   COUNTRIES: 'countries',
   BUSINESS_TYPE: 'business_type',
+  COMPANY_SIZE: 'company_size',
+  COMPANY_STATUS: 'company_status',
   // 可以根据项目需要添加更多常量
 } as const
 

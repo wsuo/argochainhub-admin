@@ -15,11 +15,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { ArrowLeft, Building2, Save } from 'lucide-react'
+import { ArrowLeft, Building2, Save, Globe, Upload as UploadIcon } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { companyApi } from '@/lib/api'
 import type { CreateCompanyRequest } from '@/lib/types'
 import { toast } from 'sonner'
+import { CompanyNameInput, MultiLangInput } from '@/components/multi-lang-input'
+import { EnhancedCountrySelect } from '@/components/enhanced-country-select'
+import { BusinessTypesMultiSelect, CompanySizeSelect, CompanyStatusSelect } from '@/components/dictionary-components'
+import { ImageUpload } from '@/components/file-upload'
 
 export default function NewCompanyPage() {
   const router = useRouter()
@@ -43,7 +47,31 @@ export default function NewCompanyPage() {
     },
     rating: 4.0,
     isTop100: false,
-    email: ''
+    email: '',
+    // 新增字段
+    country: '',
+    businessCategories: [],
+    businessScope: {
+      'zh-CN': '',
+      'en': '',
+      'es': ''
+    },
+    companySize: '',
+    mainProducts: {
+      'zh-CN': '',
+      'en': '',
+      'es': ''
+    },
+    mainSuppliers: {
+      'zh-CN': '',
+      'en': '',
+      'es': ''
+    },
+    annualImportExportValue: 0,
+    registrationNumber: '',
+    taxNumber: '',
+    businessLicenseUrl: '',
+    companyPhotosUrls: []
   })
 
   const createMutation = useMutation({
@@ -72,7 +100,7 @@ export default function NewCompanyPage() {
       return
     }
 
-    // 清理空值
+    // 清理空值并格式化数据
     const cleanData = {
       ...formData,
       name: {
@@ -88,7 +116,37 @@ export default function NewCompanyPage() {
         address: formData.profile?.address?.trim() || undefined,
         phone: formData.profile?.phone?.trim() || undefined,
         website: formData.profile?.website?.trim() || undefined
-      }
+      },
+      // 清理多语言字段空值
+      businessScope: Object.keys(formData.businessScope || {}).reduce((acc, key) => {
+        const value = formData.businessScope?.[key as keyof typeof formData.businessScope]
+        if (value && value.trim()) {
+          acc[key as keyof typeof acc] = value.trim()
+        }
+        return acc
+      }, {} as any),
+      mainProducts: Object.keys(formData.mainProducts || {}).reduce((acc, key) => {
+        const value = formData.mainProducts?.[key as keyof typeof formData.mainProducts]
+        if (value && value.trim()) {
+          acc[key as keyof typeof acc] = value.trim()
+        }
+        return acc
+      }, {} as any),
+      mainSuppliers: Object.keys(formData.mainSuppliers || {}).reduce((acc, key) => {
+        const value = formData.mainSuppliers?.[key as keyof typeof formData.mainSuppliers]
+        if (value && value.trim()) {
+          acc[key as keyof typeof acc] = value.trim()
+        }
+        return acc
+      }, {} as any),
+      // 清理其他字段
+      country: formData.country || undefined,
+      companySize: formData.companySize || undefined,
+      registrationNumber: formData.registrationNumber?.trim() || undefined,
+      taxNumber: formData.taxNumber?.trim() || undefined,
+      businessLicenseUrl: formData.businessLicenseUrl || undefined,
+      companyPhotosUrls: formData.companyPhotosUrls?.length ? formData.companyPhotosUrls : undefined,
+      annualImportExportValue: formData.annualImportExportValue || undefined
     }
 
     createMutation.mutate(cleanData)
@@ -136,29 +194,12 @@ export default function NewCompanyPage() {
             <CardTitle>基本信息</CardTitle>
             <CardDescription>企业的基础档案信息</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name-zh">企业中文名称 *</Label>
-                <Input
-                  id="name-zh"
-                  value={formData.name.zh}
-                  onChange={(e) => updateFormData('name.zh', e.target.value)}
-                  placeholder="请输入企业中文名称"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="name-en">企业英文名称</Label>
-                <Input
-                  id="name-en"
-                  value={formData.name.en || ''}
-                  onChange={(e) => updateFormData('name.en', e.target.value)}
-                  placeholder="请输入企业英文名称（可选）"
-                />
-              </div>
-            </div>
+          <CardContent className="space-y-6">
+            {/* 企业名称 */}
+            <CompanyNameInput
+              value={formData.name}
+              onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -179,19 +220,10 @@ export default function NewCompanyPage() {
 
               <div>
                 <Label htmlFor="status">企业状态</Label>
-                <Select
+                <CompanyStatusSelect
                   value={formData.status || 'active'}
                   onValueChange={(value) => updateFormData('status', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">已激活</SelectItem>
-                    <SelectItem value="pending_review">待审核</SelectItem>
-                    <SelectItem value="disabled">已禁用</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
               </div>
             </div>
 
@@ -204,6 +236,123 @@ export default function NewCompanyPage() {
                 onChange={(e) => updateFormData('email', e.target.value)}
                 placeholder="请输入企业邮箱"
                 required
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 扩展信息 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              扩展信息
+            </CardTitle>
+            <CardDescription>企业的详细业务信息</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="country">所在国家</Label>
+                <EnhancedCountrySelect
+                  value={formData.country}
+                  onValueChange={(value) => updateFormData('country', value)}
+                  placeholder="请选择国家"
+                  showFlag={true}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="companySize">公司规模</Label>
+                <CompanySizeSelect
+                  value={formData.companySize}
+                  onValueChange={(value) => updateFormData('companySize', value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="businessCategories">业务类别</Label>
+                <BusinessTypesMultiSelect
+                  value={formData.businessCategories}
+                  onValueChange={(value) => updateFormData('businessCategories', value)}
+                  maxItems={3}
+                />
+              </div>
+            </div>
+
+            {/* 业务范围 */}
+            <MultiLangInput
+              label="业务范围"
+              value={formData.businessScope}
+              onChange={(value) => updateFormData('businessScope', value)}
+              variant="textarea"
+              placeholder={{
+                'zh-CN': '请描述企业的主要业务范围',
+                'en': 'Please describe the main business scope',
+                'es': 'Por favor describa el alcance principal del negocio'
+              }}
+            />
+
+            {/* 主要产品 */}
+            <MultiLangInput
+              label={formData.type === 'supplier' ? '主要产品' : '主要采购产品'}
+              value={formData.mainProducts}
+              onChange={(value) => updateFormData('mainProducts', value)}
+              variant="textarea"
+              placeholder={{
+                'zh-CN': formData.type === 'supplier' ? '请列出主要生产或销售的产品' : '请列出主要采购的产品',
+                'en': formData.type === 'supplier' ? 'Please list main products produced or sold' : 'Please list main products purchased',
+                'es': formData.type === 'supplier' ? 'Por favor enumere los principales productos producidos o vendidos' : 'Por favor enumere los principales productos comprados'
+              }}
+            />
+
+            {/* 主要供应商（采购商填写） */}
+            {formData.type === 'buyer' && (
+              <MultiLangInput
+                label="主要供应商"
+                value={formData.mainSuppliers}
+                onChange={(value) => updateFormData('mainSuppliers', value)}
+                variant="textarea"
+                placeholder={{
+                  'zh-CN': '请列出主要合作的供应商',
+                  'en': 'Please list main cooperating suppliers',
+                  'es': 'Por favor enumere los principales proveedores cooperantes'
+                }}
+              />
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="annualValue">年{formData.type === 'supplier' ? '出口' : '进口'}额（美元）</Label>
+                <Input
+                  id="annualValue"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.annualImportExportValue || ''}
+                  onChange={(e) => updateFormData('annualImportExportValue', parseFloat(e.target.value) || 0)}
+                  placeholder="请输入年交易额"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="registrationNumber">注册证号</Label>
+                <Input
+                  id="registrationNumber"
+                  value={formData.registrationNumber || ''}
+                  onChange={(e) => updateFormData('registrationNumber', e.target.value)}
+                  placeholder="请输入注册证号"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="taxNumber">税号</Label>
+              <Input
+                id="taxNumber"
+                value={formData.taxNumber || ''}
+                onChange={(e) => updateFormData('taxNumber', e.target.value)}
+                placeholder="请输入税号"
               />
             </div>
           </CardContent>
@@ -277,6 +426,40 @@ export default function NewCompanyPage() {
                 onChange={(e) => updateFormData('profile.description.en', e.target.value)}
                 placeholder="请输入企业英文描述（可选）"
                 rows={4}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 文件上传 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UploadIcon className="h-5 w-5" />
+              资质文件
+            </CardTitle>
+            <CardDescription>上传企业相关证件和照片</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <Label>营业执照</Label>
+              <ImageUpload
+                value={formData.businessLicenseUrl ? [formData.businessLicenseUrl] : []}
+                onChange={(urls) => updateFormData('businessLicenseUrl', urls[0] || '')}
+                maxFiles={1}
+                fileType="company_certificate"
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label>公司照片</Label>
+              <ImageUpload
+                value={formData.companyPhotosUrls || []}
+                onChange={(urls) => updateFormData('companyPhotosUrls', urls)}
+                maxFiles={5}
+                fileType="company_certificate"
+                className="mt-2"
               />
             </div>
           </CardContent>

@@ -31,17 +31,24 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
-  Plus
+  Plus,
+  Globe
 } from 'lucide-react'
 import { useCompanies, useToggleCompanyStatus } from '@/hooks/use-api'
 import { DataPagination } from '@/components/data-pagination'
 import type { Company, CompanyQuery } from '@/lib/types'
+import { SimpleCountrySelect, CountryDisplay } from '@/components/enhanced-country-select'
+import { CompanySizeSelect, CompanyStatusSelect, BusinessTypeSelect } from '@/components/dictionary-components'
+import { useDictionaryOptions } from '@/lib/dictionary-utils'
 
 export default function EnterprisesPage() {
   const router = useRouter()
   const [searchInput, setSearchInput] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [countryFilter, setCountryFilter] = useState<string>('all')
+  const [companySizeFilter, setCompanySizeFilter] = useState<string>('all')
+  const [businessCategoryFilter, setBusinessCategoryFilter] = useState<string>('all')
   
   const [query, setQuery] = useState<CompanyQuery>({
     page: 1,
@@ -53,12 +60,20 @@ export default function EnterprisesPage() {
   const { data, isLoading, error } = useCompanies(query)
   const toggleStatusMutation = useToggleCompanyStatus()
 
+  // 获取字典选项
+  const companyStatusOptions = useDictionaryOptions('company_status')
+  const companySizeOptions = useDictionaryOptions('company_size')
+  const businessTypeOptions = useDictionaryOptions('business_type')
+
   const handleSearch = () => {
     setQuery(prev => ({ 
       ...prev, 
       search: searchInput.trim() || undefined,
       status: statusFilter === 'all' ? undefined : statusFilter as Company['status'],
       type: typeFilter === 'all' ? undefined : typeFilter as Company['type'],
+      country: countryFilter === 'all' ? undefined : countryFilter,
+      companySize: companySizeFilter === 'all' ? undefined : companySizeFilter,
+      businessCategory: businessCategoryFilter === 'all' ? undefined : businessCategoryFilter,
       page: 1 
     }))
   }
@@ -67,11 +82,17 @@ export default function EnterprisesPage() {
     setSearchInput('')
     setStatusFilter('all')
     setTypeFilter('all')
+    setCountryFilter('all')
+    setCompanySizeFilter('all')
+    setBusinessCategoryFilter('all')
     setQuery({
       page: 1,
       limit: 20,
       status: undefined,
       type: undefined,
+      country: undefined,
+      companySize: undefined,
+      businessCategory: undefined,
     })
   }
 
@@ -103,6 +124,12 @@ export default function EnterprisesPage() {
   }
 
   const getStatusBadge = (status: Company['status']) => {
+    const option = companyStatusOptions.find(opt => opt.value === status)
+    if (option) {
+      return <Badge variant="secondary">{option.label}</Badge>
+    }
+    
+    // 兜底处理
     switch (status) {
       case 'active':
         return <Badge variant="secondary">已激活</Badge>
@@ -127,6 +154,29 @@ export default function EnterprisesPage() {
         return <Badge variant="outline">分销商</Badge>
       default:
         return <Badge>{type}</Badge>
+    }
+  }
+
+  const getCompanySizeBadge = (size?: string) => {
+    if (!size) return null
+    
+    const option = companySizeOptions.find(opt => opt.value === size)
+    return option ? (
+      <Badge variant="outline" className="text-xs">
+        {option.label}
+      </Badge>
+    ) : null
+  }
+
+  const formatAnnualValue = (value?: number) => {
+    if (!value || value === 0) return null
+    
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`
+    } else if (value >= 1000) {
+      return `$${(value / 1000).toFixed(1)}K`
+    } else {
+      return `$${value.toFixed(0)}`
     }
   }
 
@@ -168,49 +218,73 @@ export default function EnterprisesPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end justify-between gap-4">
-            {/* 左侧搜索条件 */}
-            <div className="flex items-end gap-4">
-              {/* 搜索 */}
-              <div className="w-[300px]">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="搜索企业名称..."
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="pl-8"
-                  />
+          <div className="space-y-4">
+            {/* 第一行：搜索框 */}
+            <div className="flex items-end justify-between gap-4">
+              <div className="flex items-end gap-4 flex-1">
+                <div className="w-[300px]">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="搜索企业名称..."
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      className="pl-8"
+                    />
+                  </div>
                 </div>
               </div>
 
+              {/* 操作按钮 */}
+              <div className="flex gap-2">
+                <Button onClick={handleSearch} className="min-w-[80px]">
+                  <Search className="h-4 w-4 mr-2" />
+                  搜索
+                </Button>
+                <Button variant="outline" onClick={handleReset} className="min-w-[80px]">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  重置
+                </Button>
+              </div>
+            </div>
+
+            {/* 第二行：筛选下拉框 */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {/* 状态筛选 */}
-              <div className="min-w-[150px]">
-                <Select
+              <div>
+                <CompanyStatusSelect
                   value={statusFilter}
-                  onValueChange={setStatusFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">所有状态</SelectItem>
-                    <SelectItem value="active">已激活</SelectItem>
-                    <SelectItem value="pending_review">待审核</SelectItem>
-                    <SelectItem value="disabled">已禁用</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onValueChange={(value) => {
+                    setStatusFilter(value)
+                    // 立即搜索
+                    setQuery(prev => ({ 
+                      ...prev, 
+                      status: value === 'all' ? undefined : value as Company['status'],
+                      page: 1 
+                    }))
+                  }}
+                  includeAll={true}
+                  placeholder="所有状态"
+                />
               </div>
 
               {/* 类型筛选 */}
-              <div className="min-w-[150px]">
+              <div>
                 <Select
                   value={typeFilter}
-                  onValueChange={setTypeFilter}
+                  onValueChange={(value) => {
+                    setTypeFilter(value)
+                    // 立即搜索
+                    setQuery(prev => ({ 
+                      ...prev, 
+                      type: value === 'all' ? undefined : value as Company['type'],
+                      page: 1 
+                    }))
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="选择类型" />
+                    <SelectValue placeholder="所有类型" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">所有类型</SelectItem>
@@ -219,19 +293,89 @@ export default function EnterprisesPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* 国家筛选 */}
+              <div>
+                <SimpleCountrySelect
+                  value={countryFilter}
+                  onValueChange={(value) => {
+                    setCountryFilter(value)
+                    // 立即搜索
+                    setQuery(prev => ({ 
+                      ...prev, 
+                      country: value === 'all' ? undefined : value,
+                      page: 1 
+                    }))
+                  }}
+                  includeAll={true}
+                  allLabel="所有国家"
+                  placeholder="所有国家"
+                />
+              </div>
+
+              {/* 公司规模筛选 */}
+              <div>
+                <CompanySizeSelect
+                  value={companySizeFilter}
+                  onValueChange={(value) => {
+                    setCompanySizeFilter(value)
+                    // 立即搜索
+                    setQuery(prev => ({ 
+                      ...prev, 
+                      companySize: value === 'all' ? undefined : value,
+                      page: 1 
+                    }))
+                  }}
+                  includeAll={true}
+                  placeholder="所有规模"
+                />
+              </div>
+
+              {/* 业务类别筛选 */}
+              <div>
+                <Select
+                  value={businessCategoryFilter}
+                  onValueChange={(value) => {
+                    setBusinessCategoryFilter(value)
+                    // 立即搜索
+                    setQuery(prev => ({ 
+                      ...prev, 
+                      businessCategory: value === 'all' ? undefined : value,
+                      page: 1 
+                    }))
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="所有业务" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">所有业务</SelectItem>
+                    {businessTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* 右侧操作按钮 */}
-            <div className="flex gap-2">
-              <Button onClick={handleSearch} className="min-w-[80px]">
-                <Search className="h-4 w-4 mr-2" />
-                搜索
-              </Button>
-              <Button variant="outline" onClick={handleReset} className="min-w-[80px]">
-                <RotateCcw className="h-4 w-4 mr-2" />
-                重置
-              </Button>
-            </div>
+            {/* 筛选结果提示 */}
+            {(statusFilter !== 'all' || typeFilter !== 'all' || countryFilter !== 'all' || 
+              companySizeFilter !== 'all' || businessCategoryFilter !== 'all' || searchInput) && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                <span>已应用筛选条件</span>
+                <div className="flex gap-1">
+                  {searchInput && <Badge variant="outline">关键词: {searchInput}</Badge>}
+                  {statusFilter !== 'all' && <Badge variant="outline">状态</Badge>}
+                  {typeFilter !== 'all' && <Badge variant="outline">类型</Badge>}
+                  {countryFilter !== 'all' && <Badge variant="outline">国家</Badge>}
+                  {companySizeFilter !== 'all' && <Badge variant="outline">规模</Badge>}
+                  {businessCategoryFilter !== 'all' && <Badge variant="outline">业务</Badge>}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -262,6 +406,14 @@ export default function EnterprisesPage() {
                     <TableHead>企业名称</TableHead>
                     <TableHead>类型</TableHead>
                     <TableHead>状态</TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <Globe className="h-4 w-4" />
+                        国家
+                      </div>
+                    </TableHead>
+                    <TableHead>规模</TableHead>
+                    <TableHead>年交易额</TableHead>
                     <TableHead>用户数</TableHead>
                     <TableHead>注册时间</TableHead>
                     <TableHead>操作</TableHead>
@@ -282,6 +434,23 @@ export default function EnterprisesPage() {
                       </TableCell>
                       <TableCell>{getTypeBadge(company.type)}</TableCell>
                       <TableCell>{getStatusBadge(company.status)}</TableCell>
+                      <TableCell>
+                        {company.country ? (
+                          <CountryDisplay value={company.country} showFlag={true} />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">未设置</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {getCompanySizeBadge(company.companySize) || (
+                          <span className="text-muted-foreground text-sm">未设置</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {formatAnnualValue(company.annualImportExportValue) || (
+                          <span className="text-muted-foreground text-sm">未设置</span>
+                        )}
+                      </TableCell>
                       <TableCell>{company.users?.length || 0}</TableCell>
                       <TableCell>
                         {new Date(company.createdAt).toLocaleDateString('zh-CN')}

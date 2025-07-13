@@ -57,7 +57,21 @@ export interface Company {
   address?: string
   contactPerson?: string
   contactPhone?: string
+  
+  // 新增扩展字段
+  country?: string // 国家代码
+  businessCategories?: string[] // 业务类别代码列表
+  businessScope?: MultiLangText // 业务范围描述
+  companySize?: string // 公司规模枚举
+  mainProducts?: MultiLangText // 主要产品/采购产品
+  mainSuppliers?: MultiLangText // 主要供应商（采购商填写）
+  annualImportExportValue?: number // 年进口/出口额（美元）
+  taxNumber?: string // 税号
+  businessLicenseUrl?: string // 营业执照图片地址
+  companyPhotosUrls?: string[] // 公司照片地址列表
+  
   createdAt: string
+  updatedAt?: string
   users?: User[]
   subscriptions?: Subscription[]
 }
@@ -236,13 +250,6 @@ export interface ApiError {
 }
 
 // 查询参数类型
-export interface CompanyQuery {
-  page?: number
-  limit?: number
-  status?: Company['status']
-  type?: Company['type']
-  search?: string
-}
 
 // 企业审核请求
 export interface ReviewRequest {
@@ -270,6 +277,31 @@ export interface CreateCompanyRequest {
   rating?: number
   isTop100?: boolean
   email?: string
+  
+  // 新增扩展字段
+  country?: string
+  businessCategories?: string[]
+  businessScope?: {
+    'zh-CN': string
+    'en'?: string
+    'es'?: string
+  }
+  companySize?: string
+  mainProducts?: {
+    'zh-CN': string
+    'en'?: string
+    'es'?: string
+  }
+  mainSuppliers?: {
+    'zh-CN': string
+    'en'?: string
+    'es'?: string
+  }
+  annualImportExportValue?: number
+  registrationNumber?: string
+  taxNumber?: string
+  businessLicenseUrl?: string
+  companyPhotosUrls?: string[]
 }
 
 export interface UpdateCompanyRequest extends Partial<CreateCompanyRequest> {}
@@ -413,4 +445,38 @@ export interface UpdateDictionaryItemRequest extends Partial<CreateDictionaryIte
 
 export interface BatchImportDictionaryItemRequest {
   items: CreateDictionaryItemRequest[]
+}
+
+// 文件上传相关类型
+export interface UploadFile {
+  id: number
+  filename: string
+  originalName: string
+  mimetype: string
+  size: number
+  storageKey: string
+  url: string
+  type: 'product_image' | 'company_certificate' | 'sample_document' | 'registration_document' | 'other'
+  relatedId?: number
+  uploadedById: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UploadFileRequest {
+  file: File
+  type: UploadFile['type']
+  relatedId?: number
+}
+
+// 扩展查询参数，添加新的筛选字段
+export interface CompanyQuery {
+  page?: number
+  limit?: number
+  status?: Company['status']
+  type?: Company['type']
+  search?: string
+  country?: string
+  companySize?: string
+  businessCategory?: string
 }

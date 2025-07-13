@@ -160,8 +160,7 @@ export const navigationConfig = {
         { title: '全部企业', path: '/enterprises', key: 'all' },
         { title: '待审核企业', path: '/enterprises/pending', key: 'pending', badge: '审核待处理' },
         { title: '采购企业', path: '/enterprises/buyers', key: 'buyers' },
-        { title: '供应企业', path: '/enterprises/suppliers', key: 'suppliers' },
-        { title: '新增企业', path: '/enterprises/new', key: 'new' }
+        { title: '供应企业', path: '/enterprises/suppliers', key: 'suppliers' }
       ]
     },
     content: {
