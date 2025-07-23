@@ -216,12 +216,6 @@ export interface ChartData {
   }>
 }
 
-// 审核操作类型
-export interface ReviewRequest {
-  approved: boolean
-  reason: string
-}
-
 // 工具类型
 export interface TranslateRequest {
   text: string
