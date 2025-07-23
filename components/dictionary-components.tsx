@@ -155,6 +155,7 @@ interface BusinessTypesMultiSelectProps {
   onValueChange?: (value: string[]) => void
   className?: string
   maxItems?: number
+  showMaxItemsHint?: boolean // 新增：是否显示"已达上限"提示
 }
 
 export function BusinessTypesMultiSelect({
@@ -162,7 +163,8 @@ export function BusinessTypesMultiSelect({
   value = [],
   onValueChange,
   className,
-  maxItems = 5
+  maxItems = 5,
+  showMaxItemsHint = true // 默认显示提示
 }: BusinessTypesMultiSelectProps) {
   const [open, setOpen] = useState(false)
   const options = useDictionaryOptions('business_type')
@@ -234,7 +236,7 @@ export function BusinessTypesMultiSelect({
                     )}
                   />
                   {option.label}
-                  {!value.includes(option.value) && value.length >= maxItems && (
+                  {!value.includes(option.value) && value.length >= maxItems && showMaxItemsHint && (
                     <Badge variant="outline" className="ml-auto text-xs">
                       已达上限
                     </Badge>

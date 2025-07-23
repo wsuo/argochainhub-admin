@@ -564,7 +564,8 @@ export default function CompanyDetailPage() {
                     <BusinessTypesMultiSelect
                       value={editData.businessCategories || company.businessCategories || []}
                       onValueChange={(value) => setEditData(prev => ({ ...prev, businessCategories: value }))}
-                      maxItems={3}
+                      maxItems={10}
+                      showMaxItemsHint={false}
                       className="w-48"
                     />
                   </div>
@@ -592,15 +593,22 @@ export default function CompanyDetailPage() {
                 )}
 
                 {/* 业务类别 */}
-                {company.businessCategories && company.businessCategories.length > 0 && (
+                {company.businessCategories && company.businessCategories.length > 0 && businessTypes.length > 0 && (
                   <div>
                     <span className="text-sm font-medium mb-2 block">业务类别</span>
                     <div className="flex flex-wrap gap-1">
-                      {company.businessCategories.map((category, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {getDictionaryLabel(businessTypes, category)}
-                        </Badge>
-                      ))}
+                      {company.businessCategories.map((category, index) => {
+                        const label = getDictionaryLabel(businessTypes, category)
+                        // 只显示能找到对应标签的业务类别，避免显示原始代码
+                        if (label && label !== category) {
+                          return (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {label}
+                            </Badge>
+                          )
+                        }
+                        return null
+                      })}
                     </div>
                   </div>
                 )}
@@ -708,7 +716,7 @@ export default function CompanyDetailPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleImagePreview(company.businessLicenseUrl, '营业执照')}
+                      onClick={() => handleImagePreview(company.businessLicenseUrl || '', '营业执照')}
                       className="text-xs"
                     >
                       <Eye className="h-3 w-3 mr-1" />
