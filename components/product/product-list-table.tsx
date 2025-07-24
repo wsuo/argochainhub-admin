@@ -138,7 +138,11 @@ export function ProductListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
+          {products.map((product) => {
+            // 调试：在控制台输出每个产品数据结构
+            console.log('Product data:', product)
+            
+            return (
             <TableRow key={product.id}>
               {/* 产品信息 */}
               <TableCell>
@@ -153,7 +157,7 @@ export function ProductListTable({
                   )}
                   {product.registrationNumber && (
                     <div className="text-xs text-muted-foreground">
-                      登记证号: {product.registrationNumber}
+                      登记证号: {String(product.registrationNumber)}
                     </div>
                   )}
                 </div>
@@ -177,8 +181,8 @@ export function ProductListTable({
               <TableCell>
                 {product.supplier ? (
                   <div>
-                    <div className="font-medium">{product.supplier.name}</div>
-                    <div className="text-sm text-muted-foreground">{product.supplier.country}</div>
+                    <div className="font-medium">{String(product.supplier.name || '')}</div>
+                    <div className="text-sm text-muted-foreground">{String(product.supplier.country || '')}</div>
                   </div>
                 ) : (
                   <span className="text-muted-foreground">未知供应商</span>
@@ -188,7 +192,7 @@ export function ProductListTable({
               {/* 剂型 */}
               <TableCell>
                 <Badge variant="outline">
-                  {getDictionaryLabel(formulations, product.formulation, product.formulation)}
+                  {getDictionaryLabel(formulations, product.formulation, String(product.formulation))}
                 </Badge>
               </TableCell>
 
@@ -200,7 +204,7 @@ export function ProductListTable({
               {/* 起订量 */}
               <TableCell>
                 <div className="text-sm">
-                  {product.minOrderQuantity?.toLocaleString()} {product.minOrderUnit}
+                  {product.minOrderQuantity?.toLocaleString()} {String(product.minOrderUnit || '')}
                 </div>
               </TableCell>
 
@@ -312,7 +316,8 @@ export function ProductListTable({
                 </DropdownMenu>
               </TableCell>
             </TableRow>
-          ))}
+            )
+          })}
         </TableBody>
       </Table>
     </div>
