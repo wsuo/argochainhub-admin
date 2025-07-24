@@ -4,6 +4,12 @@ import api from '@/lib/api'
 import type {
   CompanyQuery,
   ProductQuery,
+  CreateProductRequest,
+  UpdateProductRequest,
+  CreateControlMethodRequest,
+  UpdateControlMethodRequest,
+  BatchCreateControlMethodsRequest,
+  UpdateControlMethodOrderRequest,
   UserQuery,
   OrderQuery,
   PlanQuery,
@@ -222,6 +228,52 @@ export const useProduct = (id: number) => {
   })
 }
 
+export const useCreateProduct = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreateProductRequest) => api.product.createProduct(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('产品创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '产品创建失败')
+    },
+  })
+}
+
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateProductRequest }) => 
+      api.product.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('产品信息已更新')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '产品信息更新失败')
+    },
+  })
+}
+
+export const useDeleteProduct = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.product.deleteProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('产品删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '产品删除失败')
+    },
+  })
+}
+
 export const useReviewProduct = () => {
   const queryClient = useQueryClient()
   
@@ -234,6 +286,128 @@ export const useReviewProduct = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '审核操作失败')
+    },
+  })
+}
+
+export const useListProduct = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.product.listProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('产品已上架')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '产品上架失败')
+    },
+  })
+}
+
+export const useUnlistProduct = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.product.unlistProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('产品已下架')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '产品下架失败')
+    },
+  })
+}
+
+// 防治方法相关hooks
+export const useControlMethods = (productId: number) => {
+  return useQuery({
+    queryKey: ['controlMethods', productId],
+    queryFn: () => api.product.getControlMethods(productId),
+    enabled: !!productId,
+  })
+}
+
+export const useCreateControlMethod = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ productId, data }: { productId: number; data: CreateControlMethodRequest }) => 
+      api.product.createControlMethod(productId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['controlMethods', variables.productId] })
+      queryClient.invalidateQueries({ queryKey: ['products', variables.productId] })
+      toast.success('防治方法创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '防治方法创建失败')
+    },
+  })
+}
+
+export const useBatchCreateControlMethods = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ productId, data }: { productId: number; data: BatchCreateControlMethodsRequest }) => 
+      api.product.batchCreateControlMethods(productId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['controlMethods', variables.productId] })
+      queryClient.invalidateQueries({ queryKey: ['products', variables.productId] })
+      toast.success('防治方法批量创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '防治方法批量创建失败')
+    },
+  })
+}
+
+export const useUpdateControlMethod = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateControlMethodRequest }) => 
+      api.product.updateControlMethod(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['controlMethods'] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('防治方法更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '防治方法更新失败')
+    },
+  })
+}
+
+export const useDeleteControlMethod = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.product.deleteControlMethod(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['controlMethods'] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('防治方法删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '防治方法删除失败')
+    },
+  })
+}
+
+export const useUpdateControlMethodOrder = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ productId, data }: { productId: number; data: UpdateControlMethodOrderRequest }) => 
+      api.product.updateControlMethodOrder(productId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['controlMethods', variables.productId] })
+      toast.success('防治方法排序更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '防治方法排序更新失败')
     },
   })
 }

@@ -94,18 +94,58 @@ export interface User {
 // 产品相关类型
 export interface Product {
   id: number
-  name: string
-  category: string
-  activeIngredient: string
-  specification: string
-  status: 'pending_review' | 'active' | 'rejected' | 'archived'
-  description: string
-  price: number
-  unit: string
-  minimumOrder: number
-  stockQuantity: number
-  supplier: Company
-  inquiryItems?: InquiryItem[]
+  name: MultiLangText
+  pesticideName: MultiLangText
+  supplierId: number
+  supplier?: {
+    id: number
+    name: string
+    country: string
+  }
+  formulation: string // 剂型（字典值）
+  toxicity: 'LOW' | 'MEDIUM' | 'HIGH' | 'ACUTE' // 毒性等级
+  registrationNumber: string // 登记证号
+  registrationHolder: string // 登记证持有人
+  effectiveDate: string // 有效截止日期
+  firstApprovalDate: string // 首次批准日期
+  totalContent: string // 总含量
+  activeIngredient1?: ActiveIngredient
+  activeIngredient2?: ActiveIngredient
+  activeIngredient3?: ActiveIngredient
+  minOrderQuantity: number // 最低起订量
+  minOrderUnit: string // 起订单位
+  details?: {
+    productCategory: string // 产品品类
+    exportRestrictedCountries: string[] // 出口限制国家
+    description: string // 产品描述
+    remarks: string // 备注
+  }
+  isListed: boolean // 是否上架
+  status: 'DRAFT' | 'PENDING_REVIEW' | 'ACTIVE' | 'REJECTED'
+  controlMethods?: ControlMethod[] // 防治方法
+  createdAt: string
+  updatedAt: string
+}
+
+// 有效成分
+export interface ActiveIngredient {
+  name: MultiLangText
+  content: string // 含量百分比
+}
+
+// 防治方法
+export interface ControlMethod {
+  id: number
+  productId?: number
+  targetCrop: MultiLangText // 防治作物
+  pestDisease: MultiLangText // 防治病虫害
+  applicationMethod: MultiLangText // 施用方法
+  dosage: MultiLangText // 用药量
+  sortOrder: number
+  isActive: boolean
+  remarks?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface InquiryItem {
@@ -286,8 +326,31 @@ export interface ProductQuery {
   page?: number
   limit?: number
   status?: Product['status']
-  category?: string
-  search?: string
+  search?: string // 产品名称、农药名称、登记证号
+  supplierId?: number
+  supplierName?: string
+  formulation?: string // 剂型（字典值）
+  toxicity?: Product['toxicity']
+  activeIngredient?: string // 有效成分名称
+  registrationNumber?: string
+  registrationHolder?: string
+  productCategory?: string
+  country?: string
+  exportRestrictedCountries?: string[] // 出口限制国家
+  minOrderQuantityMin?: number // 最低起订量（最小）
+  minOrderQuantityMax?: number // 最低起订量（最大）
+  isListed?: boolean // 是否上架
+  effectiveDateStart?: string // 有效截止日期（开始）
+  effectiveDateEnd?: string // 有效截止日期（结束）
+  firstApprovalDateStart?: string // 首次批准日期（开始）
+  firstApprovalDateEnd?: string // 首次批准日期（结束）
+  createdStartDate?: string // 创建开始日期
+  createdEndDate?: string // 创建结束日期
+  updatedStartDate?: string // 更新开始日期
+  updatedEndDate?: string // 更新结束日期
+  hasControlMethods?: boolean // 是否有防治方法
+  sortBy?: 'createdAt' | 'updatedAt' | 'name' | 'pesticideName' | 'effectiveDate' | 'firstApprovalDate' | 'minOrderQuantity'
+  sortOrder?: 'ASC' | 'DESC'
 }
 
 export interface OrderQuery {
@@ -310,6 +373,54 @@ export interface PlanQuery {
 }
 
 // 创建和更新类型
+export interface CreateProductRequest {
+  name: MultiLangText
+  pesticideName: MultiLangText
+  supplierId: number
+  formulation: string // 剂型（字典值）
+  toxicity: Product['toxicity']
+  registrationNumber: string
+  registrationHolder: string
+  effectiveDate: string
+  firstApprovalDate: string
+  totalContent: string
+  activeIngredient1?: ActiveIngredient
+  activeIngredient2?: ActiveIngredient
+  activeIngredient3?: ActiveIngredient
+  minOrderQuantity: number
+  minOrderUnit: string
+  details?: {
+    productCategory: string
+    exportRestrictedCountries: string[]
+    description: string
+    remarks: string
+  }
+  status?: Product['status']
+  isListed?: boolean
+}
+
+export interface UpdateProductRequest extends Partial<CreateProductRequest> {}
+
+export interface CreateControlMethodRequest {
+  targetCrop: MultiLangText
+  pestDisease: MultiLangText
+  applicationMethod: MultiLangText
+  dosage: MultiLangText
+  sortOrder?: number
+  isActive?: boolean
+  remarks?: string
+}
+
+export interface UpdateControlMethodRequest extends Partial<CreateControlMethodRequest> {}
+
+export interface BatchCreateControlMethodsRequest {
+  controlMethods: CreateControlMethodRequest[]
+}
+
+export interface UpdateControlMethodOrderRequest {
+  [methodId: string]: number // methodId: sortOrder
+}
+
 export interface CreatePlanRequest {
   name: {
     zh: string

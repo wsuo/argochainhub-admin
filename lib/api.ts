@@ -11,6 +11,13 @@ import type {
   CompanyQuery,
   Product,
   ProductQuery,
+  CreateProductRequest,
+  UpdateProductRequest,
+  ControlMethod,
+  CreateControlMethodRequest,
+  UpdateControlMethodRequest,
+  BatchCreateControlMethodsRequest,
+  UpdateControlMethodOrderRequest,
   User,
   UserQuery,
   Order,
@@ -116,13 +123,53 @@ export const productApi = {
   getProduct: (id: number): Promise<Product> =>
     apiClient.get(`/admin/products/${id}`),
 
+  // 创建产品
+  createProduct: (data: CreateProductRequest): Promise<Product> =>
+    apiClient.post('/admin/products', data),
+
+  // 更新产品
+  updateProduct: (id: number, data: UpdateProductRequest): Promise<Product> =>
+    apiClient.put(`/admin/products/${id}`, data),
+
+  // 删除产品
+  deleteProduct: (id: number): Promise<void> =>
+    apiClient.delete(`/admin/products/${id}`),
+
   // 审核产品
   reviewProduct: (id: number, data: ReviewRequest): Promise<void> =>
     apiClient.post(`/admin/products/${id}/review`, data),
 
-  // 切换产品状态
-  toggleProductStatus: (id: number): Promise<void> =>
-    apiClient.patch(`/admin/products/${id}/toggle-status`),
+  // 产品上架
+  listProduct: (id: number): Promise<void> =>
+    apiClient.patch(`/admin/products/${id}/list`),
+
+  // 产品下架
+  unlistProduct: (id: number): Promise<void> =>
+    apiClient.patch(`/admin/products/${id}/unlist`),
+
+  // 获取产品的防治方法列表
+  getControlMethods: (productId: number): Promise<ControlMethod[]> =>
+    apiClient.get(`/admin/products/${productId}/control-methods`),
+
+  // 创建防治方法
+  createControlMethod: (productId: number, data: CreateControlMethodRequest): Promise<ControlMethod> =>
+    apiClient.post(`/admin/products/${productId}/control-methods`, data),
+
+  // 批量创建防治方法
+  batchCreateControlMethods: (productId: number, data: BatchCreateControlMethodsRequest): Promise<ControlMethod[]> =>
+    apiClient.post(`/admin/products/${productId}/control-methods/batch`, data),
+
+  // 更新防治方法
+  updateControlMethod: (id: number, data: UpdateControlMethodRequest): Promise<ControlMethod> =>
+    apiClient.put(`/admin/control-methods/${id}`, data),
+
+  // 删除防治方法
+  deleteControlMethod: (id: number): Promise<void> =>
+    apiClient.delete(`/admin/control-methods/${id}`),
+
+  // 更新防治方法排序
+  updateControlMethodOrder: (productId: number, data: UpdateControlMethodOrderRequest): Promise<void> =>
+    apiClient.put(`/admin/products/${productId}/control-methods/order`, data),
 }
 
 // 用户管理相关API
