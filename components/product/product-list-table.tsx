@@ -36,6 +36,7 @@ import {
 import type { Product } from '@/lib/types'
 import { getDictionaryLabel } from '@/lib/dictionary-utils'
 import { getMultiLangText, safeRenderText } from '@/lib/multi-lang-utils'
+import type { DictionaryOption } from '@/lib/dictionary-utils'
 
 export interface ProductListTableProps {
   products: Product[]
@@ -46,7 +47,8 @@ export interface ProductListTableProps {
   onReview?: (product: Product, approved: boolean) => void
   onToggleListing?: (productId: number, isListed: boolean) => void
   onDelete?: (productId: number) => void
-  formulations?: Array<{ value: string; label: string }> // 剂型字典
+  formulations?: DictionaryOption[] // 剂型字典
+  toxicities?: DictionaryOption[] // 毒性字典
 }
 
 export function ProductListTable({
@@ -58,7 +60,8 @@ export function ProductListTable({
   onReview,
   onToggleListing,
   onDelete,
-  formulations = []
+  formulations = [],
+  toxicities = []
 }: ProductListTableProps) {
   const getStatusBadge = (status: Product['status']) => {
     switch (status) {
@@ -76,6 +79,10 @@ export function ProductListTable({
   }
 
   const getToxicityBadge = (toxicity: Product['toxicity']) => {
+    if (!toxicity) {
+      return <Badge variant="outline" className="text-muted-foreground">未设置</Badge>
+    }
+    
     switch (toxicity) {
       case 'LOW':
         return <Badge variant="secondary" className="bg-green-100 text-green-800">低毒</Badge>
@@ -187,9 +194,15 @@ export function ProductListTable({
 
               {/* 剂型 */}
               <TableCell>
-                <Badge variant="outline">
-                  {getDictionaryLabel(formulations, product.formulation, safeRenderText(product.formulation))}
-                </Badge>
+                {product.formulation ? (
+                  <Badge variant="outline">
+                    {getDictionaryLabel(formulations, product.formulation, safeRenderText(product.formulation))}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    未设置
+                  </Badge>
+                )}
               </TableCell>
 
               {/* 毒性 */}

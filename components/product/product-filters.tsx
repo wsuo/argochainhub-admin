@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/popover'
 import type { Product, ProductQuery } from '@/lib/types'
 import { SimpleCountrySelect } from '@/components/enhanced-country-select'
-import { useDictionaryOptions } from '@/lib/dictionary-utils'
+import type { DictionaryOption } from '@/lib/dictionary-utils'
 
 export interface ProductFiltersProps {
   onSearch: (query: Partial<ProductQuery>) => void
@@ -40,6 +40,9 @@ export interface ProductFiltersProps {
   showDateFilters?: boolean
   defaultStatus?: Product['status']
   className?: string
+  // 字典数据props，避免子组件重复调用API
+  formulations?: DictionaryOption[]
+  toxicities?: DictionaryOption[]
 }
 
 export function ProductFilters({
@@ -52,7 +55,9 @@ export function ProductFilters({
   showListingFilter = true,
   showDateFilters = false,
   defaultStatus,
-  className
+  className,
+  formulations = [],
+  toxicities = []
 }: ProductFiltersProps) {
   const [searchInput, setSearchInput] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>(defaultStatus || 'all')
@@ -66,8 +71,7 @@ export function ProductFilters({
   const [createdDateStart, setCreatedDateStart] = useState<Date>()
   const [createdDateEnd, setCreatedDateEnd] = useState<Date>()
 
-  // 获取字典数据
-  const formulations = useDictionaryOptions('formulation')
+  // 字典数据现在通过props传入，不再单独调用API
 
   const handleSearch = () => {
     const query: Partial<ProductQuery> = {

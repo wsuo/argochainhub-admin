@@ -44,8 +44,15 @@ export default function ProductsPage() {
   const unlistMutation = useUnlistProduct()
   const deleteMutation = useDeleteProduct()
 
-  // 获取字典数据
+  // 获取字典数据 - 统一在此处获取，避免子组件重复调用
   const formulations = useDictionaryOptions('formulation')
+  // 毒性是枚举类型，不从字典获取，而是硬编码选项
+  const toxicities = [
+    { value: 'LOW', label: '低毒' },
+    { value: 'MEDIUM', label: '中毒' },
+    { value: 'HIGH', label: '高毒' },
+    { value: 'ACUTE', label: '剧毒' }
+  ]
 
   // 实时更新统计数据
   useEffect(() => {
@@ -270,6 +277,8 @@ export default function ProductsPage() {
         showCountryFilter={true}
         showSupplierFilter={true}
         showListingFilter={true}
+        formulations={formulations}
+        toxicities={toxicities}
       />
 
       {/* 产品列表 */}
@@ -351,6 +360,7 @@ export default function ProductsPage() {
                   onToggleListing={handleToggleListing}
                   onDelete={handleDeleteClick}
                   formulations={formulations}
+                  toxicities={toxicities}
                 />
               </ErrorBoundary>
 
