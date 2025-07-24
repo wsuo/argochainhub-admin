@@ -13,6 +13,7 @@ import { ProductFilters } from '@/components/product/product-filters'
 import { ProductReviewDialog } from '@/components/product/product-review-dialog'
 import { ErrorDisplay } from '@/components/ui/error-display'
 import { LoadingState, StatCardSkeleton } from '@/components/ui/loading-state'
+import { ErrorBoundary } from '@/components/error-boundary'
 import type { Product, ProductQuery } from '@/lib/types'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
 import {
@@ -339,17 +340,19 @@ export default function ProductsPage() {
             </div>
           ) : (
             <>
-              <ProductListTable
-                products={data?.data || []}
-                loading={isLoading}
-                showReviewActions={true}
-                showListingToggle={true}
-                showDeleteAction={true}
-                onReview={handleReview}
-                onToggleListing={handleToggleListing}
-                onDelete={handleDeleteClick}
-                formulations={formulations}
-              />
+              <ErrorBoundary>
+                <ProductListTable
+                  products={data?.data || []}
+                  loading={isLoading}
+                  showReviewActions={true}
+                  showListingToggle={true}
+                  showDeleteAction={true}
+                  onReview={handleReview}
+                  onToggleListing={handleToggleListing}
+                  onDelete={handleDeleteClick}
+                  formulations={formulations}
+                />
+              </ErrorBoundary>
 
               {/* 分页 */}
               {data && data.meta && (

@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { Product } from '@/lib/types'
 import { getDictionaryLabel } from '@/lib/dictionary-utils'
+import { getMultiLangText } from '@/lib/multi-lang-utils'
 
 export interface ProductListTableProps {
   products: Product[]
@@ -95,12 +96,6 @@ export function ProductListTable({
     ) : (
       <Badge variant="outline" className="gap-1"><PackageOpen className="h-3 w-3" />未上架</Badge>
     )
-  }
-
-  const getMultiLangText = (text: any, lang: 'zh-CN' | 'en' = 'zh-CN'): string => {
-    if (!text) return ''
-    if (typeof text === 'string') return text
-    return text[lang] || text['zh-CN'] || text.zh || ''
   }
 
   if (loading) {
