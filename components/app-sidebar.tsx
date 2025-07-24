@@ -4,6 +4,7 @@ import { Shield, ChevronRight } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { useNavigation, navigationConfig } from "@/components/navigation-provider"
+import { usePendingCompanies } from "@/hooks/use-api"
 
 import {
   Sidebar,
@@ -33,6 +34,10 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { isPathActive, isSectionExpanded, toggleSection } = useNavigation()
+  
+  // 获取待审核企业数量
+  const { data: pendingCompaniesData } = usePendingCompanies({ page: 1, limit: 1 })
+  const pendingCount = pendingCompaniesData?.meta?.totalItems || 0
   
   const currentUserRole = user?.role || "operations_manager"
 
@@ -109,7 +114,14 @@ export function AppSidebar() {
                                   className="w-full flex items-center gap-2 text-left min-w-0"
                                 >
                                   <span className="truncate flex-1">{subItem.title}</span>
-                                  {subItem.badge && (
+                                  {/* 动态显示待审核企业数量 */}
+                                  {subItem.key === 'pending' && pendingCount > 0 && (
+                                    <Badge variant="destructive" className="text-xs shrink-0">
+                                      {pendingCount}
+                                    </Badge>
+                                  )}
+                                  {/* 其他固定badge */}
+                                  {subItem.badge && subItem.key !== 'pending' && (
                                     <Badge variant="secondary" className="text-xs shrink-0">
                                       {subItem.badge}
                                     </Badge>
