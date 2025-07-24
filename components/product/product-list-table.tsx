@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { Product } from '@/lib/types'
 import { getDictionaryLabel } from '@/lib/dictionary-utils'
-import { getMultiLangText } from '@/lib/multi-lang-utils'
+import { getMultiLangText, safeRenderText } from '@/lib/multi-lang-utils'
 
 export interface ProductListTableProps {
   products: Product[]
@@ -157,7 +157,7 @@ export function ProductListTable({
                   )}
                   {product.registrationNumber && (
                     <div className="text-xs text-muted-foreground">
-                      登记证号: {String(product.registrationNumber)}
+                      登记证号: {safeRenderText(product.registrationNumber)}
                     </div>
                   )}
                 </div>
@@ -181,8 +181,8 @@ export function ProductListTable({
               <TableCell>
                 {product.supplier ? (
                   <div>
-                    <div className="font-medium">{String(product.supplier.name || '')}</div>
-                    <div className="text-sm text-muted-foreground">{String(product.supplier.country || '')}</div>
+                    <div className="font-medium">{safeRenderText(product.supplier.name)}</div>
+                    <div className="text-sm text-muted-foreground">{safeRenderText(product.supplier.country)}</div>
                   </div>
                 ) : (
                   <span className="text-muted-foreground">未知供应商</span>
@@ -192,7 +192,7 @@ export function ProductListTable({
               {/* 剂型 */}
               <TableCell>
                 <Badge variant="outline">
-                  {getDictionaryLabel(formulations, product.formulation, String(product.formulation))}
+                  {getDictionaryLabel(formulations, product.formulation, safeRenderText(product.formulation))}
                 </Badge>
               </TableCell>
 
@@ -204,7 +204,7 @@ export function ProductListTable({
               {/* 起订量 */}
               <TableCell>
                 <div className="text-sm">
-                  {product.minOrderQuantity?.toLocaleString()} {String(product.minOrderUnit || '')}
+                  {product.minOrderQuantity?.toLocaleString()} {safeRenderText(product.minOrderUnit)}
                 </div>
               </TableCell>
 
