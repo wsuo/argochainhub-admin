@@ -20,11 +20,12 @@ import {
   AlertTriangle,
   PackageOpen,
   Trash2,
-  Plus
+  Plus,
+  Target
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { useProduct, useReviewProduct, useListProduct, useUnlistProduct, useDeleteProduct } from '@/hooks/use-api'
+import { useProduct, useReviewProduct, useListProduct, useUnlistProduct, useDeleteProduct, useControlMethods } from '@/hooks/use-api'
 import { ProductReviewDialog } from '@/components/product/product-review-dialog'
 import type { Product } from '@/lib/types'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
@@ -50,6 +51,7 @@ export default function ProductDetailPage() {
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
 
   const { data: product, isLoading, error } = useProduct(productId)
+  const { data: controlMethods } = useControlMethods(productId)
   const reviewMutation = useReviewProduct()
   const listMutation = useListProduct()
   const unlistMutation = useUnlistProduct()
@@ -502,13 +504,80 @@ export default function ProductDetailPage() {
           </div>
           <CardDescription>
             产品的防治对象和使用方法
+            {controlMethods && controlMethods.length > 0 && ` (共 ${controlMethods.length} 个)`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>防治方法管理功能即将完成</p>
-          </div>
+          {!controlMethods || controlMethods.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">暂无防治方法</h3>
+              <p className="mb-4">还没有为该产品添加防治方法</p>
+              <Button asChild>
+                <Link href={`/content/products/${product.id}/control-methods`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  添加防治方法
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* 防治方法摘要 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{controlMethods.length}</div>
+                  <div className="text-sm text-muted-foreground">防治方法</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {new Set(controlMethods.map(m => getMultiLangText(m.target, 'zh-CN'))).size}
+                  </div>
+                  <div className="text-sm text-muted-foreground">防治对象</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {Math.min(...controlMethods.map(m => m.safetyInterval || 0))}
+                  </div>
+                  <div className="text-sm text-muted-foreground">最短安全间隔(天)</div>
+                </div>
+              </div>
+
+              {/* 防治方法列表预览 */}
+              <div className="space-y-3">
+                {controlMethods.slice(0, 3).map((method, index) => (
+                  <div key={method.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-full text-primary text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <div className="font-medium">{getMultiLangText(method.target, 'zh-CN')}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {getMultiLangText(method.method, 'zh-CN')} • {method.dosage}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge variant="outline">{method.applicationTimes}次</Badge>
+                      <Badge variant="secondary">{method.safetyInterval}天</Badge>
+                    </div>
+                  </div>
+                ))}
+
+                {controlMethods.length > 3 && (
+                  <div className="text-center py-4">
+                    <Button variant="outline" asChild>
+                      <Link href={`/content/products/${product.id}/control-methods`}>
+                        查看全部 {controlMethods.length} 个防治方法
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,8 @@ import { DataPagination } from '@/components/data-pagination'
 import { ProductListTable } from '@/components/product/product-list-table'
 import { ProductFilters } from '@/components/product/product-filters'
 import { ProductReviewDialog } from '@/components/product/product-review-dialog'
+import { ErrorDisplay } from '@/components/ui/error-display'
+import { LoadingState, StatCardSkeleton } from '@/components/ui/loading-state'
 import type { Product, ProductQuery } from '@/lib/types'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
 import {
@@ -44,8 +46,14 @@ export default function ProductsPage() {
   // 获取字典数据
   const formulations = useDictionaryOptions('formulation')
 
+  // 实时更新统计数据
+  useEffect(() => {
+    // 当产品数据更新时，自动重新计算统计数据
+    // 这里可以添加更多的实时数据处理逻辑
+  }, [data])
+
   const handleFilterChange = (newQuery: Partial<ProductQuery>) => {
-    setQuery(prev => ({ ...prev, ...newQuery }))
+    setQuery(prev => ({ ...prev, ...newQuery, page: 1 })) // 重置到第一页
   }
 
   const handlePageChange = (page: number) => {
@@ -102,14 +110,66 @@ export default function ProductsPage() {
           <h1 className="text-3xl font-bold tracking-tight">产品管理</h1>
           <p className="text-muted-foreground">管理平台上的产品信息</p>
         </div>
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            <p className="text-sm text-destructive">
-              加载产品数据失败: {(error as any).message}
-            </p>
-          </div>
+        <ErrorDisplay 
+          error={error}
+          title="加载产品数据失败"
+          showRetry={true}
+          onRetry={() => window.location.reload()}
+          showReportBug={true}
+        />
+      </div>
+    )
+  }
+
+  // 加载状态
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">产品管理</h1>
+          <p className="text-muted-foreground">管理平台上的产品信息</p>
         </div>
+        
+        {/* 统计卡片骨架屏 */}
+        <StatCardSkeleton />
+        
+        {/* 筛选器加载 */}
+        <Card>
+          <CardHeader>
+            <div className="h-6 w-24 bg-muted animate-pulse rounded" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="h-10 w-[300px] bg-muted animate-pulse rounded" />
+                <div className="h-10 w-[200px] bg-muted animate-pulse rounded" />
+                <div className="h-10 w-[80px] bg-muted animate-pulse rounded" />
+                <div className="h-10 w-[80px] bg-muted animate-pulse rounded" />
+              </div>
+              <div className="grid grid-cols-6 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-10 bg-muted animate-pulse rounded" />
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* 产品列表加载 */}
+        <Card>
+          <CardHeader>
+            <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-48 bg-muted animate-pulse rounded" />
+          </CardHeader>
+          <CardContent>
+            <LoadingState
+              type="table"
+              message="加载产品列表..."
+              description="正在获取产品数据"
+              icon="package"
+            />
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -241,24 +301,41 @@ export default function ProductsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-16 bg-muted animate-pulse rounded" />
-              ))}
-            </div>
+            <LoadingState
+              type="table"
+              message="加载产品数据..."
+              description="正在获取最新的产品信息"
+              icon="package"
+            />
           ) : data?.data.length === 0 ? (
             <div className="text-center py-12">
-              <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">暂无产品</h3>
-              <p className="text-muted-foreground mb-4">
-                当前筛选条件下没有找到产品
+              <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
+              <h3 className="text-xl font-semibold mb-2">
+                {query.search || Object.keys(query).length > 2 ? '未找到匹配的产品' : '暂无产品'}
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                {query.search || Object.keys(query).length > 2 
+                  ? '尝试调整筛选条件或搜索关键词来查找产品' 
+                  : '还没有添加任何产品，点击下方按钮开始添加第一个产品'
+                }
               </p>
-              <Button asChild>
-                <Link href="/content/products/new">
-                  <Plus className="h-4 w-4 mr-2" />
-                  创建第一个产品
-                </Link>
-              </Button>
+              <div className="flex gap-3 justify-center">
+                {(query.search || Object.keys(query).length > 2) ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setQuery({ page: 1, limit: 20 })}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    清除筛选条件
+                  </Button>
+                ) : null}
+                <Button asChild>
+                  <Link href="/content/products/new">
+                    <Plus className="h-4 w-4 mr-2" />
+                    {query.search || Object.keys(query).length > 2 ? '新建产品' : '创建第一个产品'}
+                  </Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <>

@@ -70,7 +70,12 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     
     // 产品相关页面
     if (pathname.startsWith('/content/products/') && !pathname.startsWith('/content/products/pending') && !pathname.startsWith('/content/products/new')) {
-      currentPath = '/content/products'
+      // 防治方法管理页面也应该激活产品管理
+      if (pathname.includes('/control-methods')) {
+        currentPath = '/content/products'
+      } else {
+        currentPath = '/content/products'
+      }
     }
     
     // 字典项管理页面
