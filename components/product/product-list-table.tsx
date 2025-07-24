@@ -138,11 +138,7 @@ export function ProductListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => {
-            // 调试：在控制台输出每个产品数据结构
-            console.log('Product data:', product)
-            
-            return (
+          {products.map((product) => (
             <TableRow key={product.id}>
               {/* 产品信息 */}
               <TableCell>
@@ -316,8 +312,7 @@ export function ProductListTable({
                 </DropdownMenu>
               </TableCell>
             </TableRow>
-            )
-          })}
+          ))}
         </TableBody>
       </Table>
     </div>
