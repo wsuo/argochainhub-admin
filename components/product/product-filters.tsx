@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -112,17 +112,53 @@ export function ProductFilters({
   }
 
   const handleFilterChange = (filterType: string, value: string) => {
-    // 立即搜索的筛选器
+    // 立即更新状态并构建查询对象
+    let newStatusFilter = statusFilter
+    let newFormulationFilter = formulationFilter
+    let newToxicityFilter = toxicityFilter
+    let newCountryFilter = countryFilter
+    let newListingFilter = listingFilter
+    
+    // 根据变化的类型更新对应的筛选条件
+    switch (filterType) {
+      case 'status':
+        newStatusFilter = value
+        setStatusFilter(value)
+        break
+      case 'formulation':
+        newFormulationFilter = value
+        setFormulationFilter(value)
+        break
+      case 'toxicity':
+        newToxicityFilter = value
+        setToxicityFilter(value)
+        break
+      case 'country':
+        newCountryFilter = value
+        setCountryFilter(value)
+        break
+      case 'listing':
+        newListingFilter = value
+        setListingFilter(value)
+        break
+    }
+    
+    // 使用最新的值构建查询对象
     const query: Partial<ProductQuery> = {
       search: searchInput.trim() || undefined,
-      status: filterType === 'status' ? (value === 'all' ? undefined : value as Product['status']) : (statusFilter === 'all' ? undefined : statusFilter as Product['status']),
-      formulation: filterType === 'formulation' ? (value === 'all' ? undefined : value) : (formulationFilter === 'all' ? undefined : formulationFilter),
-      toxicity: filterType === 'toxicity' ? (value === 'all' ? undefined : value as Product['toxicity']) : (toxicityFilter === 'all' ? undefined : toxicityFilter as Product['toxicity']),
-      country: filterType === 'country' ? (value === 'all' ? undefined : value) : (countryFilter === 'all' ? undefined : countryFilter),
-      isListed: filterType === 'listing' ? (value === 'all' ? undefined : value === 'listed') : (listingFilter === 'all' ? undefined : listingFilter === 'listed'),
+      status: newStatusFilter === 'all' ? undefined : newStatusFilter as Product['status'],
+      formulation: newFormulationFilter === 'all' ? undefined : newFormulationFilter,
+      toxicity: newToxicityFilter === 'all' ? undefined : newToxicityFilter as Product['toxicity'],
+      country: newCountryFilter === 'all' ? undefined : newCountryFilter,
+      isListed: newListingFilter === 'all' ? undefined : newListingFilter === 'listed',
       supplierName: supplierFilter.trim() || undefined,
+      effectiveDateStart: effectiveDateStart ? format(effectiveDateStart, 'yyyy-MM-dd') : undefined,
+      effectiveDateEnd: effectiveDateEnd ? format(effectiveDateEnd, 'yyyy-MM-dd') : undefined,
+      createdStartDate: createdDateStart ? format(createdDateStart, 'yyyy-MM-dd') : undefined,
+      createdEndDate: createdDateEnd ? format(createdDateEnd, 'yyyy-MM-dd') : undefined,
       page: 1
     }
+    
     onSearch(query)
   }
 
