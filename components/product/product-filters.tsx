@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -111,56 +111,75 @@ export function ProductFilters({
     onSearch(query)
   }
 
-  const handleFilterChange = (filterType: string, value: string) => {
-    // 立即更新状态并构建查询对象
-    let newStatusFilter = statusFilter
-    let newFormulationFilter = formulationFilter
-    let newToxicityFilter = toxicityFilter
-    let newCountryFilter = countryFilter
-    let newListingFilter = listingFilter
-    
-    // 根据变化的类型更新对应的筛选条件
-    switch (filterType) {
-      case 'status':
-        newStatusFilter = value
-        setStatusFilter(value)
-        break
-      case 'formulation':
-        newFormulationFilter = value
-        setFormulationFilter(value)
-        break
-      case 'toxicity':
-        newToxicityFilter = value
-        setToxicityFilter(value)
-        break
-      case 'country':
-        newCountryFilter = value
-        setCountryFilter(value)
-        break
-      case 'listing':
-        newListingFilter = value
-        setListingFilter(value)
-        break
+  // 创建稳定的筛选处理函数
+  const handleFilterChange = useCallback((filterType: string, value: string) => {
+    // 使用函数式状态更新，确保获取最新状态
+    const updateFiltersAndSearch = () => {
+      let newStatusFilter = statusFilter
+      let newFormulationFilter = formulationFilter
+      let newToxicityFilter = toxicityFilter
+      let newCountryFilter = countryFilter
+      let newListingFilter = listingFilter
+      
+      // 根据变化的类型更新对应的筛选条件
+      switch (filterType) {
+        case 'status':
+          newStatusFilter = value
+          setStatusFilter(value)
+          break
+        case 'formulation':
+          newFormulationFilter = value
+          setFormulationFilter(value)
+          break
+        case 'toxicity':
+          newToxicityFilter = value
+          setToxicityFilter(value)
+          break
+        case 'country':
+          newCountryFilter = value
+          setCountryFilter(value)
+          break
+        case 'listing':
+          newListingFilter = value
+          setListingFilter(value)
+          break
+      }
+      
+      // 使用最新的值构建查询对象
+      const query: Partial<ProductQuery> = {
+        search: searchInput.trim() || undefined,
+        status: newStatusFilter === 'all' ? undefined : newStatusFilter as Product['status'],
+        formulation: newFormulationFilter === 'all' ? undefined : newFormulationFilter,
+        toxicity: newToxicityFilter === 'all' ? undefined : newToxicityFilter as Product['toxicity'],
+        country: newCountryFilter === 'all' ? undefined : newCountryFilter,
+        isListed: newListingFilter === 'all' ? undefined : newListingFilter === 'listed',
+        supplierName: supplierFilter.trim() || undefined,
+        effectiveDateStart: effectiveDateStart ? format(effectiveDateStart, 'yyyy-MM-dd') : undefined,
+        effectiveDateEnd: effectiveDateEnd ? format(effectiveDateEnd, 'yyyy-MM-dd') : undefined,
+        createdStartDate: createdDateStart ? format(createdDateStart, 'yyyy-MM-dd') : undefined,
+        createdEndDate: createdDateEnd ? format(createdDateEnd, 'yyyy-MM-dd') : undefined,
+        page: 1
+      }
+      
+      onSearch(query)
     }
-    
-    // 使用最新的值构建查询对象
-    const query: Partial<ProductQuery> = {
-      search: searchInput.trim() || undefined,
-      status: newStatusFilter === 'all' ? undefined : newStatusFilter as Product['status'],
-      formulation: newFormulationFilter === 'all' ? undefined : newFormulationFilter,
-      toxicity: newToxicityFilter === 'all' ? undefined : newToxicityFilter as Product['toxicity'],
-      country: newCountryFilter === 'all' ? undefined : newCountryFilter,
-      isListed: newListingFilter === 'all' ? undefined : newListingFilter === 'listed',
-      supplierName: supplierFilter.trim() || undefined,
-      effectiveDateStart: effectiveDateStart ? format(effectiveDateStart, 'yyyy-MM-dd') : undefined,
-      effectiveDateEnd: effectiveDateEnd ? format(effectiveDateEnd, 'yyyy-MM-dd') : undefined,
-      createdStartDate: createdDateStart ? format(createdDateStart, 'yyyy-MM-dd') : undefined,
-      createdEndDate: createdDateEnd ? format(createdDateEnd, 'yyyy-MM-dd') : undefined,
-      page: 1
-    }
-    
-    onSearch(query)
-  }
+
+    // 立即执行更新
+    updateFiltersAndSearch()
+  }, [
+    statusFilter,
+    formulationFilter,
+    toxicityFilter,
+    countryFilter,
+    listingFilter,
+    searchInput,
+    supplierFilter,
+    effectiveDateStart,
+    effectiveDateEnd,
+    createdDateStart,
+    createdDateEnd,
+    onSearch
+  ])
 
   const hasActiveFilters = () => {
     return (statusFilter !== (defaultStatus || 'all')) || 
@@ -235,10 +254,7 @@ export function ProductFilters({
               <div>
                 <Select
                   value={statusFilter}
-                  onValueChange={(value) => {
-                    setStatusFilter(value)
-                    handleFilterChange('status', value)
-                  }}
+                  onValueChange={(value) => handleFilterChange('status', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="所有状态" />
@@ -259,10 +275,7 @@ export function ProductFilters({
               <div>
                 <Select
                   value={formulationFilter}
-                  onValueChange={(value) => {
-                    setFormulationFilter(value)
-                    handleFilterChange('formulation', value)
-                  }}
+                  onValueChange={(value) => handleFilterChange('formulation', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="所有剂型" />
@@ -284,10 +297,7 @@ export function ProductFilters({
               <div>
                 <Select
                   value={toxicityFilter}
-                  onValueChange={(value) => {
-                    setToxicityFilter(value)
-                    handleFilterChange('toxicity', value)
-                  }}
+                  onValueChange={(value) => handleFilterChange('toxicity', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="所有毒性" />
@@ -309,10 +319,7 @@ export function ProductFilters({
               <div>
                 <SimpleCountrySelect
                   value={countryFilter}
-                  onValueChange={(value) => {
-                    setCountryFilter(value)
-                    handleFilterChange('country', value)
-                  }}
+                  onValueChange={(value) => handleFilterChange('country', value)}
                   includeAll={true}
                   allLabel="所有国家"
                   placeholder="所有国家"
@@ -325,10 +332,7 @@ export function ProductFilters({
               <div>
                 <Select
                   value={listingFilter}
-                  onValueChange={(value) => {
-                    setListingFilter(value)
-                    handleFilterChange('listing', value)
-                  }}
+                  onValueChange={(value) => handleFilterChange('listing', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="上架状态" />
