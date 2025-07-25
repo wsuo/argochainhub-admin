@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -33,6 +33,19 @@ export default function ProductsPage() {
     limit: 20,
   })
   
+  // 状态提升：将所有筛选状态从ProductFilters提升到父组件
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [formulationFilter, setFormulationFilter] = useState('all')
+  const [toxicityFilter, setToxicityFilter] = useState('all')
+  const [countryFilter, setCountryFilter] = useState('all')
+  const [listingFilter, setListingFilter] = useState('all')
+  const [searchInput, setSearchInput] = useState('')
+  const [supplierFilter, setSupplierFilter] = useState('')
+  const [effectiveDateStart, setEffectiveDateStart] = useState<Date>()
+  const [effectiveDateEnd, setEffectiveDateEnd] = useState<Date>()
+  const [createdDateStart, setCreatedDateStart] = useState<Date>()
+  const [createdDateEnd, setCreatedDateEnd] = useState<Date>()
+  
   const [reviewProduct, setReviewProduct] = useState<Product | null>(null)
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -54,9 +67,9 @@ export default function ProductsPage() {
     // 这里可以添加更多的实时数据处理逻辑
   }, [data])
 
-  const handleFilterChange = (newQuery: Partial<ProductQuery>) => {
-    setQuery(prev => ({ ...prev, ...newQuery, page: 1 })) // 重置到第一页
-  }
+  const handleFilterChange = useCallback((newQuery: Partial<ProductQuery>) => {
+    setQuery(prev => ({ ...prev, ...newQuery, page: 1 }))
+  }, [])
 
   const handlePageChange = (page: number) => {
     setQuery(prev => ({ ...prev, page }))
@@ -123,8 +136,10 @@ export default function ProductsPage() {
     )
   }
 
-  // 加载状态
-  if (isLoading) {
+  // 如果是初始加载（data为undefined），显示完整的加载状态
+  const isInitialLoading = isLoading && !data
+
+  if (isInitialLoading) {
     return (
       <div className="space-y-6">
         <div>
@@ -273,6 +288,29 @@ export default function ProductsPage() {
         showListingFilter={true}
         formulations={formulations}
         toxicities={toxicities}
+        // 状态提升：传递所有状态值和更新函数
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        formulationFilter={formulationFilter}
+        setFormulationFilter={setFormulationFilter}
+        toxicityFilter={toxicityFilter}
+        setToxicityFilter={setToxicityFilter}
+        countryFilter={countryFilter}
+        setCountryFilter={setCountryFilter}
+        listingFilter={listingFilter}
+        setListingFilter={setListingFilter}
+        searchInput={searchInput}
+        setSearchInput={setSearchInput}
+        supplierFilter={supplierFilter}
+        setSupplierFilter={setSupplierFilter}
+        effectiveDateStart={effectiveDateStart}
+        setEffectiveDateStart={setEffectiveDateStart}
+        effectiveDateEnd={effectiveDateEnd}
+        setEffectiveDateEnd={setEffectiveDateEnd}
+        createdDateStart={createdDateStart}
+        setCreatedDateStart={setCreatedDateStart}
+        createdDateEnd={createdDateEnd}
+        setCreatedDateEnd={setCreatedDateEnd}
       />
 
       {/* 产品列表 */}
@@ -327,7 +365,21 @@ export default function ProductsPage() {
                 {(query.search || Object.keys(query).length > 2) ? (
                   <Button 
                     variant="outline" 
-                    onClick={() => setQuery({ page: 1, limit: 20 })}
+                    onClick={() => {
+                      // 重置所有筛选状态
+                      setStatusFilter('all')
+                      setFormulationFilter('all')
+                      setToxicityFilter('all')
+                      setCountryFilter('all')
+                      setListingFilter('all')
+                      setSearchInput('')
+                      setSupplierFilter('')
+                      setEffectiveDateStart(undefined)
+                      setEffectiveDateEnd(undefined)
+                      setCreatedDateStart(undefined)
+                      setCreatedDateEnd(undefined)
+                      setQuery({ page: 1, limit: 20 })
+                    }}
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     清除筛选条件

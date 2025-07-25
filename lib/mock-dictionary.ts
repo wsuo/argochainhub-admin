@@ -24,6 +24,28 @@ export const mockDictionaryData = {
     { value: 'fertilizer_buyer', label: '化肥采购商' },
     { value: 'distributor', label: '分销商' },
     { value: 'manufacturer', label: '制造商' }
+  ],
+  
+  // 剂型字典数据
+  formulation: [
+    { value: 'SC', label: '悬浮剂', description: '悬浮剂（Suspension Concentrate）' },
+    { value: 'WG', label: '水分散粒剂', description: '水分散粒剂（Water Dispersible Granule）' },
+    { value: 'WP', label: '可湿性粉剂', description: '可湿性粉剂（Wettable Powder）' },
+    { value: 'EC', label: '乳油', description: '乳油（Emulsifiable Concentrate）' },
+    { value: 'EW', label: '水乳剂', description: '水乳剂（Emulsion in Water）' },
+    { value: 'SL', label: '水剂', description: '水剂（Soluble Liquid）' },
+    { value: 'DP', label: '粉剂', description: '粉剂（Dust Powder）' },
+    { value: 'GR', label: '颗粒剂', description: '颗粒剂（Granule）' },
+    { value: 'AS', label: '水剂', description: '水剂（Aqueous Solution）' },
+    { value: 'BK', label: '菌饼', description: '菌饼（Bacterial Cake）' }
+  ],
+  
+  // 毒性等级字典数据
+  toxicity: [
+    { value: 'LOW', label: '低毒', description: '低毒性农药' },
+    { value: 'MEDIUM', label: '中等毒', description: '中等毒性农药' },
+    { value: 'HIGH', label: '高毒', description: '高毒性农药' },
+    { value: 'ACUTE', label: '剧毒', description: '剧毒性农药' }
   ]
 }
 

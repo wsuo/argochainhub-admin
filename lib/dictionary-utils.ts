@@ -31,12 +31,15 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
   const { data: dictionary, isLoading, error } = useDictionary(code)
   
   return useMemo(() => {
-    console.log(`🔍 字典数据调试 (${code}):`, {
-      dictionary,
-      isLoading,
-      error,
-      dictionaryType: typeof dictionary
-    })
+    // 减少调试日志输出，避免干扰
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 字典数据调试 (${code}):`, {
+        hasData: !!dictionary,
+        isLoading,
+        hasError: !!error,
+        dataLength: dictionary?.items?.length || (Array.isArray(dictionary) ? dictionary.length : 0)
+      })
+    }
     
     // 如果API数据加载成功，使用API数据
     if (dictionary) {
@@ -51,17 +54,21 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
         items = dictionary
       }
       
-      console.log(`🔍 ${code} 字典原始items:`, items.slice(0, 3))
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔍 ${code} 字典原始items:`, items.slice(0, 2))
+      }
       
       if (items.length > 0) {
         // 检测数据结构并适配
         const firstItem = items[0]
         const isNewFormat = firstItem?.code !== undefined && firstItem?.name !== undefined
         
-        console.log(`🔍 ${code} 字典格式检测:`, {
-          isNewFormat,
-          firstItem: firstItem
-        })
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🔍 ${code} 字典格式检测:`, {
+            isNewFormat,
+            sampleItem: { code: firstItem?.code, hasName: !!firstItem?.name }
+          })
+        }
         
         if (isNewFormat) {
           // 新格式：{ code, name: {zh-CN, en, es}, isActive, ... }
@@ -80,7 +87,9 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
               }
             }))
           
-          console.log(`🔍 ${code} 字典处理结果:`, result.slice(0, 3))
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🔍 ${code} 字典处理结果:`, result.slice(0, 2))
+          }
           return result
         } else {
           // 旧格式：{ value, labelZh, labelEn, status, ... }
@@ -99,7 +108,9 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
               }
             }))
           
-          console.log(`🔍 ${code} 字典处理结果 (旧格式):`, result.slice(0, 3))
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🔍 ${code} 字典处理结果 (旧格式):`, result.slice(0, 2))
+          }
           return result
         }
       }
@@ -107,7 +118,9 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
     
     // 如果API数据不可用，使用模拟数据
     const mockData = getDictionaryData(code)
-    console.log(`🔍 ${code} 使用模拟数据:`, mockData.slice(0, 3))
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 ${code} 使用模拟数据:`, mockData.length)
+    }
     return mockData.map(item => ({
       value: item.value,
       label: item.label,
