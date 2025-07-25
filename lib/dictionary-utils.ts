@@ -31,6 +31,13 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
   const { data: dictionary, isLoading, error } = useDictionary(code)
   
   return useMemo(() => {
+    console.log(`🔍 字典数据调试 (${code}):`, {
+      dictionary,
+      isLoading,
+      error,
+      dictionaryType: typeof dictionary
+    })
+    
     // 如果API数据加载成功，使用API数据
     if (dictionary) {
       let items = []
@@ -44,14 +51,21 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
         items = dictionary
       }
       
+      console.log(`🔍 ${code} 字典原始items:`, items.slice(0, 3))
+      
       if (items.length > 0) {
         // 检测数据结构并适配
         const firstItem = items[0]
         const isNewFormat = firstItem?.code !== undefined && firstItem?.name !== undefined
         
+        console.log(`🔍 ${code} 字典格式检测:`, {
+          isNewFormat,
+          firstItem: firstItem
+        })
+        
         if (isNewFormat) {
           // 新格式：{ code, name: {zh-CN, en, es}, isActive, ... }
-          return items
+          const result = items
             .filter(item => includeDisabled || item.isActive !== false)
             .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
             .map(item => ({
@@ -65,9 +79,12 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
                 id: item.id
               }
             }))
+          
+          console.log(`🔍 ${code} 字典处理结果:`, result.slice(0, 3))
+          return result
         } else {
           // 旧格式：{ value, labelZh, labelEn, status, ... }
-          return items
+          const result = items
             .filter(item => includeDisabled || item.status === 'active')
             .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
             .map(item => ({
@@ -81,12 +98,16 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
                 ...item.extra
               }
             }))
+          
+          console.log(`🔍 ${code} 字典处理结果 (旧格式):`, result.slice(0, 3))
+          return result
         }
       }
     }
     
     // 如果API数据不可用，使用模拟数据
     const mockData = getDictionaryData(code)
+    console.log(`🔍 ${code} 使用模拟数据:`, mockData.slice(0, 3))
     return mockData.map(item => ({
       value: item.value,
       label: item.label,

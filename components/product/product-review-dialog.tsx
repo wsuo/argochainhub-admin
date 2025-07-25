@@ -28,6 +28,8 @@ import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { Product } from '@/lib/types'
 import { getDictionaryLabel } from '@/lib/dictionary-utils'
+import { getMultiLangText, safeRenderText } from '@/lib/multi-lang-utils'
+import type { DictionaryOption } from '@/lib/dictionary-utils'
 
 export interface ProductReviewDialogProps {
   product: Product | null
@@ -35,7 +37,8 @@ export interface ProductReviewDialogProps {
   onOpenChange: (open: boolean) => void
   onConfirm: (approved: boolean, reason: string) => void
   loading?: boolean
-  formulations?: Array<{ value: string; label: string }>
+  formulations?: DictionaryOption[]
+  toxicities?: DictionaryOption[]
 }
 
 export function ProductReviewDialog({
@@ -44,7 +47,8 @@ export function ProductReviewDialog({
   onOpenChange,
   onConfirm,
   loading = false,
-  formulations = []
+  formulations = [],
+  toxicities = []
 }: ProductReviewDialogProps) {
   const [reason, setReason] = useState('')
   const [selectedAction, setSelectedAction] = useState<'approve' | 'reject' | null>(null)
@@ -62,25 +66,52 @@ export function ProductReviewDialog({
     }
   }
 
-  const getMultiLangText = (text: any, lang: 'zh-CN' | 'en' = 'zh-CN'): string => {
-    if (!text) return ''
-    if (typeof text === 'string') return text
-    return text[lang] || text['zh-CN'] || text.zh || ''
-  }
 
   const getToxicityBadge = (toxicity: Product['toxicity']) => {
-    switch (toxicity) {
-      case 'LOW':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">低毒</Badge>
-      case 'MEDIUM':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">中毒</Badge>
-      case 'HIGH':
-        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">高毒</Badge>
-      case 'ACUTE':
-        return <Badge variant="destructive">剧毒</Badge>
-      default:
-        return <Badge variant="outline">{toxicity}</Badge>
+    console.log('🔍 产品审核对话框 - 毒性数据调试:', {
+      toxicity,
+      toxicityType: typeof toxicity,
+      toxicities: toxicities.length > 0 ? toxicities.slice(0, 3) : '字典未加载'
+    })
+    
+    if (!toxicity) {
+      return <Badge variant="outline" className="text-muted-foreground">未设置</Badge>
     }
+    
+    // 从字典中获取标签 - 需要将数字转换为字符串来匹配字典的code
+    const toxicityCode = String(toxicity)
+    const label = getDictionaryLabel(toxicities, toxicityCode, toxicityCode)
+    
+    console.log('🔍 毒性标签映射 (审核对话框):', {
+      原始值: toxicity,
+      转换后code: toxicityCode,
+      匹配到的标签: label
+    })
+    
+    // 根据毒性等级设置不同颜色
+    const colorClass = (() => {
+      switch (toxicityCode) {
+        case '1': // 微毒
+        case '6': // 微毒(原药高毒)
+          return 'bg-blue-100 text-blue-800'
+        case '2': // 低毒  
+        case '8': // 低毒(原药高毒)
+        case '9': // 低毒(原药剧毒)
+          return 'bg-green-100 text-green-800'
+        case '3': // 中等毒
+        case '10': // 中等毒(原药高毒)
+        case '11': // 中等毒(原药剧毒)
+          return 'bg-yellow-100 text-yellow-800'
+        case '4': // 高毒
+          return 'bg-orange-100 text-orange-800'
+        case '5': // 剧毒
+          return 'bg-red-100 text-red-800'
+        default:
+          return 'bg-gray-100 text-gray-800'
+      }
+    })()
+    
+    return <Badge variant="secondary" className={colorClass}>{label}</Badge>
   }
 
   if (!product) return null
@@ -130,9 +161,9 @@ export function ProductReviewDialog({
                   <Label className="text-sm font-medium">供应商</Label>
                   <div className="mt-1 flex items-center gap-2">
                     <Building className="h-4 w-4 text-muted-foreground" />
-                    <span>{product.supplier?.name || '未知供应商'}</span>
+                    <span>{safeRenderText(product.supplier?.name, '未知供应商')}</span>
                     {product.supplier?.country && (
-                      <Badge variant="outline">{product.supplier.country}</Badge>
+                      <Badge variant="outline">{safeRenderText(product.supplier.country)}</Badge>
                     )}
                   </div>
                 </div>

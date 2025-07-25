@@ -258,10 +258,11 @@ export function ProductFilters({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">所有毒性</SelectItem>
-                    <SelectItem value="LOW">低毒</SelectItem>
-                    <SelectItem value="MEDIUM">中毒</SelectItem>
-                    <SelectItem value="HIGH">高毒</SelectItem>
-                    <SelectItem value="ACUTE">剧毒</SelectItem>
+                    {toxicities.map((toxicity) => (
+                      <SelectItem key={toxicity.value} value={toxicity.value}>
+                        {toxicity.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

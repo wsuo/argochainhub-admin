@@ -30,6 +30,7 @@ import { ProductReviewDialog } from '@/components/product/product-review-dialog'
 import type { Product } from '@/lib/types'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
 import { getDictionaryLabel } from '@/lib/dictionary-utils'
+import { getMultiLangText, safeRenderText } from '@/lib/multi-lang-utils'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +60,7 @@ export default function ProductDetailPage() {
 
   // 获取字典数据
   const formulations = useDictionaryOptions('formulation')
+  const toxicities = useDictionaryOptions('toxicity')
 
   const handleReview = (approved: boolean) => {
     if (product) {
@@ -111,18 +113,50 @@ export default function ProductDetailPage() {
   }
 
   const getToxicityBadge = (toxicity: Product['toxicity']) => {
-    switch (toxicity) {
-      case 'LOW':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">低毒</Badge>
-      case 'MEDIUM':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">中毒</Badge>
-      case 'HIGH':
-        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">高毒</Badge>
-      case 'ACUTE':
-        return <Badge variant="destructive">剧毒</Badge>
-      default:
-        return <Badge variant="outline">{toxicity}</Badge>
+    console.log('🔍 产品详情页面 - 毒性数据调试:', {
+      toxicity,
+      toxicityType: typeof toxicity,
+      toxicities: toxicities.length > 0 ? toxicities.slice(0, 3) : '字典未加载'
+    })
+    
+    if (!toxicity) {
+      return <Badge variant="outline" className="text-muted-foreground">未设置</Badge>
     }
+    
+    // 从字典中获取标签 - 需要将数字转换为字符串来匹配字典的code
+    const toxicityCode = String(toxicity)
+    const label = getDictionaryLabel(toxicities, toxicityCode, toxicityCode)
+    
+    console.log('🔍 毒性标签映射:', {
+      原始值: toxicity,
+      转换后code: toxicityCode,
+      匹配到的标签: label
+    })
+    
+    // 根据毒性等级设置不同颜色
+    const colorClass = (() => {
+      switch (toxicityCode) {
+        case '1': // 微毒
+        case '6': // 微毒(原药高毒)
+          return 'bg-blue-100 text-blue-800'
+        case '2': // 低毒  
+        case '8': // 低毒(原药高毒)
+        case '9': // 低毒(原药剧毒)
+          return 'bg-green-100 text-green-800'
+        case '3': // 中等毒
+        case '10': // 中等毒(原药高毒)
+        case '11': // 中等毒(原药剧毒)
+          return 'bg-yellow-100 text-yellow-800'
+        case '4': // 高毒
+          return 'bg-orange-100 text-orange-800'
+        case '5': // 剧毒
+          return 'bg-red-100 text-red-800'
+        default:
+          return 'bg-gray-100 text-gray-800'
+      }
+    })()
+    
+    return <Badge variant="secondary" className={colorClass}>{label}</Badge>
   }
 
   const getListingBadge = (isListed: boolean) => {
@@ -133,11 +167,6 @@ export default function ProductDetailPage() {
     )
   }
 
-  const getMultiLangText = (text: any, lang: 'zh-CN' | 'en' = 'zh-CN'): string => {
-    if (!text) return ''
-    if (typeof text === 'string') return text
-    return text[lang] || text['zh-CN'] || text.zh || ''
-  }
 
   if (isLoading) {
     return (
@@ -327,9 +356,9 @@ export default function ProductDetailPage() {
               <Label className="text-sm font-medium">供应商</Label>
               <div className="mt-1 flex items-center gap-2">
                 <Building className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{product.supplier?.name || '未知供应商'}</span>
+                <span className="font-medium">{safeRenderText(product.supplier?.name, '未知供应商')}</span>
                 {product.supplier?.country && (
-                  <Badge variant="outline">{product.supplier.country}</Badge>
+                  <Badge variant="outline">{safeRenderText(product.supplier.country)}</Badge>
                 )}
               </div>
             </div>
@@ -338,7 +367,16 @@ export default function ProductDetailPage() {
               <Label className="text-sm font-medium">剂型</Label>
               <div className="mt-1">
                 <Badge variant="outline" className="text-base px-3 py-1">
-                  {getDictionaryLabel(formulations, product.formulation, product.formulation)}
+                  {(() => {
+                    const formulationLabel = getDictionaryLabel(formulations, product.formulation, product.formulation)
+                    console.log('🔍 产品详情页面 - 剂型数据调试:', {
+                      formulation: product.formulation,
+                      formulationType: typeof product.formulation,
+                      formulations: formulations.length > 0 ? formulations.slice(0, 3) : '字典未加载',
+                      匹配到的标签: formulationLabel
+                    })
+                    return formulationLabel
+                  })()}
                 </Badge>
               </div>
             </div>
@@ -352,13 +390,13 @@ export default function ProductDetailPage() {
 
             <div>
               <Label className="text-sm font-medium">总含量</Label>
-              <div className="mt-1 font-medium">{product.totalContent}</div>
+              <div className="mt-1 font-medium">{safeRenderText(product.totalContent)}</div>
             </div>
 
             <div>
               <Label className="text-sm font-medium">最低起订量</Label>
               <div className="mt-1 font-medium">
-                {product.minOrderQuantity?.toLocaleString()} {product.minOrderUnit}
+                {product.minOrderQuantity?.toLocaleString()} {safeRenderText(product.minOrderUnit)}
               </div>
             </div>
           </div>
@@ -378,13 +416,13 @@ export default function ProductDetailPage() {
             <div>
               <Label className="text-sm font-medium">登记证号</Label>
               <div className="mt-1 font-mono bg-muted px-3 py-2 rounded-lg">
-                {product.registrationNumber || '未填写'}
+                {safeRenderText(product.registrationNumber, '未填写')}
               </div>
             </div>
 
             <div>
               <Label className="text-sm font-medium">登记证持有人</Label>
-              <div className="mt-1 font-medium">{product.registrationHolder || '未填写'}</div>
+              <div className="mt-1 font-medium">{safeRenderText(product.registrationHolder, '未填写')}</div>
             </div>
 
             <div>
@@ -433,7 +471,7 @@ export default function ProductDetailPage() {
                       <div className="text-sm text-muted-foreground">{getMultiLangText(ingredient?.name, 'en')}</div>
                     )}
                   </div>
-                  <Badge variant="secondary" className="text-base px-3 py-1">{ingredient?.content}</Badge>
+                  <Badge variant="secondary" className="text-base px-3 py-1">{safeRenderText(ingredient?.content)}</Badge>
                 </div>
               ))}
           </CardContent>
@@ -452,7 +490,7 @@ export default function ProductDetailPage() {
                 <Label className="text-sm font-medium">产品品类</Label>
                 <div className="mt-1">
                   <Badge variant="outline" className="text-base px-3 py-1">
-                    {product.details.productCategory}
+                    {safeRenderText(product.details.productCategory)}
                   </Badge>
                 </div>
               </div>
@@ -463,7 +501,7 @@ export default function ProductDetailPage() {
                 <Label className="text-sm font-medium">出口限制国家</Label>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {product.details.exportRestrictedCountries.map((country, index) => (
-                    <Badge key={index} variant="destructive">{country}</Badge>
+                    <Badge key={index} variant="destructive">{safeRenderText(country)}</Badge>
                   ))}
                 </div>
               </div>
@@ -473,7 +511,7 @@ export default function ProductDetailPage() {
               <div>
                 <Label className="text-sm font-medium">产品描述</Label>
                 <div className="mt-1 p-4 bg-muted rounded-lg">
-                  <p className="whitespace-pre-wrap">{product.details.description}</p>
+                  <p className="whitespace-pre-wrap">{safeRenderText(product.details.description)}</p>
                 </div>
               </div>
             )}
@@ -482,7 +520,7 @@ export default function ProductDetailPage() {
               <div>
                 <Label className="text-sm font-medium">备注</Label>
                 <div className="mt-1 p-4 bg-muted rounded-lg">
-                  <p className="whitespace-pre-wrap">{product.details.remarks}</p>
+                  <p className="whitespace-pre-wrap">{safeRenderText(product.details.remarks)}</p>
                 </div>
               </div>
             )}
@@ -589,6 +627,7 @@ export default function ProductDetailPage() {
         onConfirm={handleReviewConfirm}
         loading={reviewMutation.isPending}
         formulations={formulations}
+        toxicities={toxicities}
       />
     </div>
   )

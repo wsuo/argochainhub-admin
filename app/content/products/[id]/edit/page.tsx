@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,6 +30,7 @@ import {
 import { ArrowLeft, Save, Package, AlertTriangle } from 'lucide-react'
 import { useProduct, useUpdateProduct } from '@/hooks/use-api'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
+import { getMultiLangText, safeRenderText } from '@/lib/multi-lang-utils'
 import type { Product, UpdateProductRequest } from '@/lib/types'
 import { toast } from 'sonner'
 
@@ -44,15 +45,13 @@ const productFormSchema = z.object({
     'en': z.string().optional(),
   }),
   formulation: z.string().min(1, '请选择剂型'),
-  toxicity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'ACUTE'], {
-    required_error: '请选择毒性等级',
-  }),
+  toxicity: z.string().min(1, '请选择毒性等级'),
   totalContent: z.string().min(1, '总含量不能为空'),
   registrationNumber: z.string().optional(),
   registrationHolder: z.string().optional(),
   effectiveDate: z.string().optional(),
   firstApprovalDate: z.string().optional(),
-  minOrderQuantity: z.number().min(1, '最低起订量必须大于0').optional(),
+  minOrderQuantity: z.coerce.number().min(1, '最低起订量必须大于0').optional(),
   minOrderUnit: z.string().optional(),
   // 有效成分
   activeIngredient1Name: z.object({
@@ -87,6 +86,7 @@ export default function EditProductPage() {
   const { data: product, isLoading, error } = useProduct(productId)
   const updateMutation = useUpdateProduct()
   const formulations = useDictionaryOptions('formulation')
+  const toxicities = useDictionaryOptions('toxicity')
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -94,7 +94,7 @@ export default function EditProductPage() {
       name: { 'zh-CN': '', 'en': '' },
       pesticideName: { 'zh-CN': '', 'en': '' },
       formulation: '',
-      toxicity: 'LOW',
+      toxicity: '',
       totalContent: '',
       registrationNumber: '',
       registrationHolder: '',
@@ -117,14 +117,24 @@ export default function EditProductPage() {
 
   // 当产品数据加载完成时，更新表单数据
   useEffect(() => {
-    if (product) {
-      const getMultiLangText = (text: any, lang: 'zh-CN' | 'en' = 'zh-CN'): string => {
-        if (!text) return ''
-        if (typeof text === 'string') return text
-        return text[lang] || ''
-      }
-
-      form.reset({
+    // 确保产品数据和字典数据都已加载
+    if (product && formulations.length > 0 && toxicities.length > 0) {
+      console.log('🔍 产品编辑页面 - 原始产品数据:', {
+        formulation: product.formulation,
+        formulationType: typeof product.formulation,
+        toxicity: product.toxicity,
+        toxicityType: typeof product.toxicity,
+        product: product
+      })
+      
+      console.log('🔍 产品编辑页面 - 字典数据状态:', {
+        formulations: formulations.length > 0 ? formulations.slice(0, 3) : '字典未加载',
+        toxicities: toxicities.length > 0 ? toxicities.slice(0, 3) : '字典未加载',
+        formulations完整: formulations,
+        toxicities完整: toxicities
+      })
+      
+      const resetData = {
         name: {
           'zh-CN': getMultiLangText(product.name, 'zh-CN'),
           'en': getMultiLangText(product.name, 'en'),
@@ -133,37 +143,69 @@ export default function EditProductPage() {
           'zh-CN': getMultiLangText(product.pesticideName, 'zh-CN'),
           'en': getMultiLangText(product.pesticideName, 'en'),
         },
-        formulation: product.formulation || '',
-        toxicity: product.toxicity,
-        totalContent: product.totalContent || '',
-        registrationNumber: product.registrationNumber || '',
-        registrationHolder: product.registrationHolder || '',
+        formulation: String(product.formulation || ''),
+        toxicity: String(product.toxicity || ''),
+        totalContent: safeRenderText(product.totalContent),
+        registrationNumber: safeRenderText(product.registrationNumber),
+        registrationHolder: safeRenderText(product.registrationHolder),
         effectiveDate: product.effectiveDate ? product.effectiveDate.split('T')[0] : '',
         firstApprovalDate: product.firstApprovalDate ? product.firstApprovalDate.split('T')[0] : '',
-        minOrderQuantity: product.minOrderQuantity || 1,
-        minOrderUnit: product.minOrderUnit || '',
+        minOrderQuantity: product.minOrderQuantity ? Number(product.minOrderQuantity) : 1,
+        minOrderUnit: safeRenderText(product.minOrderUnit),
         activeIngredient1Name: {
           'zh-CN': getMultiLangText(product.activeIngredient1?.name, 'zh-CN'),
           'en': getMultiLangText(product.activeIngredient1?.name, 'en'),
         },
-        activeIngredient1Content: product.activeIngredient1?.content || '',
+        activeIngredient1Content: safeRenderText(product.activeIngredient1?.content),
         activeIngredient2Name: {
           'zh-CN': getMultiLangText(product.activeIngredient2?.name, 'zh-CN'),
           'en': getMultiLangText(product.activeIngredient2?.name, 'en'),
         },
-        activeIngredient2Content: product.activeIngredient2?.content || '',
+        activeIngredient2Content: safeRenderText(product.activeIngredient2?.content),
         activeIngredient3Name: {
           'zh-CN': getMultiLangText(product.activeIngredient3?.name, 'zh-CN'),
           'en': getMultiLangText(product.activeIngredient3?.name, 'en'),
         },
-        activeIngredient3Content: product.activeIngredient3?.content || '',
-        productCategory: product.details?.productCategory || '',
+        activeIngredient3Content: safeRenderText(product.activeIngredient3?.content),
+        productCategory: safeRenderText(product.details?.productCategory),
         exportRestrictedCountries: product.details?.exportRestrictedCountries?.join(', ') || '',
-        description: product.details?.description || '',
-        remarks: product.details?.remarks || '',
+        description: safeRenderText(product.details?.description),
+        remarks: safeRenderText(product.details?.remarks),
+      }
+      
+      console.log('🔍 产品编辑页面 - 表单重置数据:', {
+        formulation: resetData.formulation,
+        toxicity: resetData.toxicity,
+        resetData,
+        字典匹配检查: {
+          剂型匹配: formulations.find(f => f.value === resetData.formulation),
+          毒性匹配: toxicities.find(t => t.value === resetData.toxicity),
+          formulations前3项: formulations.slice(0, 3),
+          toxicities前3项: toxicities.slice(0, 3)
+        }
       })
+      
+      // 添加延迟确保DOM更新
+      setTimeout(() => {
+        console.log('🔍 延迟检查表单值:', {
+          formulation表单值: form.getValues('formulation'),
+          toxicity表单值: form.getValues('toxicity')
+        })
+      }, 100)
+      
+      form.reset(resetData)
+      
+      // 额外使用setValue确保Select组件正确更新
+      setTimeout(() => {
+        form.setValue('formulation', String(product.formulation || ''))
+        form.setValue('toxicity', String(product.toxicity || ''))
+        console.log('🔍 手动设置后表单值:', {
+          formulation: form.getValues('formulation'),
+          toxicity: form.getValues('toxicity')
+        })
+      }, 200)
     }
-  }, [product, form])
+  }, [product, form, formulations, toxicities])
 
   const onSubmit = async (values: ProductFormValues) => {
     try {
@@ -218,7 +260,7 @@ export default function EditProductPage() {
         data: updateData
       })
 
-      toast.success('产品信息更新成功')
+      // 成功后导航回详情页（不需要手动toast，hook已处理）
       router.push(`/content/products/${productId}`)
     } catch (error) {
       toast.error('更新失败: ' + (error as any).message)
@@ -380,18 +422,20 @@ export default function EditProductPage() {
                 </div>
 
                 {/* 剂型 */}
-                <FormField
-                  control={form.control}
+                <Controller
                   name="formulation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>剂型 *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="请选择剂型" />
-                          </SelectTrigger>
-                        </FormControl>
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <div>
+                      <Label htmlFor="formulation" className="text-sm font-medium">剂型 *</Label>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="请选择剂型" />
+                        </SelectTrigger>
                         <SelectContent>
                           {formulations.map((formulation) => (
                             <SelectItem key={formulation.value} value={formulation.value}>
@@ -400,33 +444,50 @@ export default function EditProductPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
+                      {fieldState.error && (
+                        <p className="text-sm font-medium text-destructive mt-1">
+                          {fieldState.error.message}
+                        </p>
+                      )}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        调试: 当前值={field.value}, 选项数={formulations.length}
+                      </div>
+                    </div>
                   )}
                 />
 
                 {/* 毒性等级 */}
-                <FormField
-                  control={form.control}
+                <Controller
                   name="toxicity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>毒性等级 *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="请选择毒性等级" />
-                          </SelectTrigger>
-                        </FormControl>
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <div>
+                      <Label htmlFor="toxicity" className="text-sm font-medium">毒性等级 *</Label>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="请选择毒性等级" />
+                        </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="LOW">低毒</SelectItem>
-                          <SelectItem value="MEDIUM">中毒</SelectItem>
-                          <SelectItem value="HIGH">高毒</SelectItem>
-                          <SelectItem value="ACUTE">剧毒</SelectItem>
+                          {toxicities.map((toxicity) => (
+                            <SelectItem key={toxicity.value} value={toxicity.value}>
+                              {toxicity.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
+                      {fieldState.error && (
+                        <p className="text-sm font-medium text-destructive mt-1">
+                          {fieldState.error.message}
+                        </p>
+                      )}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        调试: 当前值={field.value}, 选项数={toxicities.length}
+                      </div>
+                    </div>
                   )}
                 />
 
@@ -456,8 +517,9 @@ export default function EditProductPage() {
                         <FormControl>
                           <Input 
                             type="number" 
+                            step="0.01"
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                             placeholder="数量"
                           />
                         </FormControl>

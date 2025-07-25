@@ -79,22 +79,50 @@ export function ProductListTable({
   }
 
   const getToxicityBadge = (toxicity: Product['toxicity']) => {
+    console.log('🔍 产品列表表格 - 毒性数据调试:', {
+      toxicity,
+      toxicityType: typeof toxicity,
+      toxicities: toxicities.length > 0 ? toxicities.slice(0, 3) : '字典未加载'
+    })
+    
     if (!toxicity) {
       return <Badge variant="outline" className="text-muted-foreground">未设置</Badge>
     }
     
-    switch (toxicity) {
-      case 'LOW':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">低毒</Badge>
-      case 'MEDIUM':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">中毒</Badge>
-      case 'HIGH':
-        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">高毒</Badge>
-      case 'ACUTE':
-        return <Badge variant="destructive">剧毒</Badge>
-      default:
-        return <Badge variant="outline">{toxicity}</Badge>
-    }
+    // 从字典中获取标签 - 需要将数字转换为字符串来匹配字典的code
+    const toxicityCode = String(toxicity)
+    const label = getDictionaryLabel(toxicities, toxicityCode, toxicityCode)
+    
+    console.log('🔍 毒性标签映射 (列表表格):', {
+      原始值: toxicity,
+      转换后code: toxicityCode,
+      匹配到的标签: label
+    })
+    
+    // 根据毒性等级设置不同颜色
+    const colorClass = (() => {
+      switch (toxicityCode) {
+        case '1': // 微毒
+        case '6': // 微毒(原药高毒)
+          return 'bg-blue-100 text-blue-800'
+        case '2': // 低毒  
+        case '8': // 低毒(原药高毒)
+        case '9': // 低毒(原药剧毒)
+          return 'bg-green-100 text-green-800'
+        case '3': // 中等毒
+        case '10': // 中等毒(原药高毒)
+        case '11': // 中等毒(原药剧毒)
+          return 'bg-yellow-100 text-yellow-800'
+        case '4': // 高毒
+          return 'bg-orange-100 text-orange-800'
+        case '5': // 剧毒
+          return 'bg-red-100 text-red-800'
+        default:
+          return 'bg-gray-100 text-gray-800'
+      }
+    })()
+    
+    return <Badge variant="secondary" className={colorClass}>{label}</Badge>
   }
 
   const getListingBadge = (isListed: boolean) => {
@@ -196,7 +224,16 @@ export function ProductListTable({
               <TableCell>
                 {product.formulation ? (
                   <Badge variant="outline">
-                    {getDictionaryLabel(formulations, product.formulation, safeRenderText(product.formulation))}
+                    {(() => {
+                      const formulationLabel = getDictionaryLabel(formulations, product.formulation, safeRenderText(product.formulation))
+                      console.log('🔍 产品列表表格 - 剂型数据调试:', {
+                        formulation: product.formulation,
+                        formulationType: typeof product.formulation,  
+                        formulations: formulations.length > 0 ? formulations.slice(0, 3) : '字典未加载',
+                        匹配到的标签: formulationLabel
+                      })
+                      return formulationLabel
+                    })()}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="text-muted-foreground">

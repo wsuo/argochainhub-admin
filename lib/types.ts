@@ -103,7 +103,7 @@ export interface Product {
     country: string
   }
   formulation: string // 剂型（字典值）
-  toxicity: 'LOW' | 'MEDIUM' | 'HIGH' | 'ACUTE' // 毒性等级
+  toxicity: string | number // 毒性等级（字典code，后端可能返回数字或字符串）
   registrationNumber: string // 登记证号
   registrationHolder: string // 登记证持有人
   effectiveDate: string // 有效截止日期
