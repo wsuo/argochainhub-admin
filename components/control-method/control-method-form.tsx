@@ -86,14 +86,14 @@ export function ControlMethodForm({
 
       form.reset({
         target: {
-          'zh-CN': getMultiLangText(method.target, 'zh-CN'),
-          'en': getMultiLangText(method.target, 'en'),
+          'zh-CN': getMultiLangText(method.targetCrop, 'zh-CN'),
+          'en': getMultiLangText(method.targetCrop, 'en'),
         },
         method: {
-          'zh-CN': getMultiLangText(method.method, 'zh-CN'),
-          'en': getMultiLangText(method.method, 'en'),
+          'zh-CN': getMultiLangText(method.applicationMethod, 'zh-CN'),
+          'en': getMultiLangText(method.applicationMethod, 'en'),
         },
-        dosage: method.dosage || '',
+        dosage: getMultiLangText(method.dosage, 'zh-CN'),
         applicationTimes: method.applicationTimes || 1,
         safetyInterval: method.safetyInterval || 0,
         remarks: method.remarks || '',
@@ -116,11 +116,9 @@ export function ControlMethodForm({
       if (isEdit && method) {
         // 更新防治方法
         const updateData: UpdateControlMethodRequest = {
-          target: values.target,
-          method: values.method,
-          dosage: values.dosage,
-          applicationTimes: values.applicationTimes,
-          safetyInterval: values.safetyInterval,
+          targetCrop: values.target,
+          applicationMethod: values.method,
+          dosage: { 'zh-CN': values.dosage, 'en': values.dosage }, // 转换为多语言格式
           remarks: values.remarks || undefined,
         }
 
@@ -131,11 +129,10 @@ export function ControlMethodForm({
       } else {
         // 创建防治方法
         const createData: CreateControlMethodRequest = {
-          target: values.target,
-          method: values.method,
-          dosage: values.dosage,
-          applicationTimes: values.applicationTimes,
-          safetyInterval: values.safetyInterval,
+          targetCrop: values.target,
+          pestDisease: { 'zh-CN': '', 'en': '' }, // 暂时设为空，根据实际需求调整
+          applicationMethod: values.method,
+          dosage: { 'zh-CN': values.dosage, 'en': values.dosage }, // 转换为多语言格式
           remarks: values.remarks || undefined,
         }
 
