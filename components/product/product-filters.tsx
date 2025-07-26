@@ -138,9 +138,21 @@ function ProductFiltersComponent({
     setCreatedDateStart(undefined)
     setCreatedDateEnd(undefined)
     
+    // 构建重置后的查询对象，明确清空所有字段
     const query: Partial<ProductQuery> = {
       page: 1,
+      limit: 20,
       status: defaultStatus ? defaultStatus : undefined,
+      search: undefined,
+      formulation: undefined,
+      toxicity: undefined,
+      country: undefined,
+      supplierName: undefined,
+      isListed: undefined,
+      effectiveDateStart: undefined,
+      effectiveDateEnd: undefined,
+      createdStartDate: undefined,
+      createdEndDate: undefined,
     }
     onSearch(query)
   }
