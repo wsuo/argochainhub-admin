@@ -74,7 +74,14 @@ export function ProductListTable({
       case 'DRAFT':
         return <Badge variant="outline">草稿</Badge>
       default:
-        return <Badge>{status}</Badge>
+        // 未知状态的中文映射
+        const statusMap: Record<string, string> = {
+          'active': '已激活',
+          'inactive': '未激活', 
+          'disabled': '已禁用',
+          'suspended': '已暂停'
+        }
+        return <Badge variant="outline">{statusMap[status] || status}</Badge>
     }
   }
 

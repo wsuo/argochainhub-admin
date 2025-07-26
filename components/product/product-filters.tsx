@@ -279,7 +279,7 @@ function ProductFiltersComponent({
 
           {/* 第二行：基础筛选下拉框 */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {/* 状态筛选 */}
+            {/* 审核状态筛选 */}
             {showStatusFilter && (
               <div>
                 <Select
@@ -287,10 +287,10 @@ function ProductFiltersComponent({
                   onValueChange={(value) => handleFilterChange('status', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="所有状态" />
+                    <SelectValue placeholder="审核状态" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">所有状态</SelectItem>
+                    <SelectItem value="all">所有审核状态</SelectItem>
                     <SelectItem value="DRAFT">草稿</SelectItem>
                     <SelectItem value="PENDING_REVIEW">待审核</SelectItem>
                     <SelectItem value="ACTIVE">已通过</SelectItem>
@@ -368,7 +368,7 @@ function ProductFiltersComponent({
                     <SelectValue placeholder="上架状态" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">所有状态</SelectItem>
+                    <SelectItem value="all">全部上架状态</SelectItem>
                     <SelectItem value="listed">已上架</SelectItem>
                     <SelectItem value="unlisted">未上架</SelectItem>
                   </SelectContent>
