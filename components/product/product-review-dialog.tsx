@@ -68,12 +68,6 @@ export function ProductReviewDialog({
 
 
   const getToxicityBadge = (toxicity: Product['toxicity']) => {
-    console.log('🔍 产品审核对话框 - 毒性数据调试:', {
-      toxicity,
-      toxicityType: typeof toxicity,
-      toxicities: toxicities.length > 0 ? toxicities.slice(0, 3) : '字典未加载'
-    })
-    
     if (!toxicity) {
       return <Badge variant="outline" className="text-muted-foreground">未设置</Badge>
     }
@@ -81,12 +75,6 @@ export function ProductReviewDialog({
     // 从字典中获取标签 - 需要将数字转换为字符串来匹配字典的code
     const toxicityCode = String(toxicity)
     const label = getDictionaryLabel(toxicities, toxicityCode, toxicityCode)
-    
-    console.log('🔍 毒性标签映射 (审核对话框):', {
-      原始值: toxicity,
-      转换后code: toxicityCode,
-      匹配到的标签: label
-    })
     
     // 根据毒性等级设置不同颜色
     const colorClass = (() => {

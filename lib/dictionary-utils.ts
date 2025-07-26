@@ -7,6 +7,12 @@ import type { DictionaryItem } from './types'
 /**
  * 字典工具类 - 提供常用的字典数据获取和处理功能
  * 
+ * 特性说明：
+ * - 自动适配新旧API数据格式
+ * - 支持多语言文本处理（中文/英文/西班牙文）
+ * - 内置模拟数据回退机制
+ * - 优化的开发环境调试日志（仅在错误或特殊情况时输出）
+ * 
  * 使用示例：
  * const businessTypes = useDictionaryOptions('business_type')
  * const countries = useCountryOptions()
@@ -23,6 +29,13 @@ export interface DictionaryOption {
 
 /**
  * 获取字典选项列表Hook - 适用于下拉框等组件
+ * 
+ * 特性：
+ * - 自动处理API数据和模拟数据切换
+ * - 支持新旧数据格式自动适配
+ * - 优化的调试日志（仅在异常情况下输出）
+ * - 内置缓存机制，避免重复请求
+ * 
  * @param code 字典分类代码
  * @param includeDisabled 是否包含禁用项，默认false
  * @returns 字典选项数组
@@ -31,14 +44,13 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
   const { data: dictionary, isLoading, error } = useDictionary(code)
   
   return useMemo(() => {
-    // 减少调试日志输出，避免干扰
+    // 只在出现错误或加载失败时输出调试信息
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 字典数据调试 (${code}):`, {
-        hasData: !!dictionary,
-        isLoading,
-        hasError: !!error,
-        dataLength: dictionary?.items?.length || (Array.isArray(dictionary) ? dictionary.length : 0)
-      })
+      if (error) {
+        console.error(`❌ 字典数据加载失败 (${code}):`, error)
+      } else if (!dictionary && !isLoading && !error) {
+        console.debug(`⚠️ 字典数据为空 (${code})，将使用模拟数据`)
+      }
     }
     
     // 如果API数据加载成功，使用API数据
@@ -54,21 +66,10 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
         items = dictionary
       }
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🔍 ${code} 字典原始items:`, items.slice(0, 2))
-      }
-      
       if (items.length > 0) {
         // 检测数据结构并适配
         const firstItem = items[0]
         const isNewFormat = firstItem?.code !== undefined && firstItem?.name !== undefined
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`🔍 ${code} 字典格式检测:`, {
-            isNewFormat,
-            sampleItem: { code: firstItem?.code, hasName: !!firstItem?.name }
-          })
-        }
         
         if (isNewFormat) {
           // 新格式：{ code, name: {zh-CN, en, es}, isActive, ... }
@@ -87,9 +88,6 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
               }
             }))
           
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`🔍 ${code} 字典处理结果:`, result.slice(0, 2))
-          }
           return result
         } else {
           // 旧格式：{ value, labelZh, labelEn, status, ... }
@@ -108,9 +106,6 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
               }
             }))
           
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`🔍 ${code} 字典处理结果 (旧格式):`, result.slice(0, 2))
-          }
           return result
         }
       }
@@ -118,8 +113,9 @@ export function useDictionaryOptions(code: string, includeDisabled = false): Dic
     
     // 如果API数据不可用，使用模拟数据
     const mockData = getDictionaryData(code)
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 ${code} 使用模拟数据:`, mockData.length)
+    // 只在首次使用模拟数据时输出提示，避免重复日志
+    if (process.env.NODE_ENV === 'development' && mockData.length > 0 && !isLoading) {
+      console.debug(`📋 ${code} 使用模拟数据: ${mockData.length} 项`)
     }
     return mockData.map(item => ({
       value: item.value,
