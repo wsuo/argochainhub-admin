@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react'
-import { usePendingProducts, useReviewProduct } from '@/hooks/use-api'
+import { usePendingProducts, useReviewProduct, useBatchReviewProduct } from '@/hooks/use-api'
 import { DataPagination } from '@/components/data-pagination'
 import { ProductListTable } from '@/components/product/product-list-table'
 import { ProductFilters } from '@/components/product/product-filters'
 import { ProductReviewDialog } from '@/components/product/product-review-dialog'
+import { BatchReviewDialog } from '@/components/product/batch-review-dialog'
 import type { Product, ProductQuery } from '@/lib/types'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
 
@@ -22,9 +23,13 @@ export default function PendingProductsPage() {
   
   const [reviewProduct, setReviewProduct] = useState<Product | null>(null)
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([])
+  const [batchReviewDialogOpen, setBatchReviewDialogOpen] = useState(false)
+  const [batchReviewApproved, setBatchReviewApproved] = useState<boolean>(true)
 
   const { data, isLoading, error } = usePendingProducts(query)
   const reviewMutation = useReviewProduct()
+  const batchReviewMutation = useBatchReviewProduct()
 
   // 获取字典数据
   const formulations = useDictionaryOptions('formulation')
@@ -53,6 +58,31 @@ export default function PendingProductsPage() {
     })
     setReviewDialogOpen(false)
     setReviewProduct(null)
+  }
+
+  // 批量审核处理
+  const handleBatchReview = (approved: boolean) => {
+    if (selectedProducts.length === 0) {
+      return
+    }
+    setBatchReviewApproved(approved)
+    setBatchReviewDialogOpen(true)
+  }
+
+  const handleBatchReviewConfirm = async (reason: string) => {
+    if (selectedProducts.length === 0) return
+
+    const batchData = {
+      products: selectedProducts.map(productId => ({
+        productId,
+        approved: batchReviewApproved,
+        reason
+      }))
+    }
+
+    await batchReviewMutation.mutateAsync(batchData)
+    setBatchReviewDialogOpen(false)
+    setSelectedProducts([]) // 清空选择
   }
 
   // 计算统计数据
@@ -187,13 +217,25 @@ export default function PendingProductsPage() {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="text-green-600 hover:bg-green-50">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="text-green-600 hover:bg-green-50"
+                onClick={() => handleBatchReview(true)}
+                disabled={selectedProducts.length === 0 || batchReviewMutation.isPending}
+              >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                批量通过
+                批量通过 {selectedProducts.length > 0 && `(${selectedProducts.length})`}
               </Button>
-              <Button size="sm" variant="outline" className="text-red-600 hover:bg-red-50">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="text-red-600 hover:bg-red-50"
+                onClick={() => handleBatchReview(false)}
+                disabled={selectedProducts.length === 0 || batchReviewMutation.isPending}
+              >
                 <XCircle className="h-4 w-4 mr-2" />
-                批量拒绝
+                批量拒绝 {selectedProducts.length > 0 && `(${selectedProducts.length})`}
               </Button>
             </div>
           </div>
@@ -226,6 +268,9 @@ export default function PendingProductsPage() {
                 showReviewActions={true}
                 showListingToggle={false}
                 showDeleteAction={false}
+                showSelection={true}
+                selectedProducts={selectedProducts}
+                onSelectionChange={setSelectedProducts}
                 onReview={handleReview}
                 formulations={formulations}
               />
@@ -253,6 +298,16 @@ export default function PendingProductsPage() {
         onConfirm={handleReviewConfirm}
         loading={reviewMutation.isPending}
         formulations={formulations}
+      />
+
+      {/* 批量审核对话框 */}
+      <BatchReviewDialog
+        open={batchReviewDialogOpen}
+        onOpenChange={setBatchReviewDialogOpen}
+        onConfirm={handleBatchReviewConfirm}
+        loading={batchReviewMutation.isPending}
+        approved={batchReviewApproved}
+        selectedCount={selectedProducts.length}
       />
     </div>
   )

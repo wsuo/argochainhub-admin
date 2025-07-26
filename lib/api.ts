@@ -44,6 +44,8 @@ import type {
   CreateDictionaryItemRequest,
   UpdateDictionaryItemRequest,
   BatchImportDictionaryItemRequest,
+  BatchReviewProductRequest,
+  BatchReviewProductResponse,
 } from './types'
 
 // 认证相关API
@@ -138,6 +140,10 @@ export const productApi = {
   // 审核产品
   reviewProduct: (id: number, data: ReviewRequest): Promise<void> =>
     apiClient.post(`/admin/products/${id}/review`, data),
+  
+  // 批量审核产品
+  batchReviewProduct: (data: BatchReviewProductRequest): Promise<BatchReviewProductResponse> =>
+    apiClient.post('/admin/products/batch-review', data),
 
   // 产品上架
   listProduct: (id: number): Promise<void> =>

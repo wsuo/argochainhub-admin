@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { 
   MoreHorizontal, 
   Eye, 
@@ -44,6 +45,9 @@ export interface ProductListTableProps {
   showReviewActions?: boolean // 是否显示审核操作
   showListingToggle?: boolean // 是否显示上架/下架操作
   showDeleteAction?: boolean // 是否显示删除操作
+  showSelection?: boolean // 是否显示复选框选择
+  selectedProducts?: number[] // 已选中的产品ID列表
+  onSelectionChange?: (selectedIds: number[]) => void // 选择变化回调
   onReview?: (product: Product, approved: boolean) => void
   onToggleListing?: (productId: number, isListed: boolean) => void
   onDelete?: (productId: number) => void
@@ -57,12 +61,39 @@ export function ProductListTable({
   showReviewActions = false,
   showListingToggle = false,
   showDeleteAction = false,
+  showSelection = false,
+  selectedProducts = [],
+  onSelectionChange,
   onReview,
   onToggleListing,
   onDelete,
   formulations = [],
   toxicities = []
 }: ProductListTableProps) {
+  
+  // 处理全选/取消全选
+  const handleSelectAll = (checked: boolean) => {
+    if (!onSelectionChange) return
+    if (checked) {
+      onSelectionChange(products.map(p => p.id))
+    } else {
+      onSelectionChange([])
+    }
+  }
+
+  // 处理单个产品选择
+  const handleSelectProduct = (productId: number, checked: boolean) => {
+    if (!onSelectionChange) return
+    if (checked) {
+      onSelectionChange([...selectedProducts, productId])
+    } else {
+      onSelectionChange(selectedProducts.filter(id => id !== productId))
+    }
+  }
+
+  // 判断是否全选
+  const isAllSelected = products.length > 0 && selectedProducts.length === products.length
+  const isIndeterminate = selectedProducts.length > 0 && selectedProducts.length < products.length
   const getStatusBadge = (status: Product['status']) => {
     switch (status) {
       case 'active':
@@ -162,6 +193,15 @@ export function ProductListTable({
       <Table>
         <TableHeader>
           <TableRow>
+            {showSelection && (
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={isAllSelected}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="全选"
+                />
+              </TableHead>
+            )}
             <TableHead>产品信息</TableHead>
             <TableHead>农药名称</TableHead>
             <TableHead>供应商</TableHead>
@@ -177,6 +217,15 @@ export function ProductListTable({
         <TableBody>
           {products.map((product) => (
             <TableRow key={product.id}>
+              {showSelection && (
+                <TableCell>
+                  <Checkbox
+                    checked={selectedProducts.includes(product.id)}
+                    onCheckedChange={(checked) => handleSelectProduct(product.id, checked as boolean)}
+                    aria-label={`选择产品 ${getMultiLangText(product.name, 'zh-CN')}`}
+                  />
+                </TableCell>
+              )}
               {/* 产品信息 */}
               <TableCell>
                 <div>

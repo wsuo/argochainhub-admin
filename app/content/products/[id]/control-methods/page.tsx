@@ -11,6 +11,7 @@ import { ControlMethodList } from '@/components/control-method/control-method-li
 import { ControlMethodForm } from '@/components/control-method/control-method-form'
 import { ControlMethodBatchImport } from '@/components/control-method/control-method-batch-import'
 import type { ControlMethod } from '@/lib/types'
+import { getMultiLangText } from '@/lib/multi-lang-utils'
 
 export default function ControlMethodsPage() {
   const params = useParams()
@@ -39,12 +40,6 @@ export default function ControlMethodsPage() {
   const handleFormClose = () => {
     setFormOpen(false)
     setEditingMethod(null)
-  }
-
-  const getMultiLangText = (text: any, lang: 'zh-CN' | 'en' = 'zh-CN'): string => {
-    if (!text) return ''
-    if (typeof text === 'string') return text
-    return text[lang] || text['zh-CN'] || text.zh || ''
   }
 
   if (productLoading) {
@@ -127,22 +122,28 @@ export default function ControlMethodsPage() {
             <div>
               <div className="text-sm text-muted-foreground">产品名称</div>
               <div className="font-medium">{getMultiLangText(product.name, 'zh-CN')}</div>
-              {getMultiLangText(product.name, 'en') && (
-                <div className="text-sm text-muted-foreground">{getMultiLangText(product.name, 'en')}</div>
-              )}
+              {(() => {
+                const englishName = getMultiLangText(product.name, 'en')
+                return englishName ? (
+                  <div className="text-sm text-muted-foreground">{englishName}</div>
+                ) : null
+              })()}
             </div>
             
             <div>
               <div className="text-sm text-muted-foreground">农药名称</div>
               <div className="font-medium">{getMultiLangText(product.pesticideName, 'zh-CN')}</div>
-              {getMultiLangText(product.pesticideName, 'en') && (
-                <div className="text-sm text-muted-foreground">{getMultiLangText(product.pesticideName, 'en')}</div>
-              )}
+              {(() => {
+                const englishPesticideName = getMultiLangText(product.pesticideName, 'en')
+                return englishPesticideName ? (
+                  <div className="text-sm text-muted-foreground">{englishPesticideName}</div>
+                ) : null
+              })()}
             </div>
 
             <div>
               <div className="text-sm text-muted-foreground">供应商</div>
-              <div className="font-medium">{product.supplier?.name || '未知供应商'}</div>
+              <div className="font-medium">{product.supplier ? getMultiLangText(product.supplier.name, 'zh-CN') : '未知供应商'}</div>
               {product.supplier?.country && (
                 <div className="text-sm text-muted-foreground">{product.supplier.country}</div>
               )}

@@ -127,11 +127,6 @@ export default function ProductDetailPage() {
   }
 
   const getToxicityBadge = (toxicity: Product['toxicity']) => {
-    console.log('🔍 产品详情页面 - 毒性数据调试:', {
-      toxicity,
-      toxicityType: typeof toxicity,
-      toxicities: toxicities.length > 0 ? toxicities.slice(0, 3) : '字典未加载'
-    })
     
     if (!toxicity) {
       return <Badge variant="outline" className="text-muted-foreground">未设置</Badge>
@@ -140,12 +135,6 @@ export default function ProductDetailPage() {
     // 从字典中获取标签 - 需要将数字转换为字符串来匹配字典的code
     const toxicityCode = String(toxicity)
     const label = getDictionaryLabel(toxicities, toxicityCode, toxicityCode)
-    
-    console.log('🔍 毒性标签映射:', {
-      原始值: toxicity,
-      转换后code: toxicityCode,
-      匹配到的标签: label
-    })
     
     // 根据毒性等级设置不同颜色
     const colorClass = (() => {
@@ -350,9 +339,12 @@ export default function ProductDetailPage() {
               <Label className="text-sm font-medium">产品名称</Label>
               <div className="mt-1">
                 <div className="font-medium text-lg">{getMultiLangText(product.name, 'zh-CN')}</div>
-                {getMultiLangText(product.name, 'en') && (
-                  <div className="text-sm text-muted-foreground">{getMultiLangText(product.name, 'en')}</div>
-                )}
+                {(() => {
+                  const englishText = getMultiLangText(product.name, 'en')
+                  return englishText ? (
+                    <div className="text-sm text-muted-foreground">{englishText}</div>
+                  ) : null
+                })()}
               </div>
             </div>
 
@@ -360,9 +352,12 @@ export default function ProductDetailPage() {
               <Label className="text-sm font-medium">农药名称</Label>
               <div className="mt-1">
                 <div className="font-medium">{getMultiLangText(product.pesticideName, 'zh-CN')}</div>
-                {getMultiLangText(product.pesticideName, 'en') && (
-                  <div className="text-sm text-muted-foreground">{getMultiLangText(product.pesticideName, 'en')}</div>
-                )}
+                {(() => {
+                  const englishText = getMultiLangText(product.pesticideName, 'en')
+                  return englishText ? (
+                    <div className="text-sm text-muted-foreground">{englishText}</div>
+                  ) : null
+                })()}
               </div>
             </div>
 
@@ -381,16 +376,7 @@ export default function ProductDetailPage() {
               <Label className="text-sm font-medium">剂型</Label>
               <div className="mt-1">
                 <Badge variant="outline" className="text-base px-3 py-1">
-                  {(() => {
-                    const formulationLabel = getDictionaryLabel(formulations, product.formulation, product.formulation)
-                    console.log('🔍 产品详情页面 - 剂型数据调试:', {
-                      formulation: product.formulation,
-                      formulationType: typeof product.formulation,
-                      formulations: formulations.length > 0 ? formulations.slice(0, 3) : '字典未加载',
-                      匹配到的标签: formulationLabel
-                    })
-                    return formulationLabel
-                  })()}
+                  {getDictionaryLabel(formulations, product.formulation, product.formulation)}
                 </Badge>
               </div>
             </div>
@@ -481,9 +467,12 @@ export default function ProductDetailPage() {
                 <div key={index} className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
                   <div>
                     <div className="font-medium">{getMultiLangText(ingredient?.name, 'zh-CN')}</div>
-                    {getMultiLangText(ingredient?.name, 'en') && (
-                      <div className="text-sm text-muted-foreground">{getMultiLangText(ingredient?.name, 'en')}</div>
-                    )}
+                    {(() => {
+                      const englishText = getMultiLangText(ingredient?.name, 'en')
+                      return englishText ? (
+                        <div className="text-sm text-muted-foreground">{englishText}</div>
+                      ) : null
+                    })()}
                   </div>
                   <Badge variant="secondary" className="text-base px-3 py-1">{safeRenderText(ingredient?.content)}</Badge>
                 </div>
@@ -575,22 +564,16 @@ export default function ProductDetailPage() {
           ) : (
             <div className="space-y-4">
               {/* 防治方法摘要 */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{controlMethods.length}</div>
                   <div className="text-sm text-muted-foreground">防治方法</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {new Set(controlMethods.map(m => getMultiLangText(m.target, 'zh-CN'))).size}
+                    {new Set(controlMethods.map(m => getMultiLangText(m.targetCrop, 'zh-CN'))).size}
                   </div>
                   <div className="text-sm text-muted-foreground">防治对象</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {Math.min(...controlMethods.map(m => m.safetyInterval || 0))}
-                  </div>
-                  <div className="text-sm text-muted-foreground">最短安全间隔(天)</div>
                 </div>
               </div>
 
@@ -604,16 +587,14 @@ export default function ProductDetailPage() {
                           {index + 1}
                         </div>
                         <div>
-                          <div className="font-medium">{getMultiLangText(method.target, 'zh-CN')}</div>
+                          <div className="font-medium">{getMultiLangText(method.targetCrop, 'zh-CN')}</div>
                           <div className="text-sm text-muted-foreground">
-                            {getMultiLangText(method.method, 'zh-CN')} • {method.dosage}
+                            防治: {getMultiLangText(method.pestDisease, 'zh-CN')} • 
+                            方法: {getMultiLangText(method.applicationMethod, 'zh-CN')} • 
+                            用量: {getMultiLangText(method.dosage, 'zh-CN')}
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge variant="outline">{method.applicationTimes}次</Badge>
-                      <Badge variant="secondary">{method.safetyInterval}天</Badge>
                     </div>
                   </div>
                 ))}

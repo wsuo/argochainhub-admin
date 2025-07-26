@@ -29,6 +29,8 @@ import type {
   CreateDictionaryItemRequest,
   UpdateDictionaryItemRequest,
   BatchImportDictionaryItemRequest,
+  BatchReviewProductRequest,
+  BatchReviewProductResponse,
 } from '@/lib/types'
 
 // 查询键常量
@@ -286,6 +288,27 @@ export const useReviewProduct = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '审核操作失败')
+    },
+  })
+}
+
+export const useBatchReviewProduct = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: BatchReviewProductRequest) => 
+      api.product.batchReviewProduct(data),
+    onSuccess: (result: BatchReviewProductResponse) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      
+      if (result.failed === 0) {
+        toast.success(`批量审核完成！成功处理 ${result.success} 个产品`)
+      } else {
+        toast.warning(`批量审核完成！成功 ${result.success} 个，失败 ${result.failed} 个`)
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '批量审核操作失败')
     },
   })
 }

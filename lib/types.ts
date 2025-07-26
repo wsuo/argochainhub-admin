@@ -402,6 +402,7 @@ export interface CreateProductRequest {
 export interface UpdateProductRequest extends Partial<CreateProductRequest> {}
 
 export interface CreateControlMethodRequest {
+  productId?: number
   targetCrop: MultiLangText
   pestDisease: MultiLangText
   applicationMethod: MultiLangText
@@ -532,6 +533,27 @@ export interface UpdateDictionaryItemRequest extends Partial<CreateDictionaryIte
 
 export interface BatchImportDictionaryItemRequest {
   items: CreateDictionaryItemRequest[]
+}
+
+// 批量审核产品请求
+export interface BatchReviewProductRequest {
+  products: Array<{
+    productId: number
+    approved: boolean
+    reason: string
+  }>
+}
+
+// 批量审核产品响应
+export interface BatchReviewProductResponse {
+  total: number
+  success: number
+  failed: number
+  successIds: number[]
+  failures: Array<{
+    productId: number
+    error: string
+  }>
 }
 
 // 文件上传相关类型

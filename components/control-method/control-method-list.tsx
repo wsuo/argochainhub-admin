@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import * as React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -191,10 +192,9 @@ export function ControlMethodList({
                       <TableRow>
                         <TableHead className="w-[40px]">排序</TableHead>
                         <TableHead>防治对象</TableHead>
+                        <TableHead>防治病虫害</TableHead>
                         <TableHead>使用方法</TableHead>
                         <TableHead>用药量</TableHead>
-                        <TableHead>施药次数</TableHead>
-                        <TableHead>安全间隔期</TableHead>
                         <TableHead className="w-[100px]">操作</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -225,16 +225,30 @@ export function ControlMethodList({
                                   <div className="font-medium">
                                     {getMultiLangText(method.targetCrop, 'zh-CN')}
                                   </div>
-                                  {getMultiLangText(method.targetCrop, 'en') && (
-                                    <div className="text-sm text-muted-foreground">
-                                      {getMultiLangText(method.targetCrop, 'en')}
-                                    </div>
-                                  )}
-                                  {method.pestDisease && (
-                                    <div className="text-xs text-muted-foreground mt-1">
-                                      防治: {getMultiLangText(method.pestDisease, 'zh-CN')}
-                                    </div>
-                                  )}
+                                  {getMultiLangText(method.targetCrop, 'en') && (() => {
+                                    const englishText = getMultiLangText(method.targetCrop, 'en')
+                                    return englishText ? (
+                                      <div className="text-sm text-muted-foreground">
+                                        {englishText}
+                                      </div>
+                                    ) : null
+                                  })()}
+                                </div>
+                              </TableCell>
+
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">
+                                    {getMultiLangText(method.pestDisease, 'zh-CN')}
+                                  </div>
+                                  {getMultiLangText(method.pestDisease, 'en') && (() => {
+                                    const englishText = getMultiLangText(method.pestDisease, 'en')
+                                    return englishText ? (
+                                      <div className="text-sm text-muted-foreground">
+                                        {englishText}
+                                      </div>
+                                    ) : null
+                                  })()}
                                 </div>
                               </TableCell>
 
@@ -243,11 +257,14 @@ export function ControlMethodList({
                                   <div className="font-medium">
                                     {getMultiLangText(method.applicationMethod, 'zh-CN')}
                                   </div>
-                                  {getMultiLangText(method.applicationMethod, 'en') && (
-                                    <div className="text-sm text-muted-foreground">
-                                      {getMultiLangText(method.applicationMethod, 'en')}
-                                    </div>
-                                  )}
+                                  {getMultiLangText(method.applicationMethod, 'en') && (() => {
+                                    const englishText = getMultiLangText(method.applicationMethod, 'en')
+                                    return englishText ? (
+                                      <div className="text-sm text-muted-foreground">
+                                        {englishText}
+                                      </div>
+                                    ) : null
+                                  })()}
                                 </div>
                               </TableCell>
 
@@ -255,22 +272,14 @@ export function ControlMethodList({
                                 <span className="font-medium">
                                   {getMultiLangText(method.dosage, 'zh-CN')}
                                 </span>
-                              </TableCell>
-
-                              <TableCell>
-                                <Badge variant="outline">
-                                  {typeof method.applicationTimes === 'object' 
-                                    ? getMultiLangText(method.applicationTimes, 'zh-CN')
-                                    : method.applicationTimes}次
-                                </Badge>
-                              </TableCell>
-
-                              <TableCell>
-                                <Badge variant="secondary">
-                                  {typeof method.safetyInterval === 'object' 
-                                    ? getMultiLangText(method.safetyInterval, 'zh-CN')
-                                    : method.safetyInterval}天
-                                </Badge>
+                                {getMultiLangText(method.dosage, 'en') && (() => {
+                                  const englishText = getMultiLangText(method.dosage, 'en')
+                                  return englishText ? (
+                                    <div className="text-sm text-muted-foreground">
+                                      {englishText}
+                                    </div>
+                                  ) : null
+                                })()}
                               </TableCell>
 
                               <TableCell>
