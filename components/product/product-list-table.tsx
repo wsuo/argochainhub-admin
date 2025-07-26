@@ -65,19 +65,26 @@ export function ProductListTable({
 }: ProductListTableProps) {
   const getStatusBadge = (status: Product['status']) => {
     switch (status) {
-      case 'ACTIVE':
+      case 'active':
         return <Badge variant="secondary" className="gap-1"><CheckCircle className="h-3 w-3" />已通过</Badge>
-      case 'PENDING_REVIEW':
+      case 'pending_review':
         return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />待审核</Badge>
-      case 'REJECTED':
+      case 'rejected':
         return <Badge variant="outline" className="gap-1"><XCircle className="h-3 w-3" />已拒绝</Badge>
-      case 'DRAFT':
+      case 'draft':
         return <Badge variant="outline">草稿</Badge>
+      case 'inactive':
+        return <Badge variant="outline">未激活</Badge>
+      case 'archived':
+        return <Badge variant="outline">已归档</Badge>
       default:
         // 未知状态的中文映射
         const statusMap: Record<string, string> = {
-          'active': '已激活',
-          'inactive': '未激活', 
+          'ACTIVE': '已通过',
+          'PENDING_REVIEW': '待审核',
+          'REJECTED': '已拒绝',
+          'DRAFT': '草稿',
+          'INACTIVE': '未激活',
           'disabled': '已禁用',
           'suspended': '已暂停'
         }
@@ -290,7 +297,7 @@ export function ProductListTable({
                     <DropdownMenuSeparator />
 
                     {/* 审核操作 */}
-                    {showReviewActions && product.status === 'PENDING_REVIEW' && (
+                    {showReviewActions && product.status === 'pending_review' && (
                       <>
                         <DropdownMenuItem
                           onClick={() => onReview?.(product, true)}
@@ -311,7 +318,7 @@ export function ProductListTable({
                     )}
 
                     {/* 上架/下架操作 */}
-                    {showListingToggle && product.status === 'ACTIVE' && (
+                    {showListingToggle && product.status === 'active' && (
                       <>
                         {product.isListed ? (
                           <DropdownMenuItem

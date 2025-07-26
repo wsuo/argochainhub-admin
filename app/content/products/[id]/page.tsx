@@ -99,19 +99,26 @@ export default function ProductDetailPage() {
 
   const getStatusBadge = (status: Product['status']) => {
     switch (status) {
-      case 'ACTIVE':
+      case 'active':
         return <Badge variant="secondary" className="gap-1"><CheckCircle className="h-3 w-3" />已通过</Badge>
-      case 'PENDING_REVIEW':
+      case 'pending_review':
         return <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />待审核</Badge>
-      case 'REJECTED':
+      case 'rejected':
         return <Badge variant="outline" className="gap-1"><XCircle className="h-3 w-3" />已拒绝</Badge>
-      case 'DRAFT':
+      case 'draft':
         return <Badge variant="outline">草稿</Badge>
+      case 'inactive':
+        return <Badge variant="outline">未激活</Badge>
+      case 'archived':
+        return <Badge variant="outline">已归档</Badge>
       default:
         // 未知状态的中文映射
         const statusMap: Record<string, string> = {
-          'active': '已激活',
-          'inactive': '未激活',
+          'ACTIVE': '已通过',
+          'PENDING_REVIEW': '待审核',
+          'REJECTED': '已拒绝',
+          'DRAFT': '草稿',
+          'INACTIVE': '未激活',
           'disabled': '已禁用',
           'suspended': '已暂停'
         }
@@ -257,7 +264,7 @@ export default function ProductDetailPage() {
           </Button>
           
           {/* 审核操作 */}
-          {product.status === 'PENDING_REVIEW' && (
+          {product.status === 'pending_review' && (
             <>
               <Button onClick={() => handleReview(true)} className="bg-green-600 hover:bg-green-700">
                 <CheckCircle className="h-4 w-4 mr-2" />
@@ -271,7 +278,7 @@ export default function ProductDetailPage() {
           )}
           
           {/* 上架/下架操作 */}
-          {product.status === 'ACTIVE' && (
+          {product.status === 'active' && (
             <Button 
               onClick={handleToggleListing} 
               variant={product.isListed ? "outline" : "default"}

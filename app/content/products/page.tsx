@@ -114,8 +114,8 @@ export default function ProductsPage() {
 
   // 计算统计数据
   const totalProducts = data?.meta?.totalItems || 0
-  const activeProducts = data?.data.filter(product => product.status === 'ACTIVE').length || 0
-  const pendingProducts = data?.data.filter(product => product.status === 'PENDING_REVIEW').length || 0
+  const activeProducts = data?.data.filter(product => product.status === 'active').length || 0
+  const pendingProducts = data?.data.filter(product => product.status === 'pending_review').length || 0
   const listedProducts = data?.data.filter(product => product.isListed).length || 0
 
   if (error) {

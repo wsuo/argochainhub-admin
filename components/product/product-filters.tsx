@@ -291,10 +291,12 @@ function ProductFiltersComponent({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">所有审核状态</SelectItem>
-                    <SelectItem value="DRAFT">草稿</SelectItem>
-                    <SelectItem value="PENDING_REVIEW">待审核</SelectItem>
-                    <SelectItem value="ACTIVE">已通过</SelectItem>
-                    <SelectItem value="REJECTED">已拒绝</SelectItem>
+                    <SelectItem value="draft">草稿</SelectItem>
+                    <SelectItem value="pending_review">待审核</SelectItem>
+                    <SelectItem value="active">已通过</SelectItem>
+                    <SelectItem value="inactive">未激活</SelectItem>
+                    <SelectItem value="rejected">已拒绝</SelectItem>
+                    <SelectItem value="archived">已归档</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

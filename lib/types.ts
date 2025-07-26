@@ -121,7 +121,7 @@ export interface Product {
     remarks: string // 备注
   }
   isListed: boolean // 是否上架
-  status: 'DRAFT' | 'PENDING_REVIEW' | 'ACTIVE' | 'REJECTED'
+  status: 'draft' | 'pending_review' | 'active' | 'inactive' | 'rejected' | 'archived'
   controlMethods?: ControlMethod[] // 防治方法
   createdAt: string
   updatedAt: string
