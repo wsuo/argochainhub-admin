@@ -50,6 +50,10 @@ import type {
   CompanyUserQuery,
   CreateCompanyUserRequest,
   UpdateCompanyUserRequest,
+  Inquiry,
+  InquiryQuery,
+  InquiryItem,
+  InquiryStats,
 } from './types'
 
 // 认证相关API
@@ -314,6 +318,34 @@ export const companyUserApi = {
     apiClient.patch(`/companies/${companyId}/users/${userId}/toggle-status`),
 }
 
+// 询盘相关API（管理员接口）
+export const inquiryApi = {
+  // 获取询盘列表（管理员）
+  getInquiries: (query: InquiryQuery = {}): Promise<ApiResponse<Inquiry[]>> =>
+    apiClient.get('/admin/inquiries', filterQueryParams(query)),
+
+  // 获取询盘统计数据（管理员）
+  getInquiryStats: (): Promise<InquiryStats> =>
+    apiClient.get('/admin/inquiries/stats'),
+
+  // 获取询盘详情（管理员）
+  getInquiry: (id: number): Promise<Inquiry> =>
+    apiClient.get(`/admin/inquiries/${id}`),
+
+  // 更新询盘状态（管理员）
+  updateInquiryStatus: (id: number, data: { 
+    status: string; 
+    quoteDetails?: any; 
+    declineReason?: string; 
+    operatedBy?: string; 
+  }): Promise<Inquiry> =>
+    apiClient.patch(`/admin/inquiries/${id}/status`, data),
+
+  // 删除询盘（管理员软删除）
+  deleteInquiry: (id: number): Promise<{ message: string }> =>
+    apiClient.delete(`/admin/inquiries/${id}`),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
@@ -327,6 +359,7 @@ export const api = {
   subscription: subscriptionApi,
   utility: utilityApi,
   dictionary: dictionaryApi,
+  inquiry: inquiryApi,
 }
 
 export default api

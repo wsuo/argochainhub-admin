@@ -156,8 +156,76 @@ export interface InquiryItem {
 
 export interface Inquiry {
   id: number
-  title: string
-  status: 'pending' | 'matched' | 'completed'
+  inquiryNo: string
+  status: 'pending_quote' | 'quoted' | 'confirmed' | 'declined' | 'expired' | 'cancelled'
+  details: {
+    deliveryLocation: string
+    tradeTerms: string
+    paymentMethod: string
+    buyerRemarks: string
+    declineReason?: string
+    declinedBy?: string
+  }
+  quoteDetails?: {
+    totalPrice: number
+    validUntil: string
+    supplierRemarks: string
+  }
+  deadline: string
+  buyer: {
+    id: number
+    name: {
+      'zh-CN': string
+      en: string
+    }
+    contactPerson?: string
+    contactPhone?: string
+    profile?: {
+      address?: string
+      phone?: string
+      website?: string
+    }
+  }
+  supplier: {
+    id: number
+    name: {
+      'zh-CN': string
+      en: string
+    }
+    contactPerson?: string
+    contactPhone?: string
+    profile?: {
+      address?: string
+      phone?: string
+      website?: string
+    }
+  }
+  items: InquiryItem[]
+  createdAt: string
+  updatedAt: string
+}
+
+// 询盘查询参数（管理员接口）
+export interface InquiryQuery {
+  page?: number
+  limit?: number
+  inquiryNo?: string
+  status?: string
+  buyerId?: number
+  supplierId?: number
+  createdStartDate?: string // YYYY-MM-DD
+  createdEndDate?: string   // YYYY-MM-DD
+}
+
+// 询盘统计数据
+export interface InquiryStats {
+  pendingQuote: number
+  quoted: number
+  confirmed: number
+  declined: number
+  expired: number
+  cancelled: number
+  total: number
 }
 
 // 订阅和订单相关类型

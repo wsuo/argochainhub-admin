@@ -35,6 +35,8 @@ import type {
   CompanyUserQuery,
   CreateCompanyUserRequest,
   UpdateCompanyUserRequest,
+  InquiryQuery,
+  InquiryStats,
 } from '@/lib/types'
 
 // 查询键常量
@@ -79,6 +81,11 @@ export const queryKeys = {
   dictionaryItems: (code: string, query?: DictionaryItemQuery) => ['dictionary', 'items', code, query] as const,
   dictionary: (code: string) => ['dictionary', code] as const,
   countriesWithFlags: ['dictionary', 'countries', 'with-flags'] as const,
+  
+  // 询盘管理
+  inquiries: (query?: InquiryQuery) => ['inquiries', query] as const,
+  inquiry: (id: number) => ['inquiries', id] as const,
+  inquiryStats: ['inquiries', 'stats'] as const,
 }
 
 // 仪表盘相关hooks
@@ -782,6 +789,80 @@ export const useToggleCompanyUserStatus = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '企业用户状态更新失败')
+    },
+  })
+}
+
+// ================================
+// 询盘管理相关 hooks
+// ================================
+
+// 获取询盘列表
+export const useInquiries = (query?: InquiryQuery) => {
+  return useQuery({
+    queryKey: queryKeys.inquiries(query),
+    queryFn: () => api.inquiry.getInquiries(query),
+    staleTime: 30 * 1000, // 30秒内不重新请求
+  })
+}
+
+// 获取询盘详情
+export const useInquiry = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.inquiry(id),
+    queryFn: () => api.inquiry.getInquiry(id),
+    enabled: !!id,
+  })
+}
+
+// 获取询盘统计数据
+export const useInquiryStats = () => {
+  return useQuery({
+    queryKey: queryKeys.inquiryStats,
+    queryFn: () => api.inquiry.getInquiryStats(),
+    staleTime: 60 * 1000, // 1分钟内不重新请求
+  })
+}
+
+// 更新询盘状态
+export const useUpdateInquiryStatus = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { 
+      id: number; 
+      data: { 
+        status: string; 
+        quoteDetails?: any; 
+        declineReason?: string; 
+        operatedBy?: string; 
+      } 
+    }) => api.inquiry.updateInquiryStatus(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] })
+      queryClient.invalidateQueries({ queryKey: ['inquiries', variables.id] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.inquiryStats })
+      toast.success('询盘状态已更新')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '询盘状态更新失败')
+    },
+  })
+}
+
+// 删除询盘
+export const useDeleteInquiry = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.inquiry.deleteInquiry(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.inquiryStats })
+      toast.success('询盘删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '询盘删除失败')
     },
   })
 }
