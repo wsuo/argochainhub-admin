@@ -253,19 +253,23 @@ export function ControlMethodList({
 
                               <TableCell>
                                 <span className="font-medium">
-                                  {method.dosage}
+                                  {getMultiLangText(method.dosage, 'zh-CN')}
                                 </span>
                               </TableCell>
 
                               <TableCell>
                                 <Badge variant="outline">
-                                  {method.applicationTimes}次
+                                  {typeof method.applicationTimes === 'object' 
+                                    ? getMultiLangText(method.applicationTimes, 'zh-CN')
+                                    : method.applicationTimes}次
                                 </Badge>
                               </TableCell>
 
                               <TableCell>
                                 <Badge variant="secondary">
-                                  {method.safetyInterval}天
+                                  {typeof method.safetyInterval === 'object' 
+                                    ? getMultiLangText(method.safetyInterval, 'zh-CN')
+                                    : method.safetyInterval}天
                                 </Badge>
                               </TableCell>
 
