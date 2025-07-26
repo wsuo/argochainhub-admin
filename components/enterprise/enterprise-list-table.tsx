@@ -19,7 +19,8 @@ import {
   Globe,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Users
 } from 'lucide-react'
 import type { Company } from '@/lib/types'
 import { CountryDisplay } from '@/components/enhanced-country-select'
@@ -30,6 +31,7 @@ export interface EnterpriseListTableProps {
   loading?: boolean
   showReviewActions?: boolean
   showStatusToggle?: boolean
+  showUserManagement?: boolean
   onReview?: (company: Company, approved: boolean) => void
   onToggleStatus?: (companyId: number, currentStatus: Company['status']) => void
   onViewDetails?: (companyId: number) => void
@@ -41,6 +43,7 @@ export function EnterpriseListTable({
   loading = false,
   showReviewActions = false,
   showStatusToggle = false,
+  showUserManagement = true,
   onReview,
   onToggleStatus,
   onViewDetails,
@@ -206,6 +209,18 @@ export function EnterpriseListTable({
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
+
+                {/* 员工管理按钮 */}
+                {showUserManagement && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => router.push(`/enterprises/${company.id}/users`)}
+                    title="管理员工"
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                )}
 
                 {/* 审核操作按钮 */}
                 {showReviewActions && company.status === 'pending_review' && onReview && (

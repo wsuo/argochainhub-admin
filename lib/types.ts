@@ -578,6 +578,70 @@ export interface UploadFileRequest {
   relatedId?: number
 }
 
+// 企业用户类型
+export interface CompanyUser {
+  id: number
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
+  email: string
+  name: string
+  phone?: string
+  avatar?: string
+  position?: string
+  department?: string
+  joinedAt: string
+  emailVerified: boolean
+  role: 'owner' | 'admin' | 'member'
+  isActive: boolean
+  lastLoginAt?: string | null
+  companyId: number
+  company?: Company
+}
+
+// 企业用户查询参数
+export interface CompanyUserQuery {
+  page?: number
+  limit?: number
+  search?: string
+  role?: CompanyUser['role']
+  department?: string
+  position?: string
+  isActive?: boolean
+  emailVerified?: boolean
+  joinedStartDate?: string
+  joinedEndDate?: string
+  sortBy?: 'createdAt' | 'updatedAt' | 'name' | 'joinedAt'
+  sortOrder?: 'ASC' | 'DESC'
+}
+
+// 创建企业用户请求
+export interface CreateCompanyUserRequest {
+  email: string
+  name: string
+  password: string
+  phone?: string
+  avatar?: string
+  position?: string
+  department?: string
+  joinedAt?: string
+  role?: CompanyUser['role']
+  isActive?: boolean
+}
+
+// 更新企业用户请求
+export interface UpdateCompanyUserRequest {
+  name?: string
+  phone?: string
+  avatar?: string
+  position?: string
+  department?: string
+  joinedAt?: string
+  role?: CompanyUser['role']
+  isActive?: boolean
+  emailVerified?: boolean
+}
+
 // 扩展查询参数，添加新的筛选字段
 export interface CompanyQuery {
   page?: number

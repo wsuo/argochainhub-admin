@@ -31,6 +31,10 @@ import type {
   BatchImportDictionaryItemRequest,
   BatchReviewProductRequest,
   BatchReviewProductResponse,
+  CompanyUser,
+  CompanyUserQuery,
+  CreateCompanyUserRequest,
+  UpdateCompanyUserRequest,
 } from '@/lib/types'
 
 // 查询键常量
@@ -45,6 +49,10 @@ export const queryKeys = {
   company: (id: number) => ['companies', id] as const,
   companySubscriptions: (id: number, query?: { page?: number; limit?: number }) => 
     ['companies', id, 'subscriptions', query] as const,
+  
+  // 企业用户管理
+  companyUsers: (companyId: number, query?: CompanyUserQuery) => ['companies', companyId, 'users', query] as const,
+  companyUser: (companyId: number, userId: number) => ['companies', companyId, 'users', userId] as const,
   
   // 产品管理
   products: (query?: ProductQuery) => ['products', query] as const,
@@ -689,6 +697,91 @@ export const useBatchImportDictionaryItems = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '字典项批量导入失败')
+    },
+  })
+}
+
+// 企业用户管理相关hooks
+export const useCompanyUsers = (companyId: number, query: CompanyUserQuery = {}) => {
+  return useQuery({
+    queryKey: queryKeys.companyUsers(companyId, query),
+    queryFn: () => api.companyUser.getCompanyUsers(companyId, query),
+    enabled: !!companyId,
+  })
+}
+
+export const useCompanyUser = (companyId: number, userId: number) => {
+  return useQuery({
+    queryKey: queryKeys.companyUser(companyId, userId),
+    queryFn: () => api.companyUser.getCompanyUser(companyId, userId),
+    enabled: !!companyId && !!userId,
+  })
+}
+
+export const useCreateCompanyUser = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ companyId, data }: { companyId: number; data: CreateCompanyUserRequest }) => 
+      api.companyUser.createCompanyUser(companyId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId, 'users'] })
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId] })
+      toast.success('企业用户创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '企业用户创建失败')
+    },
+  })
+}
+
+export const useUpdateCompanyUser = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ companyId, userId, data }: { companyId: number; userId: number; data: UpdateCompanyUserRequest }) => 
+      api.companyUser.updateCompanyUser(companyId, userId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId, 'users'] })
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId, 'users', variables.userId] })
+      toast.success('企业用户信息已更新')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '企业用户信息更新失败')
+    },
+  })
+}
+
+export const useDeleteCompanyUser = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ companyId, userId }: { companyId: number; userId: number }) => 
+      api.companyUser.deleteCompanyUser(companyId, userId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId, 'users'] })
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId] })
+      toast.success('企业用户删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '企业用户删除失败')
+    },
+  })
+}
+
+export const useToggleCompanyUserStatus = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ companyId, userId }: { companyId: number; userId: number }) => 
+      api.companyUser.toggleCompanyUserStatus(companyId, userId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId, 'users'] })
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId, 'users', variables.userId] })
+      toast.success('企业用户状态已更新')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '企业用户状态更新失败')
     },
   })
 }

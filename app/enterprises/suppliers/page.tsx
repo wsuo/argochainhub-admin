@@ -180,6 +180,7 @@ export default function SuppliersPage() {
                 loading={isLoading}
                 showReviewActions={false} // 不显示审核操作
                 showStatusToggle={true} // 显示状态切换操作
+                showUserManagement={true} // 显示员工管理操作
                 onToggleStatus={handleToggleStatus}
               />
 

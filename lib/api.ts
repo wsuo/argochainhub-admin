@@ -46,6 +46,10 @@ import type {
   BatchImportDictionaryItemRequest,
   BatchReviewProductRequest,
   BatchReviewProductResponse,
+  CompanyUser,
+  CompanyUserQuery,
+  CreateCompanyUserRequest,
+  UpdateCompanyUserRequest,
 } from './types'
 
 // 认证相关API
@@ -283,11 +287,39 @@ export const dictionaryApi = {
     apiClient.get('/dictionaries/countries/with-flags'),
 }
 
+// 企业用户管理相关API
+export const companyUserApi = {
+  // 获取企业用户列表
+  getCompanyUsers: (companyId: number, query: CompanyUserQuery = {}): Promise<ApiResponse<CompanyUser[]>> =>
+    apiClient.get(`/companies/${companyId}/users`, filterQueryParams(query)),
+
+  // 获取企业用户详情
+  getCompanyUser: (companyId: number, userId: number): Promise<CompanyUser> =>
+    apiClient.get(`/companies/${companyId}/users/${userId}`),
+
+  // 创建企业用户
+  createCompanyUser: (companyId: number, data: CreateCompanyUserRequest): Promise<CompanyUser> =>
+    apiClient.post(`/companies/${companyId}/users`, data),
+
+  // 更新企业用户信息
+  updateCompanyUser: (companyId: number, userId: number, data: UpdateCompanyUserRequest): Promise<CompanyUser> =>
+    apiClient.put(`/companies/${companyId}/users/${userId}`, data),
+
+  // 删除企业用户
+  deleteCompanyUser: (companyId: number, userId: number): Promise<{ message: string }> =>
+    apiClient.delete(`/companies/${companyId}/users/${userId}`),
+
+  // 切换企业用户状态
+  toggleCompanyUserStatus: (companyId: number, userId: number): Promise<CompanyUser> =>
+    apiClient.patch(`/companies/${companyId}/users/${userId}/toggle-status`),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
   dashboard: dashboardApi,
   company: companyApi,
+  companyUser: companyUserApi,
   product: productApi,
   user: userApi,
   order: orderApi,

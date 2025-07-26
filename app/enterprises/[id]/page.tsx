@@ -44,11 +44,20 @@ import {
   FileText,
   Camera,
   Download,
-  Eye
+  Eye,
+  Plus,
+  User,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  Shield,
+  Briefcase,
+  Calendar,
+  CheckCircle2
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { companyApi } from '@/lib/api'
-import type { Company, ReviewRequest, UpdateCompanyRequest, MultiLangText } from '@/lib/types'
+import type { Company, ReviewRequest, UpdateCompanyRequest, MultiLangText, CompanyUser, CreateCompanyUserRequest, UpdateCompanyUserRequest } from '@/lib/types'
 import { toast } from 'sonner'
 import { StarRating, StarDisplay } from '@/components/star-rating'
 import { EnhancedCountrySelect } from '@/components/enhanced-country-select'
@@ -56,6 +65,37 @@ import { BusinessTypesMultiSelect, CompanySizeSelect } from '@/components/dictio
 import { MultiLangInput } from '@/components/multi-lang-input'
 import { ImageUpload } from '@/components/file-upload'
 import { useCountryOptions, useDictionaryOptions, getDictionaryLabel, getDictionaryLabels } from '@/lib/dictionary-utils'
+import { 
+  useCompanyUsers, 
+  useCreateCompanyUser, 
+  useUpdateCompanyUser, 
+  useDeleteCompanyUser, 
+  useToggleCompanyUserStatus 
+} from '@/hooks/use-api'
+import { 
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Switch } from '@/components/ui/switch'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 export default function CompanyDetailPage() {
   const params = useParams()
@@ -72,10 +112,77 @@ export default function CompanyDetailPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [previewTitle, setPreviewTitle] = useState('')
 
+  // 企业用户管理状态
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<CompanyUser | null>(null)
+  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false)
+
+  // 表单验证schema
+  const createUserSchema = z.object({
+    email: z.string().email('请输入有效的邮箱地址'),
+    name: z.string().min(2, '姓名至少需要2个字符').max(50, '姓名不能超过50个字符'),
+    password: z.string().min(6, '密码至少需要6个字符'),
+    phone: z.string().optional(),
+    position: z.string().optional(),
+    department: z.string().optional(),
+    joinedAt: z.string().optional(),
+    role: z.enum(['owner', 'admin', 'member']).default('member'),
+    isActive: z.boolean().default(true),
+  })
+
+  const updateUserSchema = z.object({
+    name: z.string().min(2, '姓名至少需要2个字符').max(50, '姓名不能超过50个字符'),
+    phone: z.string().optional(),
+    position: z.string().optional(),
+    department: z.string().optional(),
+    joinedAt: z.string().optional(),
+    role: z.enum(['owner', 'admin', 'member']),
+    isActive: z.boolean(),
+  })
+
+  type CreateUserFormData = z.infer<typeof createUserSchema>
+  type UpdateUserFormData = z.infer<typeof updateUserSchema>
+
   // 字典数据
   const countries = useCountryOptions()
   const businessTypes = useDictionaryOptions('business_type')
   const companySizes = useDictionaryOptions('company_size')
+
+  // 表单实例
+  const createUserForm = useForm<CreateUserFormData>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      email: '',
+      name: '',
+      password: '',
+      phone: '',
+      position: '',
+      department: '',
+      joinedAt: new Date().toISOString().split('T')[0],
+      role: 'member',
+      isActive: true,
+    },
+  })
+
+  const updateUserForm = useForm<UpdateUserFormData>({
+    resolver: zodResolver(updateUserSchema),
+    defaultValues: {
+      name: '',
+      phone: '',
+      position: '',
+      department: '',
+      joinedAt: '',
+      role: 'member',
+      isActive: true,
+    },
+  })
+
+  // API调用
+  const { data: companyUsers, isLoading: usersLoading } = useCompanyUsers(companyId, { page: 1, limit: 50 })
+  const createUserMutation = useCreateCompanyUser()
+  const updateUserMutation = useUpdateCompanyUser()
+  const deleteUserMutation = useDeleteCompanyUser()
+  const toggleUserStatusMutation = useToggleCompanyUserStatus()
 
   // 获取多语言文本的辅助函数
   const getMultiLangText = (text: MultiLangText | { zh: string; en?: string; 'zh-CN'?: string } | undefined, lang: 'zh-CN' | 'en' = 'zh-CN'): string => {
@@ -197,6 +304,87 @@ export default function CompanyDetailPage() {
       })
     }
     setIsEditMode(!isEditMode)
+  }
+
+  // 企业用户管理事件处理函数
+  const handleCreateUser = async (data: CreateUserFormData) => {
+    try {
+      await createUserMutation.mutateAsync({ companyId, data })
+      toast.success('员工创建成功')
+      setIsAddUserDialogOpen(false)
+      createUserForm.reset()
+    } catch (error: any) {
+      toast.error(error.message || '员工创建失败')
+    }
+  }
+
+  const handleEditUser = (user: CompanyUser) => {
+    setEditingUser(user)
+    updateUserForm.reset({
+      name: user.name,
+      phone: user.phone || '',
+      position: user.position || '',
+      department: user.department || '',
+      joinedAt: user.joinedAt ? user.joinedAt.split('T')[0] : '',
+      role: user.role,
+      isActive: user.isActive,
+    })
+    setIsEditUserDialogOpen(true)
+  }
+
+  const handleUpdateUser = async (data: UpdateUserFormData) => {
+    if (!editingUser) return
+    try {
+      await updateUserMutation.mutateAsync({
+        companyId,
+        userId: editingUser.id,
+        data
+      })
+      toast.success('员工信息更新成功')
+      setIsEditUserDialogOpen(false)
+      setEditingUser(null)
+    } catch (error: any) {
+      toast.error(error.message || '员工信息更新失败')
+    }
+  }
+
+  const handleDeleteUser = async (userId: number) => {
+    try {
+      await deleteUserMutation.mutateAsync({ companyId, userId })
+      toast.success('员工删除成功')
+    } catch (error: any) {
+      toast.error(error.message || '员工删除失败')
+    }
+  }
+
+  const handleToggleUserStatus = async (userId: number) => {
+    try {
+      await toggleUserStatusMutation.mutateAsync({ companyId, userId })
+      toast.success('员工状态更新成功')
+    } catch (error: any) {
+      toast.error(error.message || '员工状态更新失败')
+    }
+  }
+
+  const getRoleBadge = (role: CompanyUser['role']) => {
+    switch (role) {
+      case 'owner':
+        return <Badge variant="destructive" className="gap-1"><Shield className="h-3 w-3" />企业主</Badge>
+      case 'admin':
+        return <Badge variant="default" className="gap-1"><Shield className="h-3 w-3" />管理员</Badge>
+      case 'member':
+        return <Badge variant="secondary" className="gap-1"><User className="h-3 w-3" />普通员工</Badge>
+      default:
+        return <Badge variant="outline">{role}</Badge>
+    }
+  }
+
+  const getUserStatusBadge = (isActive: boolean) => {
+    if (!isActive) {
+      return <Badge variant="destructive">已禁用</Badge>
+    } else {
+      return <Badge variant="secondary">正常</Badge>
+    }
   }
 
   const getStatusBadge = (status: Company['status']) => {
@@ -922,29 +1110,177 @@ export default function CompanyDetailPage() {
         </Card>
       ) : null}
 
-      {/* 关联用户 */}
-      {company.users && company.users.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>关联用户 ({company.users.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {company.users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+      {/* 企业用户管理 */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                企业用户管理
+              </CardTitle>
+              <CardDescription>
+                {companyUsers ? `共 ${companyUsers.meta.totalItems} 名员工` : '管理企业员工信息'}
+              </CardDescription>
+            </div>
+            <Button onClick={() => setIsAddUserDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              新增员工
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {usersLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-muted animate-pulse rounded-full" />
+                      <div className="space-y-2">
+                        <div className="h-4 bg-muted animate-pulse rounded w-32" />
+                        <div className="h-3 bg-muted animate-pulse rounded w-48" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-8 w-8 bg-muted animate-pulse rounded" />
+                      <div className="h-8 w-8 bg-muted animate-pulse rounded" />
+                      <div className="h-8 w-8 bg-muted animate-pulse rounded" />
+                    </div>
                   </div>
-                  <Badge variant={user.isActive ? "secondary" : "outline"}>
-                    {user.isActive ? "活跃" : "未激活"}
-                  </Badge>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : companyUsers?.data.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
+              <h3 className="text-xl font-semibold mb-2">暂无员工</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                该企业还没有添加任何员工，点击上方按钮开始添加第一个员工
+              </p>
+              <Button onClick={() => setIsAddUserDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                添加第一个员工
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {companyUsers?.data.map((user) => (
+                <div key={user.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                          <User className="h-6 w-6 text-primary" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-lg">{user.name}</h4>
+                          {getRoleBadge(user.role)}
+                          {getUserStatusBadge(user.isActive)}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span>{user.email}</span>
+                          </div>
+                          
+                          {user.phone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              <span>{user.phone}</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span>入职: {new Date(user.joinedAt).toLocaleDateString('zh-CN')}</span>
+                          </div>
+                          
+                          {user.position && (
+                            <div className="flex items-center gap-2">
+                              <Briefcase className="h-4 w-4 text-muted-foreground" />
+                              <span>{user.position}</span>
+                            </div>
+                          )}
+                          
+                          {user.department && (
+                            <div className="text-muted-foreground">
+                              部门: {user.department}
+                            </div>
+                          )}
+                          
+                          {user.lastLoginAt && (
+                            <div className="text-muted-foreground">
+                              上次登录: {new Date(user.lastLoginAt).toLocaleDateString('zh-CN')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditUser(user)}
+                        title="编辑"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleUserStatus(user.id)}
+                        disabled={toggleUserStatusMutation.isPending}
+                        title={user.isActive ? '点击禁用' : '点击启用'}
+                      >
+                        {user.isActive ? (
+                          <ToggleRight className="h-4 w-4" />
+                        ) : (
+                          <ToggleLeft className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            title="删除"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>确认删除员工</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              此操作将永久删除员工 "{user.name}" 的账户，包括相关的所有数据。
+                              该操作无法撤销，请确认是否继续。
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>取消</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              确认删除
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 订阅信息 */}
       {company.subscriptions && company.subscriptions.length > 0 && (
@@ -1015,6 +1351,344 @@ export default function CompanyDetailPage() {
               关闭
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 新增用户对话框 */}
+      <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>新增员工</DialogTitle>
+            <DialogDescription>
+              为 {getMultiLangText(company?.name, 'zh-CN')} 添加新员工
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...createUserForm}>
+            <form onSubmit={createUserForm.handleSubmit(handleCreateUser)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 基本信息 */}
+                <FormField
+                  control={createUserForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>姓名 *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="请输入员工姓名" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createUserForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>邮箱 *</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="请输入邮箱地址" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createUserForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>初始密码 *</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="请输入初始密码" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createUserForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>手机号</FormLabel>
+                      <FormControl>
+                        <Input placeholder="请输入手机号" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createUserForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>角色权限 *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="请选择角色权限" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="member">普通员工</SelectItem>
+                          <SelectItem value="admin">管理员</SelectItem>
+                          <SelectItem value="owner">企业主</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createUserForm.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>部门</FormLabel>
+                      <FormControl>
+                        <Input placeholder="请输入所属部门" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createUserForm.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>职位</FormLabel>
+                      <FormControl>
+                        <Input placeholder="请输入职位名称" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createUserForm.control}
+                  name="joinedAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>入职日期</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={createUserForm.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">
+                        账户状态
+                      </FormLabel>
+                      <FormDescription>
+                        启用后员工可以正常登录使用系统
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddUserDialogOpen(false)}
+                >
+                  取消
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createUserMutation.isPending}
+                >
+                  创建员工
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 编辑用户对话框 */}
+      <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>编辑员工</DialogTitle>
+            <DialogDescription>
+              修改 {editingUser?.name} 的员工信息
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...updateUserForm}>
+            <form onSubmit={updateUserForm.handleSubmit(handleUpdateUser)} className="space-y-4">
+              <div>
+                <Label>邮箱（不可修改）</Label>
+                <Input 
+                  value={editingUser?.email || ''} 
+                  disabled 
+                  className="bg-muted text-muted-foreground"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={updateUserForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>姓名 *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="请输入员工姓名" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={updateUserForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>手机号</FormLabel>
+                      <FormControl>
+                        <Input placeholder="请输入手机号" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={updateUserForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>角色权限 *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="请选择角色权限" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="member">普通员工</SelectItem>
+                          <SelectItem value="admin">管理员</SelectItem>
+                          <SelectItem value="owner">企业主</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={updateUserForm.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>部门</FormLabel>
+                      <FormControl>
+                        <Input placeholder="请输入所属部门" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={updateUserForm.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>职位</FormLabel>
+                      <FormControl>
+                        <Input placeholder="请输入职位名称" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={updateUserForm.control}
+                  name="joinedAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>入职日期</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={updateUserForm.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">
+                        账户启用状态
+                      </FormLabel>
+                      <FormDescription>
+                        启用后员工可以正常登录使用系统
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditUserDialogOpen(false)}
+                >
+                  取消
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={updateUserMutation.isPending}
+                >
+                  保存更改
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>

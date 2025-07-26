@@ -32,7 +32,8 @@ import {
   ChevronRight,
   RotateCcw,
   Plus,
-  Globe
+  Globe,
+  Users
 } from 'lucide-react'
 import { useCompanies, useToggleCompanyStatus } from '@/hooks/use-api'
 import { DataPagination } from '@/components/data-pagination'
@@ -467,6 +468,14 @@ export default function EnterprisesPage() {
                             title="查看详情"
                           >
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => router.push(`/enterprises/${company.id}/users`)}
+                            title="管理员工"
+                          >
+                            <Users className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
