@@ -4,7 +4,7 @@ import { Shield, ChevronRight } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { useNavigation, navigationConfig } from "@/components/navigation-provider"
-import { usePendingCompanies } from "@/hooks/use-api"
+import { usePendingCompanies, usePendingProducts } from "@/hooks/use-api"
 
 import {
   Sidebar,
@@ -37,7 +37,11 @@ export function AppSidebar() {
   
   // 获取待审核企业数量
   const { data: pendingCompaniesData } = usePendingCompanies({ page: 1, limit: 1 })
-  const pendingCount = pendingCompaniesData?.meta?.totalItems || 0
+  const pendingCompaniesCount = pendingCompaniesData?.meta?.totalItems || 0
+  
+  // 获取待审核产品数量
+  const { data: pendingProductsData } = usePendingProducts({ page: 1, limit: 1 })
+  const pendingProductsCount = pendingProductsData?.meta?.totalItems || 0
   
   const currentUserRole = user?.role || "operations_manager"
 
@@ -114,14 +118,19 @@ export function AppSidebar() {
                                   className="w-full flex items-center gap-2 text-left min-w-0"
                                 >
                                   <span className="truncate flex-1">{subItem.title}</span>
-                                  {/* 动态显示待审核企业数量 */}
-                                  {subItem.key === 'pending' && pendingCount > 0 && (
+                                  {/* 动态显示待审核数量 */}
+                                  {subItem.key === 'pending' && pendingCompaniesCount > 0 && (
                                     <Badge variant="destructive" className="text-xs shrink-0">
-                                      {pendingCount}
+                                      {pendingCompaniesCount}
+                                    </Badge>
+                                  )}
+                                  {subItem.key === 'products-pending' && pendingProductsCount > 0 && (
+                                    <Badge variant="destructive" className="text-xs shrink-0">
+                                      {pendingProductsCount}
                                     </Badge>
                                   )}
                                   {/* 其他固定badge */}
-                                  {subItem.badge && subItem.key !== 'pending' && (
+                                  {subItem.badge && subItem.key !== 'pending' && subItem.key !== 'products-pending' && (
                                     <Badge variant="secondary" className="text-xs shrink-0">
                                       {subItem.badge}
                                     </Badge>

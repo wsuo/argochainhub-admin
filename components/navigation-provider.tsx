@@ -180,8 +180,8 @@ export const navigationConfig = {
       title: '内容管理',
       icon: FileText,
       items: [
-        { title: '产品管理', path: '/content/products', key: 'products', badge: '待审核' },
-        { title: '供应商审核', path: '/content/suppliers', key: 'suppliers' }
+        { title: '产品管理', path: '/content/products', key: 'products' },
+        { title: '待审核产品', path: '/content/products/pending', key: 'products-pending' }
       ]
     },
     business: {
