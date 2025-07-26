@@ -41,9 +41,6 @@ interface SupplierOption {
   status: Company['status']
 }
 
-// 供应商搜索策略
-type SearchStrategy = 'frontend' | 'backend'
-
 // 多语言文本处理工具函数
 const getDisplayText = (text: string | MultiLangText): string => {
   if (typeof text === 'string') return text
@@ -65,28 +62,28 @@ export function SupplierSelect({
 }: SupplierSelectProps) {
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchStrategy, setSearchStrategy] = useState<SearchStrategy>('backend')
   const [currentPage, setCurrentPage] = useState(1)
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   
   const ITEMS_PER_PAGE = 20
 
-  // 构建查询参数
+  // 构建查询参数 - 只查询已审核的供应商
   const queryParams = useMemo<CompanyQuery>(() => {
     const params: CompanyQuery = {
       type: 'supplier',
+      status: 'active', // 只查询已审核的供应商
       page: currentPage,
       limit: ITEMS_PER_PAGE,
     }
     
-    // 后端搜索模式：将搜索词发送到后端
-    if (searchStrategy === 'backend' && searchQuery.trim()) {
+    // 后端搜索：将搜索词发送到后端
+    if (searchQuery.trim()) {
       params.search = searchQuery.trim()
     }
     
     return params
-  }, [currentPage, searchQuery, searchStrategy])
+  }, [currentPage, searchQuery])
 
   // 获取供应商数据
   const { data: suppliersResponse, isLoading, error } = useCompanies(queryParams)
@@ -123,36 +120,15 @@ export function SupplierSelect({
     }
   }, [suppliers, currentPage])
 
-  // 前端搜索过滤
-  const filteredSuppliers = useMemo(() => {
-    if (searchStrategy === 'backend' || !searchQuery.trim()) {
-      return allSuppliers
-    }
-    
-    // 前端搜索：按名称、国家、业务类别搜索
-    const query = searchQuery.toLowerCase()
-    return allSuppliers.filter(supplier => 
-      supplier.name.toLowerCase().includes(query) ||
-      supplier.country?.toLowerCase().includes(query) ||
-      supplier.businessCategory?.toLowerCase().includes(query) ||
-      supplier.email?.toLowerCase().includes(query)
-    )
-  }, [allSuppliers, searchQuery, searchStrategy])
-
   // 获取当前选中的供应商
   const selectedSupplier = useMemo(() => {
-    return filteredSuppliers.find(supplier => supplier.id === value)
-  }, [filteredSuppliers, value])
+    return allSuppliers.find(supplier => supplier.id === value)
+  }, [allSuppliers, value])
 
   // 处理搜索输入变化
   const handleSearchChange = useCallback((newSearch: string) => {
     setSearchQuery(newSearch)
     setCurrentPage(1) // 重置到第一页
-    
-    // 如果清空搜索，切换到后端搜索模式
-    if (!newSearch.trim()) {
-      setSearchStrategy('backend')
-    }
   }, [])
 
   // 处理滚动加载更多
@@ -191,16 +167,6 @@ export function SupplierSelect({
     onValueChange?.(supplierId)
     setOpen(false)
   }, [onValueChange])
-
-  // 切换搜索策略
-  const toggleSearchStrategy = useCallback(() => {
-    const newStrategy = searchStrategy === 'frontend' ? 'backend' : 'frontend'
-    setSearchStrategy(newStrategy)
-    
-    if (newStrategy === 'backend') {
-      setCurrentPage(1) // 切换到后端搜索时重置页面
-    }
-  }, [searchStrategy])
 
   // 获取供应商状态标识
   const getStatusBadge = (status: Company['status']) => {
@@ -269,24 +235,13 @@ export function SupplierSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" style={{ width: 'var(--radix-popover-trigger-width)' }}>
-          <Command shouldFilter={searchStrategy === 'frontend'}>
-            <div className="flex items-center border-b">
-              <CommandInput 
-                placeholder="搜索供应商..." 
-                value={searchQuery}
-                onValueChange={handleSearchChange}
-                className="flex-1"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleSearchStrategy}
-                className="h-8 px-2 text-xs"
-                title={searchStrategy === 'frontend' ? '切换到后端搜索' : '切换到前端搜索'}
-              >
-                {searchStrategy === 'frontend' ? '前端' : '后端'}
-              </Button>
-            </div>
+          <Command>
+            <CommandInput 
+              placeholder="搜索供应商..." 
+              value={searchQuery}
+              onValueChange={handleSearchChange}
+              className="border-b"
+            />
             <CommandList ref={scrollRef} className="max-h-64 overflow-auto">
               {isLoading && currentPage === 1 ? (
                 <div className="flex items-center justify-center py-6">
@@ -302,13 +257,13 @@ export function SupplierSelect({
                     </p>
                   </div>
                 </CommandEmpty>
-              ) : filteredSuppliers.length === 0 ? (
+              ) : allSuppliers.length === 0 ? (
                 <CommandEmpty>
                   {searchQuery.trim() ? '未找到匹配的供应商' : '暂无供应商数据'}
                 </CommandEmpty>
               ) : (
                 <CommandGroup>
-                  {filteredSuppliers.map((supplier) => (
+                  {allSuppliers.map((supplier) => (
                     <CommandItem
                       key={supplier.id}
                       value={`${supplier.name} ${supplier.country || ''} ${supplier.businessCategory || ''}`}
@@ -351,7 +306,7 @@ export function SupplierSelect({
                   )}
                   
                   {/* 已加载完毕提示 */}
-                  {!isLoading && suppliersResponse?.hasMore === false && filteredSuppliers.length > ITEMS_PER_PAGE && (
+                  {!isLoading && suppliersResponse?.hasMore === false && allSuppliers.length > ITEMS_PER_PAGE && (
                     <div className="text-center py-2">
                       <span className="text-xs text-muted-foreground">已加载全部供应商</span>
                     </div>
@@ -362,14 +317,6 @@ export function SupplierSelect({
           </Command>
         </PopoverContent>
       </Popover>
-      
-      {/* 搜索策略说明 */}
-      {open && (
-        <div className="text-xs text-muted-foreground mt-1">
-          当前使用<strong>{searchStrategy === 'frontend' ? '前端搜索' : '后端搜索'}</strong>
-          {searchStrategy === 'frontend' ? '（实时过滤）' : '（模糊查询）'}
-        </div>
-      )}
     </div>
   )
 }
@@ -390,6 +337,7 @@ export function SupplierDisplay({
 }: SupplierDisplayProps) {
   const { data: suppliersResponse } = useCompanies({ 
     type: 'supplier',
+    status: 'active', // 只查询已审核的供应商
     page: 1,
     limit: 1000 // 获取足够多的数据用于查找
   })

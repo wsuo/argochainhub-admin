@@ -291,7 +291,7 @@ export default function NewProductPage() {
                         />
                       </FormControl>
                       <FormDescription>
-                        支持搜索和筛选，可切换前端/后端搜索模式
+                        支持搜索和筛选已审核的供应商
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
