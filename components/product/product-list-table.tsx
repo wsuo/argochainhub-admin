@@ -334,6 +334,16 @@ export function ProductListTable({
                       </>
                     )}
 
+                    {/* 状态调试信息 - 仅在开发环境显示 */}
+                    {process.env.NODE_ENV === 'development' && showListingToggle && (
+                      <>
+                        <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                          状态: {product.status} | 上架: {product.isListed ? '是' : '否'}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+
                     {/* 删除操作 */}
                     {showDeleteAction && (
                       <DropdownMenuItem
