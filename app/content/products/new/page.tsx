@@ -30,6 +30,7 @@ import {
 import { ArrowLeft, Save, Package, Plus } from 'lucide-react'
 import { useCreateProduct } from '@/hooks/use-api'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
+import { SupplierSelect } from '@/components/supplier-select'
 import type { CreateProductRequest } from '@/lib/types'
 import { toast } from 'sonner'
 
@@ -273,7 +274,7 @@ export default function NewProductPage() {
                   />
                 </div>
 
-                {/* 供应商ID */}
+                {/* 供应商选择 */}
                 <FormField
                   control={form.control}
                   name="supplierId"
@@ -281,15 +282,16 @@ export default function NewProductPage() {
                     <FormItem>
                       <FormLabel>供应商 *</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                          placeholder="请输入供应商ID"
+                        <SupplierSelect
+                          value={field.value || undefined}
+                          onValueChange={(value) => field.onChange(value || 0)}
+                          placeholder="请选择供应商"
+                          className="w-full"
+                          required
                         />
                       </FormControl>
                       <FormDescription>
-                        暂时需要手动输入供应商ID，后续会改为下拉选择
+                        支持搜索和筛选，可切换前端/后端搜索模式
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
