@@ -223,11 +223,16 @@ export function ControlMethodList({
                               <TableCell>
                                 <div>
                                   <div className="font-medium">
-                                    {getMultiLangText(method.target, 'zh-CN')}
+                                    {getMultiLangText(method.targetCrop, 'zh-CN')}
                                   </div>
-                                  {getMultiLangText(method.target, 'en') && (
+                                  {getMultiLangText(method.targetCrop, 'en') && (
                                     <div className="text-sm text-muted-foreground">
-                                      {getMultiLangText(method.target, 'en')}
+                                      {getMultiLangText(method.targetCrop, 'en')}
+                                    </div>
+                                  )}
+                                  {method.pestDisease && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      防治: {getMultiLangText(method.pestDisease, 'zh-CN')}
                                     </div>
                                   )}
                                 </div>
@@ -236,11 +241,11 @@ export function ControlMethodList({
                               <TableCell>
                                 <div>
                                   <div className="font-medium">
-                                    {getMultiLangText(method.method, 'zh-CN')}
+                                    {getMultiLangText(method.applicationMethod, 'zh-CN')}
                                   </div>
-                                  {getMultiLangText(method.method, 'en') && (
+                                  {getMultiLangText(method.applicationMethod, 'en') && (
                                     <div className="text-sm text-muted-foreground">
-                                      {getMultiLangText(method.method, 'en')}
+                                      {getMultiLangText(method.applicationMethod, 'en')}
                                     </div>
                                   )}
                                 </div>
