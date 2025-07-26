@@ -46,9 +46,7 @@ const productFormSchema = z.object({
   }),
   supplierId: z.number().min(1, '请选择供应商'),
   formulation: z.string().min(1, '请选择剂型'),
-  toxicity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'ACUTE'], {
-    required_error: '请选择毒性等级',
-  }),
+  toxicity: z.string().min(1, '请选择毒性等级'),
   totalContent: z.string().min(1, '总含量不能为空'),
   registrationNumber: z.string().optional(),
   registrationHolder: z.string().optional(),
@@ -85,6 +83,7 @@ export default function NewProductPage() {
   const router = useRouter()
   const createMutation = useCreateProduct()
   const formulations = useDictionaryOptions('formulation')
+  const toxicities = useDictionaryOptions('toxicity')
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -93,7 +92,7 @@ export default function NewProductPage() {
       pesticideName: { 'zh-CN': '', 'en': '' },
       supplierId: 0,
       formulation: '',
-      toxicity: 'LOW',
+      toxicity: '',
       totalContent: '',
       registrationNumber: '',
       registrationHolder: '',
@@ -338,10 +337,11 @@ export default function NewProductPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="LOW">低毒</SelectItem>
-                          <SelectItem value="MEDIUM">中毒</SelectItem>
-                          <SelectItem value="HIGH">高毒</SelectItem>
-                          <SelectItem value="ACUTE">剧毒</SelectItem>
+                          {toxicities.map((toxicity) => (
+                            <SelectItem key={toxicity.value} value={toxicity.value}>
+                              {toxicity.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

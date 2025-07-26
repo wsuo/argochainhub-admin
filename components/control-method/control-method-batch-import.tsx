@@ -35,13 +35,18 @@ const singleMethodSchema = z.object({
     'zh-CN': z.string().min(1, '中文防治对象不能为空'),
     'en': z.string().optional(),
   }),
+  pestDisease: z.object({
+    'zh-CN': z.string().min(1, '中文防治病虫害不能为空'),
+    'en': z.string().optional(),
+  }),
   method: z.object({
     'zh-CN': z.string().min(1, '中文使用方法不能为空'),
     'en': z.string().optional(),
   }),
-  dosage: z.string().min(1, '用药量不能为空'),
-  applicationTimes: z.number().min(1, '施药次数必须大于0'),
-  safetyInterval: z.number().min(0, '安全间隔期不能为负数'),
+  dosage: z.object({
+    'zh-CN': z.string().min(1, '中文用药量不能为空'),
+    'en': z.string().optional(),
+  }),
   remarks: z.string().optional(),
 })
 
@@ -72,10 +77,9 @@ export function ControlMethodBatchImport({
       methods: [
         {
           target: { 'zh-CN': '', 'en': '' },
+          pestDisease: { 'zh-CN': '', 'en': '' },
           method: { 'zh-CN': '', 'en': '' },
-          dosage: '',
-          applicationTimes: 1,
-          safetyInterval: 0,
+          dosage: { 'zh-CN': '', 'en': '' },
           remarks: '',
         }
       ],
@@ -90,10 +94,9 @@ export function ControlMethodBatchImport({
   const addMethod = () => {
     append({
       target: { 'zh-CN': '', 'en': '' },
+      pestDisease: { 'zh-CN': '', 'en': '' },
       method: { 'zh-CN': '', 'en': '' },
-      dosage: '',
-      applicationTimes: 1,
-      safetyInterval: 0,
+      dosage: { 'zh-CN': '', 'en': '' },
       remarks: '',
     })
   }
@@ -106,9 +109,9 @@ export function ControlMethodBatchImport({
       const methods = lines.map(line => {
         const columns = line.split(',').map(col => col.trim().replace(/^"(.*)"$/, '$1'))
         
-        // CSV格式: 防治对象(中),防治对象(英),使用方法(中),使用方法(英),用药量,施药次数,安全间隔期,备注
-        if (columns.length < 5) {
-          throw new Error('CSV格式不正确，至少需要5列数据')
+        // CSV格式: 防治对象(中),防治对象(英),防治病虫害(中),防治病虫害(英),使用方法(中),使用方法(英),用药量(中),用药量(英),备注
+        if (columns.length < 7) {
+          throw new Error('CSV格式不正确，至少需要7列数据')
         }
 
         return {
@@ -116,14 +119,19 @@ export function ControlMethodBatchImport({
             'zh-CN': columns[0] || '',
             'en': columns[1] || '',
           },
-          method: {
+          pestDisease: {
             'zh-CN': columns[2] || '',
             'en': columns[3] || '',
           },
-          dosage: columns[4] || '',
-          applicationTimes: parseInt(columns[5]) || 1,
-          safetyInterval: parseInt(columns[6]) || 0,
-          remarks: columns[7] || '',
+          method: {
+            'zh-CN': columns[4] || '',
+            'en': columns[5] || '',
+          },
+          dosage: {
+            'zh-CN': columns[6] || '',
+            'en': columns[7] || '',
+          },
+          remarks: columns[8] || '',
         }
       })
 
@@ -137,8 +145,18 @@ export function ControlMethodBatchImport({
 
   const onSubmit = async (values: BatchFormValues) => {
     try {
+      // 转换表单数据为API格式
+      const controlMethods = values.methods.map(method => ({
+        productId,
+        targetCrop: method.target,
+        pestDisease: method.pestDisease,
+        applicationMethod: method.method,
+        dosage: method.dosage,
+        remarks: method.remarks || undefined,
+      }))
+
       const batchData: BatchCreateControlMethodsRequest = {
-        methods: values.methods
+        controlMethods
       }
 
       await batchCreateMutation.mutateAsync({
@@ -187,14 +205,14 @@ export function ControlMethodBatchImport({
                   CSV数据格式 (每行一个防治方法)
                 </label>
                 <div className="text-xs text-muted-foreground mt-1 mb-2">
-                  格式: 防治对象(中),防治对象(英),使用方法(中),使用方法(英),用药量,施药次数,安全间隔期,备注
+                  格式: 防治对象(中),防治对象(英),防治病虫害(中),防治病虫害(英),使用方法(中),使用方法(英),用药量(中),用药量(英),备注
                 </div>
                 <Textarea
                   value={csvInput}
                   onChange={(e) => setCsvInput(e.target.value)}
                   placeholder={`示例:
-蚜虫,Aphids,叶面喷雾,Foliar spray,1000-1500倍液,2,7,注意避开花期
-红蜘蛛,Spider mites,均匀喷雾,Uniform spray,800-1000倍液,1,5,高温时段避免使用`}
+水稻,Rice,蚜虫,Aphids,叶面喷雾,Foliar spray,1000-1500倍液,1000-1500 times dilution,注意避开花期
+玉米,Corn,红蜘蛛,Spider mites,均匀喷雾,Uniform spray,800-1000倍液,800-1000 times dilution,高温时段避免使用`}
                   rows={4}
                 />
               </div>
@@ -248,7 +266,7 @@ export function ControlMethodBatchImport({
                             <FormItem>
                               <FormLabel>防治对象(中文) *</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="例如: 蚜虫" />
+                                <Input {...field} placeholder="例如: 水稻" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -260,6 +278,36 @@ export function ControlMethodBatchImport({
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>防治对象(英文)</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="例如: Rice" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* 防治病虫害 */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name={`methods.${index}.pestDisease.zh-CN`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>防治病虫害(中文) *</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="例如: 蚜虫" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`methods.${index}.pestDisease.en`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>防治病虫害(英文)</FormLabel>
                               <FormControl>
                                 <Input {...field} placeholder="例如: Aphids" />
                               </FormControl>
@@ -299,14 +347,14 @@ export function ControlMethodBatchImport({
                         />
                       </div>
 
-                      {/* 使用参数 */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* 用药量 */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
-                          name={`methods.${index}.dosage`}
+                          name={`methods.${index}.dosage.zh-CN`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>用药量 *</FormLabel>
+                              <FormLabel>用药量(中文) *</FormLabel>
                               <FormControl>
                                 <Input {...field} placeholder="例如: 1000-1500倍液" />
                               </FormControl>
@@ -314,41 +362,14 @@ export function ControlMethodBatchImport({
                             </FormItem>
                           )}
                         />
-
                         <FormField
                           control={form.control}
-                          name={`methods.${index}.applicationTimes`}
+                          name={`methods.${index}.dosage.en`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>施药次数 *</FormLabel>
+                              <FormLabel>用药量(英文)</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="number" 
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                                  placeholder="次数"
-                                  min="1"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`methods.${index}.safetyInterval`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>安全间隔期 *</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                  placeholder="天数"
-                                  min="0"
-                                />
+                                <Input {...field} placeholder="例如: 1000-1500 times dilution" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

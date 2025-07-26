@@ -34,13 +34,18 @@ const controlMethodFormSchema = z.object({
     'zh-CN': z.string().min(1, '中文防治对象不能为空'),
     'en': z.string().optional(),
   }),
+  pestDisease: z.object({
+    'zh-CN': z.string().min(1, '中文防治病虫害不能为空'),
+    'en': z.string().optional(),
+  }),
   method: z.object({
     'zh-CN': z.string().min(1, '中文使用方法不能为空'),
     'en': z.string().optional(),
   }),
-  dosage: z.string().min(1, '用药量不能为空'),
-  applicationTimes: z.number().min(1, '施药次数必须大于0'),
-  safetyInterval: z.number().min(0, '安全间隔期不能为负数'),
+  dosage: z.object({
+    'zh-CN': z.string().min(1, '中文用药量不能为空'),
+    'en': z.string().optional(),
+  }),
   remarks: z.string().optional(),
 })
 
@@ -67,10 +72,9 @@ export function ControlMethodForm({
     resolver: zodResolver(controlMethodFormSchema),
     defaultValues: {
       target: { 'zh-CN': '', 'en': '' },
+      pestDisease: { 'zh-CN': '', 'en': '' },
       method: { 'zh-CN': '', 'en': '' },
-      dosage: '',
-      applicationTimes: 1,
-      safetyInterval: 0,
+      dosage: { 'zh-CN': '', 'en': '' },
       remarks: '',
     },
   })
@@ -89,23 +93,27 @@ export function ControlMethodForm({
           'zh-CN': getMultiLangText(method.targetCrop, 'zh-CN'),
           'en': getMultiLangText(method.targetCrop, 'en'),
         },
+        pestDisease: {
+          'zh-CN': getMultiLangText(method.pestDisease, 'zh-CN'),
+          'en': getMultiLangText(method.pestDisease, 'en'),
+        },
         method: {
           'zh-CN': getMultiLangText(method.applicationMethod, 'zh-CN'),
           'en': getMultiLangText(method.applicationMethod, 'en'),
         },
-        dosage: getMultiLangText(method.dosage, 'zh-CN'),
-        applicationTimes: method.applicationTimes || 1,
-        safetyInterval: method.safetyInterval || 0,
+        dosage: {
+          'zh-CN': getMultiLangText(method.dosage, 'zh-CN'),
+          'en': getMultiLangText(method.dosage, 'en'),
+        },
         remarks: method.remarks || '',
       })
     } else if (!method && open) {
       // 新建模式，重置表单
       form.reset({
         target: { 'zh-CN': '', 'en': '' },
+        pestDisease: { 'zh-CN': '', 'en': '' },
         method: { 'zh-CN': '', 'en': '' },
-        dosage: '',
-        applicationTimes: 1,
-        safetyInterval: 0,
+        dosage: { 'zh-CN': '', 'en': '' },
         remarks: '',
       })
     }
@@ -117,8 +125,9 @@ export function ControlMethodForm({
         // 更新防治方法
         const updateData: UpdateControlMethodRequest = {
           targetCrop: values.target,
+          pestDisease: values.pestDisease,
           applicationMethod: values.method,
-          dosage: { 'zh-CN': values.dosage, 'en': values.dosage }, // 转换为多语言格式
+          dosage: values.dosage,
           remarks: values.remarks || undefined,
         }
 
@@ -129,10 +138,11 @@ export function ControlMethodForm({
       } else {
         // 创建防治方法
         const createData: CreateControlMethodRequest = {
+          productId,
           targetCrop: values.target,
-          pestDisease: { 'zh-CN': '', 'en': '' }, // 暂时设为空，根据实际需求调整
+          pestDisease: values.pestDisease,
           applicationMethod: values.method,
-          dosage: { 'zh-CN': values.dosage, 'en': values.dosage }, // 转换为多语言格式
+          dosage: values.dosage,
           remarks: values.remarks || undefined,
         }
 
@@ -182,7 +192,7 @@ export function ControlMethodForm({
                     <FormItem>
                       <FormLabel>中文名称 *</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例如: 蚜虫" />
+                        <Input {...field} placeholder="例如: 水稻" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -191,6 +201,39 @@ export function ControlMethodForm({
                 <FormField
                   control={form.control}
                   name="target.en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>英文名称</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="例如: Rice" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* 防治病虫害 */}
+            <div className="space-y-4">
+              <h4 className="font-medium">防治病虫害</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="pestDisease.zh-CN"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>中文名称 *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="例如: 蚜虫" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pestDisease.en"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>英文名称</FormLabel>
@@ -237,16 +280,16 @@ export function ControlMethodForm({
               </div>
             </div>
 
-            {/* 使用参数 */}
+            {/* 用药量 */}
             <div className="space-y-4">
-              <h4 className="font-medium">使用参数</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <h4 className="font-medium">用药量</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="dosage"
+                  name="dosage.zh-CN"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>用药量 *</FormLabel>
+                      <FormLabel>中文描述 *</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="例如: 1000-1500倍液" />
                       </FormControl>
@@ -260,44 +303,15 @@ export function ControlMethodForm({
 
                 <FormField
                   control={form.control}
-                  name="applicationTimes"
+                  name="dosage.en"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>施药次数 *</FormLabel>
+                      <FormLabel>英文描述</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                          placeholder="次数"
-                          min="1"
-                        />
+                        <Input {...field} placeholder="例如: 1000-1500 times dilution" />
                       </FormControl>
                       <FormDescription>
-                        建议施药次数
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="safetyInterval"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>安全间隔期 *</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                          placeholder="天数"
-                          min="0"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        距离收获的安全天数
+                        Dilution ratio or specific dosage
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
