@@ -41,6 +41,10 @@ import type {
   SampleRequestQuery,
   SampleRequestStats,
   UpdateSampleRequestStatusRequest,
+  RegistrationRequest,
+  RegistrationRequestQuery,
+  RegistrationRequestStats,
+  UpdateRegistrationRequestStatusRequest,
 } from '@/lib/types'
 
 // 查询键常量
@@ -95,6 +99,11 @@ export const queryKeys = {
   sampleRequests: (query?: SampleRequestQuery) => ['sample-requests', query] as const,
   sampleRequest: (id: string) => ['sample-requests', id] as const,
   sampleRequestStats: ['sample-requests', 'stats'] as const,
+  
+  // 登记管理
+  registrationRequests: (query?: RegistrationRequestQuery) => ['registration-requests', query] as const,
+  registrationRequest: (id: string) => ['registration-requests', id] as const,
+  registrationRequestStats: ['registration-requests', 'stats'] as const,
 }
 
 // 仪表盘相关hooks
@@ -936,6 +945,69 @@ export const useDeleteSampleRequest = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '样品申请删除失败')
+    },
+  })
+}
+
+// 登记管理相关 hooks
+// 获取登记申请列表
+export const useRegistrationRequests = (query?: RegistrationRequestQuery) => {
+  return useQuery({
+    queryKey: queryKeys.registrationRequests(query),
+    queryFn: () => api.registrationRequest.getRegistrationRequests(query),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取登记申请详情
+export const useRegistrationRequest = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.registrationRequest(id),
+    queryFn: () => api.registrationRequest.getRegistrationRequest(id),
+    enabled: !!id,
+  })
+}
+
+// 获取登记申请统计数据
+export const useRegistrationRequestStats = () => {
+  return useQuery({
+    queryKey: queryKeys.registrationRequestStats,
+    queryFn: api.registrationRequest.getRegistrationRequestStats,
+    staleTime: 30 * 1000,
+  })
+}
+
+// 更新登记申请状态
+export const useUpdateRegistrationRequestStatus = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateRegistrationRequestStatusRequest }) => 
+      api.registrationRequest.updateRegistrationRequestStatus(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registration-requests'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.registrationRequestStats })
+      toast.success('状态更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '状态更新失败')
+    },
+  })
+}
+
+// 删除登记申请
+export const useDeleteRegistrationRequest = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: string) => api.registrationRequest.deleteRegistrationRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registration-requests'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.registrationRequestStats })
+      toast.success('登记申请删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '登记申请删除失败')
     },
   })
 }

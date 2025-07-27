@@ -315,6 +315,92 @@ export interface UpdateSampleRequestStatusRequest {
   rejectReason?: string
 }
 
+// 登记管理相关类型
+export interface RegistrationRequest {
+  id: string
+  regReqNo: string
+  status: 'pending_response' | 'in_progress' | 'completed' | 'declined' | 'cancelled'
+  details: {
+    targetCountry: string
+    isExclusive: boolean
+    docReqs: string[]
+    sampleReq: {
+      needed: boolean
+      quantity?: number
+      unit?: string
+    }
+    timeline: string
+    budget: {
+      amount: number
+      currency: string
+    }
+    additionalRequirements?: string
+  }
+  productSnapshot: {
+    name: string
+    category: string
+    formulation: string
+    activeIngredient: string
+    content: string
+  }
+  deadline: string
+  buyer: {
+    id: string
+    name: {
+      en?: string
+      "zh-CN": string
+    }
+  }
+  supplier: {
+    id: string
+    name: {
+      en?: string
+      "zh-CN": string
+    }
+  }
+  product: {
+    id: string
+    name: {
+      en?: string
+      "zh-CN": string
+    }
+  }
+  createdAt?: string
+  updatedAt?: string
+}
+
+// 登记申请查询参数
+export interface RegistrationRequestQuery {
+  page?: number
+  limit?: number
+  regReqNo?: string
+  status?: string
+  buyerId?: number
+  supplierId?: number
+  productId?: number
+  targetCountry?: string
+  createdStartDate?: string
+  createdEndDate?: string
+  keyword?: string // 关键字模糊查询
+}
+
+// 登记申请统计数据
+export interface RegistrationRequestStats {
+  pendingResponse: number
+  inProgress: number
+  completed: number
+  declined: number
+  cancelled: number
+  total: number
+}
+
+// 更新登记申请状态请求
+export interface UpdateRegistrationRequestStatusRequest {
+  status: string
+  statusNote?: string
+  operatedBy: string
+}
+
 // 订阅和订单相关类型
 export interface Subscription {
   id: number

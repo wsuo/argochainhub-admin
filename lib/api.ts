@@ -58,6 +58,10 @@ import type {
   SampleRequestQuery,
   SampleRequestStats,
   UpdateSampleRequestStatusRequest,
+  RegistrationRequest,
+  RegistrationRequestQuery,
+  RegistrationRequestStats,
+  UpdateRegistrationRequestStatusRequest,
 } from './types'
 
 // 认证相关API
@@ -373,6 +377,29 @@ export const sampleRequestApi = {
     apiClient.delete(`/admin/sample-requests/${id}`),
 }
 
+// 登记管理相关API（管理员接口）
+export const registrationRequestApi = {
+  // 获取登记申请列表
+  getRegistrationRequests: (query: RegistrationRequestQuery = {}): Promise<ApiResponse<RegistrationRequest[]>> =>
+    apiClient.get('/admin/registration-requests', filterQueryParams(query)),
+  
+  // 获取登记申请统计数据
+  getRegistrationRequestStats: (): Promise<RegistrationRequestStats> =>
+    apiClient.get('/admin/registration-requests/stats'),
+  
+  // 获取登记申请详情
+  getRegistrationRequest: (id: string): Promise<RegistrationRequest> =>
+    apiClient.get(`/admin/registration-requests/${id}`),
+  
+  // 更新登记申请状态
+  updateRegistrationRequestStatus: (id: string, data: UpdateRegistrationRequestStatusRequest): Promise<RegistrationRequest> =>
+    apiClient.patch(`/admin/registration-requests/${id}/status`, data),
+  
+  // 删除登记申请
+  deleteRegistrationRequest: (id: string): Promise<{ message: string }> =>
+    apiClient.delete(`/admin/registration-requests/${id}`),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
@@ -388,6 +415,7 @@ export const api = {
   dictionary: dictionaryApi,
   inquiry: inquiryApi,
   sampleRequest: sampleRequestApi,
+  registrationRequest: registrationRequestApi,
 }
 
 export default api

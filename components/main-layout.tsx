@@ -30,7 +30,7 @@ const routeMap: Record<string, { title: string; parent?: string }> = {
   '/content/ai-knowledge': { title: 'AI知识库', parent: '内容管理' },
   '/business/inquiries': { title: '询盘管理', parent: '业务运营' },
   '/business/sample-requests': { title: '样品管理', parent: '业务运营' },
-  '/business/registrations': { title: '注册审核', parent: '业务运营' },
+  '/business/registrations': { title: '登记管理', parent: '业务运营' },
   '/finance/plans': { title: '会员计划', parent: '财务管理' },
   '/finance/orders': { title: '订单管理', parent: '财务管理' },
   '/finance/revenue': { title: '收入统计', parent: '财务管理' },

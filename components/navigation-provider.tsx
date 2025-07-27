@@ -196,7 +196,7 @@ export const navigationConfig = {
       items: [
         { title: '询盘管理', path: '/business/inquiries', key: 'inquiries' },
         { title: '样品管理', path: '/business/sample-requests', key: 'samples' },
-        { title: '注册管理', path: '/business/registrations', key: 'registrations' }
+        { title: '登记管理', path: '/business/registrations', key: 'registrations' }
       ]
     },
     finance: {
