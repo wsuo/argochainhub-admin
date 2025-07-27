@@ -37,6 +37,10 @@ import type {
   UpdateCompanyUserRequest,
   InquiryQuery,
   InquiryStats,
+  SampleRequest,
+  SampleRequestQuery,
+  SampleRequestStats,
+  UpdateSampleRequestStatusRequest,
 } from '@/lib/types'
 
 // 查询键常量
@@ -86,6 +90,11 @@ export const queryKeys = {
   inquiries: (query?: InquiryQuery) => ['inquiries', query] as const,
   inquiry: (id: number) => ['inquiries', id] as const,
   inquiryStats: ['inquiries', 'stats'] as const,
+  
+  // 样品申请管理
+  sampleRequests: (query?: SampleRequestQuery) => ['sample-requests', query] as const,
+  sampleRequest: (id: string) => ['sample-requests', id] as const,
+  sampleRequestStats: ['sample-requests', 'stats'] as const,
 }
 
 // 仪表盘相关hooks
@@ -863,6 +872,70 @@ export const useDeleteInquiry = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '询盘删除失败')
+    },
+  })
+}
+
+// 样品申请相关hooks
+
+// 获取样品申请列表
+export const useSampleRequests = (query?: SampleRequestQuery) => {
+  return useQuery({
+    queryKey: queryKeys.sampleRequests(query),
+    queryFn: () => api.sampleRequest.getSampleRequests(query),
+    staleTime: 30 * 1000, // 30秒内不重新请求
+  })
+}
+
+// 获取样品申请详情
+export const useSampleRequest = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.sampleRequest(id),
+    queryFn: () => api.sampleRequest.getSampleRequest(id),
+    enabled: !!id,
+  })
+}
+
+// 获取样品申请统计数据
+export const useSampleRequestStats = () => {
+  return useQuery({
+    queryKey: queryKeys.sampleRequestStats,
+    queryFn: api.sampleRequest.getSampleRequestStats,
+    staleTime: 30 * 1000,
+  })
+}
+
+// 更新样品申请状态
+export const useUpdateSampleRequestStatus = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateSampleRequestStatusRequest }) => 
+      api.sampleRequest.updateSampleRequestStatus(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sample-requests'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.sampleRequestStats })
+      toast.success('状态更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '状态更新失败')
+    },
+  })
+}
+
+// 删除样品申请
+export const useDeleteSampleRequest = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: string) => api.sampleRequest.deleteSampleRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sample-requests'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.sampleRequestStats })
+      toast.success('样品申请删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '样品申请删除失败')
     },
   })
 }

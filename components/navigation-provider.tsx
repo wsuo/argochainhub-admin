@@ -34,7 +34,7 @@ const routeToNavigation: Record<string, { section: string; page?: string }> = {
   '/content/products/new': { section: 'content', page: 'products-new' },
   '/content/suppliers': { section: 'content', page: 'suppliers' },
   '/business/inquiries': { section: 'business', page: 'inquiries' },
-  '/business/samples': { section: 'business', page: 'samples' },
+  '/business/sample-requests': { section: 'business', page: 'samples' },
   '/business/registrations': { section: 'business', page: 'registrations' },
   '/finance/plans': { section: 'finance', page: 'plans' },
   '/finance/orders': { section: 'finance', page: 'orders' },
@@ -76,6 +76,11 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
       } else {
         currentPath = '/content/products'
       }
+    }
+    
+    // 样品申请详情页面
+    if (pathname.startsWith('/business/sample-requests/') && pathname !== '/business/sample-requests/new') {
+      currentPath = '/business/sample-requests'
     }
     
     // 字典项管理页面
@@ -129,6 +134,7 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     // 处理动态路由的激活状态
     if (path === '/enterprises' && pathname.startsWith('/enterprises/')) return true
     if (path === '/content/products' && pathname.startsWith('/content/products/')) return true
+    if (path === '/business/sample-requests' && pathname.startsWith('/business/sample-requests/')) return true
     if (path === '/system/dictionary' && pathname.startsWith('/system/dictionary/')) return true
     
     return false
@@ -189,7 +195,7 @@ export const navigationConfig = {
       icon: Activity,
       items: [
         { title: '询盘管理', path: '/business/inquiries', key: 'inquiries' },
-        { title: '样品管理', path: '/business/samples', key: 'samples' },
+        { title: '样品管理', path: '/business/sample-requests', key: 'samples' },
         { title: '注册管理', path: '/business/registrations', key: 'registrations' }
       ]
     },

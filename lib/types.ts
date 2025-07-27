@@ -229,6 +229,91 @@ export interface InquiryStats {
   total: number
 }
 
+// 样品申请相关类型
+export interface SampleRequest {
+  id: string
+  createdAt: string
+  updatedAt: string
+  sampleReqNo: string
+  quantity: string
+  unit: string
+  status: 'pending_approval' | 'approved' | 'shipped' | 'delivered' | 'rejected' | 'cancelled'
+  details: {
+    purpose: string
+    shippingMethod: string
+    shippingAddress: string
+    willingnessToPay?: {
+      paid: boolean
+      amount: number
+    }
+  }
+  trackingInfo?: {
+    carrier: string
+    trackingNumber: string
+  }
+  productSnapshot: {
+    name: string
+    content: string
+    category: string
+    formulation: string
+    activeIngredient: string
+  }
+  deadline: string
+  buyer: {
+    id: string
+    name: {
+      "zh-CN": string
+    }
+  }
+  supplier: {
+    id: string
+    name: {
+      "zh-CN": string
+    }
+  }
+  product: {
+    id: string
+    name: {
+      "zh-CN": string
+    }
+  }
+}
+
+// 样品申请查询参数
+export interface SampleRequestQuery {
+  page?: number
+  limit?: number
+  sampleReqNo?: string
+  status?: string
+  buyerId?: number
+  supplierId?: number
+  productId?: number
+  createdStartDate?: string
+  createdEndDate?: string
+}
+
+// 样品申请统计数据
+export interface SampleRequestStats {
+  pendingApproval: number
+  approved: number
+  shipped: number
+  delivered: number
+  rejected: number
+  cancelled: number
+  total: number
+}
+
+// 更新样品申请状态请求
+export interface UpdateSampleRequestStatusRequest {
+  status: string
+  operatedBy: string
+  trackingInfo?: {
+    carrier: string
+    trackingNumber: string
+  }
+  rejectReason?: string
+}
+
 // 订阅和订单相关类型
 export interface Subscription {
   id: number

@@ -291,3 +291,14 @@ Menu items are filtered based on `currentUserRole` and organized into modules:
 - `/hooks` - Custom React hooks
 - `/lib` - Utility functions and shared logic
 - `/public` - Static assets (placeholder images)
+
+## 模块化开发文档
+
+为了保持文档的简洁性和可维护性，各模块的详细开发规范已拆分到对应目录下：
+
+### API 调用规范
+- 文档位置：`/hooks/API-GUIDE.md`
+- 适用场景：开发新的 API 功能、使用 React Query hooks、处理数据请求
+- 包含内容：类型定义规范、API 方法定义、React Query Hooks 使用、组件集成示例
+
+在开发涉及 API 调用的功能时，请先查阅对应的规范文档。

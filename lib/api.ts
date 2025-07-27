@@ -54,6 +54,10 @@ import type {
   InquiryQuery,
   InquiryItem,
   InquiryStats,
+  SampleRequest,
+  SampleRequestQuery,
+  SampleRequestStats,
+  UpdateSampleRequestStatusRequest,
 } from './types'
 
 // 认证相关API
@@ -346,6 +350,29 @@ export const inquiryApi = {
     apiClient.delete(`/admin/inquiries/${id}`),
 }
 
+// 样品申请相关API（管理员接口）
+export const sampleRequestApi = {
+  // 获取样品申请列表
+  getSampleRequests: (query: SampleRequestQuery = {}): Promise<ApiResponse<SampleRequest[]>> =>
+    apiClient.get('/admin/sample-requests', filterQueryParams(query)),
+  
+  // 获取样品申请统计数据
+  getSampleRequestStats: (): Promise<SampleRequestStats> =>
+    apiClient.get('/admin/sample-requests/stats'),
+  
+  // 获取样品申请详情
+  getSampleRequest: (id: string): Promise<SampleRequest> =>
+    apiClient.get(`/admin/sample-requests/${id}`),
+  
+  // 更新样品申请状态
+  updateSampleRequestStatus: (id: string, data: UpdateSampleRequestStatusRequest): Promise<SampleRequest> =>
+    apiClient.patch(`/admin/sample-requests/${id}/status`, data),
+  
+  // 删除样品申请
+  deleteSampleRequest: (id: string): Promise<{ message: string }> =>
+    apiClient.delete(`/admin/sample-requests/${id}`),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
@@ -360,6 +387,7 @@ export const api = {
   utility: utilityApi,
   dictionary: dictionaryApi,
   inquiry: inquiryApi,
+  sampleRequest: sampleRequestApi,
 }
 
 export default api
