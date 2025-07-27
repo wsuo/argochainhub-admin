@@ -290,6 +290,7 @@ export interface SampleRequestQuery {
   productId?: number
   createdStartDate?: string
   createdEndDate?: string
+  keyword?: string // 关键字模糊查询
 }
 
 // 样品申请统计数据
