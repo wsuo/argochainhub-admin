@@ -209,6 +209,7 @@ export interface Inquiry {
 export interface InquiryQuery {
   page?: number
   limit?: number
+  keyword?: string // 关键字搜索（支持询价单号、买方企业名、供应商企业名、产品名称模糊匹配）
   inquiryNo?: string
   status?: string
   buyerId?: number

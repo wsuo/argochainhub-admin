@@ -35,7 +35,7 @@ export default function InquiriesPage() {
   const query: InquiryQuery = {
     page: currentPage,
     limit: pageSize,
-    ...(searchKeyword && { inquiryNo: searchKeyword }),
+    ...(searchKeyword && { keyword: searchKeyword }),
     ...(selectedStatus !== "all" && { status: selectedStatus }),
   }
   
@@ -78,7 +78,7 @@ export default function InquiriesPage() {
         {/* 筛选条件 */}
         <div className="flex gap-4 mb-6">
           <Input
-            placeholder="搜索询盘编号、买方或供应商名称"
+            placeholder="搜索询盘编号、买方企业名、供应商企业名、产品名称"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -188,7 +188,7 @@ export default function InquiriesPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1 || loading}
+                disabled={currentPage === 1 || isLoading}
               >
                 上一页
               </Button>
@@ -196,7 +196,7 @@ export default function InquiriesPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages || loading}
+                disabled={currentPage === totalPages || isLoading}
               >
                 下一页
               </Button>
