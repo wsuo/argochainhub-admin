@@ -165,17 +165,10 @@ export default function InquiryDetailPage() {
             <div className="flex gap-4">
               <div className="flex-1">
                 <div className="text-sm text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  联系人
-                </div>
-                <div>{inquiry.buyer.contactPerson}</div>
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-muted-foreground flex items-center gap-1">
                   <Phone className="h-3 w-3" />
                   联系电话
                 </div>
-                <div>{inquiry.buyer.contactPhone}</div>
+                <div>{inquiry.buyer.profile?.phone || '-'}</div>
               </div>
             </div>
           </CardContent>
@@ -197,17 +190,10 @@ export default function InquiryDetailPage() {
             <div className="flex gap-4">
               <div className="flex-1">
                 <div className="text-sm text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  联系人
-                </div>
-                <div>{inquiry.supplier.contactPerson}</div>
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-muted-foreground flex items-center gap-1">
                   <Phone className="h-3 w-3" />
                   联系电话
                 </div>
-                <div>{inquiry.supplier.contactPhone}</div>
+                <div>{inquiry.supplier.profile?.phone || '-'}</div>
               </div>
             </div>
           </CardContent>

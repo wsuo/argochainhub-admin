@@ -617,23 +617,65 @@ export default function CompanyDetailPage() {
                 </div>
               )}
               
-              {company.profile?.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{company.profile.phone}</span>
-                </div>
-              )}
+              {/* 电话 - 支持编辑 */}
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                {isEditMode ? (
+                  <Input
+                    value={editData.profile?.phone || company.profile?.phone || ''}
+                    onChange={(e) => setEditData(prev => ({
+                      ...prev,
+                      profile: {
+                        ...prev.profile,
+                        phone: e.target.value
+                      }
+                    }))}
+                    placeholder="请输入联系电话"
+                    className="text-sm"
+                  />
+                ) : (
+                  <span className="text-sm">{company.profile?.phone || '-'}</span>
+                )}
+              </div>
 
-              {company.profile?.address && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{company.profile.address}</span>
-                </div>
-              )}
+              {/* 地址 - 支持编辑 */}
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                {isEditMode ? (
+                  <Input
+                    value={editData.profile?.address || company.profile?.address || ''}
+                    onChange={(e) => setEditData(prev => ({
+                      ...prev,
+                      profile: {
+                        ...prev.profile,
+                        address: e.target.value
+                      }
+                    }))}
+                    placeholder="请输入企业地址"
+                    className="text-sm"
+                  />
+                ) : (
+                  <span className="text-sm">{company.profile?.address || '-'}</span>
+                )}
+              </div>
 
-              {company.profile?.website && (
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
+              {/* 网站 - 支持编辑 */}
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                {isEditMode ? (
+                  <Input
+                    value={editData.profile?.website || company.profile?.website || ''}
+                    onChange={(e) => setEditData(prev => ({
+                      ...prev,
+                      profile: {
+                        ...prev.profile,
+                        website: e.target.value
+                      }
+                    }))}
+                    placeholder="请输入企业网站"
+                    className="text-sm"
+                  />
+                ) : company.profile?.website ? (
                   <a 
                     href={company.profile.website}
                     target="_blank"
@@ -642,8 +684,10 @@ export default function CompanyDetailPage() {
                   >
                     {company.profile.website}
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span className="text-sm">-</span>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
