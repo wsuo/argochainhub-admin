@@ -29,11 +29,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Search, Eye, RotateCcw, Edit, Trash2 } from "lucide-react"
+import { Search, Eye, RotateCcw, Edit, Trash2, Package, Clock, CheckCircle, XCircle, Ban, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { zhCN } from "date-fns/locale"
-import { useInquiries, useUpdateInquiryStatus, useDeleteInquiry } from "@/hooks/use-api"
+import { useInquiries, useInquiryStats, useUpdateInquiryStatus, useDeleteInquiry } from "@/hooks/use-api"
 import type { InquiryQuery } from "@/lib/types"
 
 const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "outline" }> = {
@@ -71,6 +71,7 @@ export default function InquiriesPage() {
   }
   
   // 使用统一的API hooks
+  const { data: stats } = useInquiryStats()
   const { data, isLoading, error } = useInquiries(query)
   const updateStatusMutation = useUpdateInquiryStatus()
   const deleteMutation = useDeleteInquiry()
@@ -158,7 +159,69 @@ export default function InquiriesPage() {
   }
 
   return (
-    <Card>
+    <div className="space-y-6">
+      {/* 统计卡片 */}
+      {stats && (
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">待报价</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pendingQuote}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">已报价</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.quoted}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">已确认</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.confirmed}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">已拒绝</CardTitle>
+              <XCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.declined}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">已过期</CardTitle>
+              <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.expired}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">总计</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 询盘列表卡片 */}
+      <Card>
       <CardHeader>
         <CardTitle>询盘管理</CardTitle>
       </CardHeader>
@@ -430,6 +493,7 @@ export default function InquiriesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+      </Card>
+    </div>
   )
 }
