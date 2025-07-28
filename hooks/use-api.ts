@@ -45,6 +45,13 @@ import type {
   RegistrationRequestQuery,
   RegistrationRequestStats,
   UpdateRegistrationRequestStatusRequest,
+  VipConfig,
+  VipConfigQuery,
+  VipConfigStats,
+  CreateVipConfigRequest,
+  UpdateVipConfigRequest,
+  BatchToggleVipConfigStatusRequest,
+  UpdateVipConfigSortOrderRequest,
 } from '@/lib/types'
 
 // 查询键常量
@@ -104,6 +111,12 @@ export const queryKeys = {
   registrationRequests: (query?: RegistrationRequestQuery) => ['registration-requests', query] as const,
   registrationRequest: (id: string) => ['registration-requests', id] as const,
   registrationRequestStats: ['registration-requests', 'stats'] as const,
+  
+  // VIP配置管理
+  vipConfigs: (query?: VipConfigQuery) => ['vip-configs', query] as const,
+  vipConfig: (id: number) => ['vip-configs', id] as const,
+  vipConfigStats: ['vip-configs', 'stats'] as const,
+  vipConfigsByPlatform: (platform: 'supplier' | 'purchaser') => ['vip-configs', 'platform', platform] as const,
 }
 
 // 仪表盘相关hooks
@@ -1008,6 +1021,146 @@ export const useDeleteRegistrationRequest = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '登记申请删除失败')
+    },
+  })
+}
+
+// VIP配置管理相关 hooks
+// 获取VIP配置列表
+export const useVipConfigs = (query?: VipConfigQuery) => {
+  return useQuery({
+    queryKey: queryKeys.vipConfigs(query),
+    queryFn: () => api.vipConfig.getVipConfigs(query),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取VIP配置详情
+export const useVipConfig = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.vipConfig(id),
+    queryFn: () => api.vipConfig.getVipConfig(id),
+    enabled: !!id,
+  })
+}
+
+// 获取VIP配置统计数据
+export const useVipConfigStats = () => {
+  return useQuery({
+    queryKey: queryKeys.vipConfigStats,
+    queryFn: api.vipConfig.getVipConfigStats,
+    staleTime: 30 * 1000,
+  })
+}
+
+// 根据平台获取VIP配置
+export const useVipConfigsByPlatform = (platform: 'supplier' | 'purchaser') => {
+  return useQuery({
+    queryKey: queryKeys.vipConfigsByPlatform(platform),
+    queryFn: () => api.vipConfig.getVipConfigsByPlatform(platform),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 创建VIP配置
+export const useCreateVipConfig = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreateVipConfigRequest) => api.vipConfig.createVipConfig(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vip-configs'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.vipConfigStats })
+      toast.success('VIP配置创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'VIP配置创建失败')
+    },
+  })
+}
+
+// 更新VIP配置
+export const useUpdateVipConfig = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateVipConfigRequest }) => 
+      api.vipConfig.updateVipConfig(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vip-configs'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.vipConfigStats })
+      toast.success('VIP配置更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'VIP配置更新失败')
+    },
+  })
+}
+
+// 删除VIP配置
+export const useDeleteVipConfig = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.vipConfig.deleteVipConfig(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vip-configs'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.vipConfigStats })
+      toast.success('VIP配置删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'VIP配置删除失败')
+    },
+  })
+}
+
+// 切换VIP配置状态
+export const useToggleVipConfigStatus = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.vipConfig.toggleVipConfigStatus(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vip-configs'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.vipConfigStats })
+      toast.success('状态切换成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '状态切换失败')
+    },
+  })
+}
+
+// 批量切换VIP配置状态
+export const useBatchToggleVipConfigStatus = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: BatchToggleVipConfigStatusRequest) => api.vipConfig.batchToggleVipConfigStatus(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vip-configs'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.vipConfigStats })
+      toast.success('批量操作成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '批量操作失败')
+    },
+  })
+}
+
+// 更新VIP配置排序
+export const useUpdateVipConfigSortOrder = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateVipConfigSortOrderRequest }) => 
+      api.vipConfig.updateVipConfigSortOrder(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vip-configs'] })
+      toast.success('排序更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '排序更新失败')
     },
   })
 }

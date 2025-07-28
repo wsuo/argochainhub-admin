@@ -894,3 +894,135 @@ export interface CompanyQuery {
   companySize?: string
   businessCategory?: string
 }
+
+// VIP配置管理相关类型
+export interface VipConfig {
+  id: number
+  name: {
+    "zh-CN": string
+    en: string
+    es: string
+  }
+  platform: 'supplier' | 'purchaser'
+  level: 'promotion' | 'basic' | 'advanced'
+  currency: 'USD' | 'CNY'
+  originalPrice: string
+  currentPrice: string
+  discount?: string
+  days: number
+  accountQuota: number
+  maxPurchaseCount: number
+  bonusDays: number
+  sampleViewCount: number
+  vipLevelNumber: number
+  inquiryManagementCount: number
+  registrationManagementCount: number
+  productPublishCount: number
+  viewCount: number
+  remarkZh?: string
+  remarkEn?: string
+  remarkEs?: string
+  isActive: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+// VIP配置查询参数
+export interface VipConfigQuery {
+  page?: number
+  limit?: number
+  platform?: 'supplier' | 'purchaser'
+  level?: 'promotion' | 'basic' | 'advanced'
+  currency?: 'USD' | 'CNY'
+  isActive?: boolean
+  keyword?: string
+}
+
+// VIP配置统计数据
+export interface VipConfigStats {
+  totalConfigs: number
+  activeConfigs: number
+  inactiveConfigs: number
+  platformStats: Array<{
+    platform: string
+    count: number
+  }>
+  levelStats: Array<{
+    level: string
+    count: number
+  }>
+  currencyStats: Array<{
+    currency: string
+    count: number
+  }>
+}
+
+// 创建VIP配置请求
+export interface CreateVipConfigRequest {
+  name: {
+    "zh-CN": string
+    en: string
+    es: string
+  }
+  platform: 'supplier' | 'purchaser'
+  level: 'promotion' | 'basic' | 'advanced'
+  currency: 'USD' | 'CNY'
+  originalPrice: number
+  currentPrice: number
+  days: number
+  accountQuota: number
+  maxPurchaseCount: number
+  bonusDays: number
+  sampleViewCount: number
+  vipLevelNumber: number
+  inquiryManagementCount: number
+  registrationManagementCount: number
+  productPublishCount: number
+  viewCount: number
+  remarkZh?: string
+  remarkEn?: string
+  remarkEs?: string
+  isActive?: boolean
+  sortOrder?: number
+}
+
+// 更新VIP配置请求
+export interface UpdateVipConfigRequest {
+  name?: {
+    "zh-CN"?: string
+    en?: string
+    es?: string
+  }
+  platform?: 'supplier' | 'purchaser'
+  level?: 'promotion' | 'basic' | 'advanced'
+  currency?: 'USD' | 'CNY'
+  originalPrice?: number
+  currentPrice?: number
+  days?: number
+  accountQuota?: number
+  maxPurchaseCount?: number
+  bonusDays?: number
+  sampleViewCount?: number
+  vipLevelNumber?: number
+  inquiryManagementCount?: number
+  registrationManagementCount?: number
+  productPublishCount?: number
+  viewCount?: number
+  remarkZh?: string
+  remarkEn?: string
+  remarkEs?: string
+  isActive?: boolean
+  sortOrder?: number
+}
+
+// 批量切换状态请求
+export interface BatchToggleVipConfigStatusRequest {
+  ids: number[]
+  isActive: boolean
+}
+
+// 更新排序请求
+export interface UpdateVipConfigSortOrderRequest {
+  sortOrder: number
+}

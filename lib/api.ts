@@ -62,6 +62,13 @@ import type {
   RegistrationRequestQuery,
   RegistrationRequestStats,
   UpdateRegistrationRequestStatusRequest,
+  VipConfig,
+  VipConfigQuery,
+  VipConfigStats,
+  CreateVipConfigRequest,
+  UpdateVipConfigRequest,
+  BatchToggleVipConfigStatusRequest,
+  UpdateVipConfigSortOrderRequest,
 } from './types'
 
 // 认证相关API
@@ -400,6 +407,49 @@ export const registrationRequestApi = {
     apiClient.delete(`/admin/registration-requests/${id}`),
 }
 
+// VIP配置管理相关API（管理员接口）
+export const vipConfigApi = {
+  // 获取VIP配置列表
+  getVipConfigs: (query: VipConfigQuery = {}): Promise<ApiResponse<VipConfig[]>> =>
+    apiClient.get('/admin/vip-configs', filterQueryParams(query)),
+  
+  // 获取VIP配置统计数据
+  getVipConfigStats: (): Promise<VipConfigStats> =>
+    apiClient.get('/admin/vip-configs/statistics'),
+  
+  // 获取VIP配置详情
+  getVipConfig: (id: number): Promise<VipConfig> =>
+    apiClient.get(`/admin/vip-configs/${id}`),
+  
+  // 创建VIP配置
+  createVipConfig: (data: CreateVipConfigRequest): Promise<VipConfig> =>
+    apiClient.post('/admin/vip-configs', data),
+  
+  // 更新VIP配置
+  updateVipConfig: (id: number, data: UpdateVipConfigRequest): Promise<VipConfig> =>
+    apiClient.patch(`/admin/vip-configs/${id}`, data),
+  
+  // 删除VIP配置
+  deleteVipConfig: (id: number): Promise<{ message: string }> =>
+    apiClient.delete(`/admin/vip-configs/${id}`),
+  
+  // 切换VIP配置状态
+  toggleVipConfigStatus: (id: number): Promise<VipConfig> =>
+    apiClient.post(`/admin/vip-configs/${id}/toggle-status`),
+  
+  // 批量切换状态
+  batchToggleVipConfigStatus: (data: BatchToggleVipConfigStatusRequest): Promise<{ message: string }> =>
+    apiClient.post('/admin/vip-configs/batch-toggle-status', data),
+  
+  // 更新排序
+  updateVipConfigSortOrder: (id: number, data: UpdateVipConfigSortOrderRequest): Promise<VipConfig> =>
+    apiClient.patch(`/admin/vip-configs/${id}/sort-order`, data),
+  
+  // 根据平台获取VIP配置
+  getVipConfigsByPlatform: (platform: 'supplier' | 'purchaser'): Promise<VipConfig[]> =>
+    apiClient.get(`/admin/vip-configs/platform/${platform}`),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
@@ -416,6 +466,7 @@ export const api = {
   inquiry: inquiryApi,
   sampleRequest: sampleRequestApi,
   registrationRequest: registrationRequestApi,
+  vipConfig: vipConfigApi,
 }
 
 export default api

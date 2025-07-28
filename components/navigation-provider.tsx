@@ -36,7 +36,8 @@ const routeToNavigation: Record<string, { section: string; page?: string }> = {
   '/business/inquiries': { section: 'business', page: 'inquiries' },
   '/business/sample-requests': { section: 'business', page: 'samples' },
   '/business/registrations': { section: 'business', page: 'registrations' },
-  '/finance/plans': { section: 'finance', page: 'plans' },
+  '/finance/vip-configs': { section: 'finance', page: 'vip-configs' },
+  '/finance/vip-configs/new': { section: 'finance', page: 'vip-configs' },
   '/finance/orders': { section: 'finance', page: 'orders' },
   '/finance/revenue': { section: 'finance', page: 'revenue' },
   '/system/accounts': { section: 'system', page: 'accounts' },
@@ -81,6 +82,11 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     // 样品申请详情页面
     if (pathname.startsWith('/business/sample-requests/') && pathname !== '/business/sample-requests/new') {
       currentPath = '/business/sample-requests'
+    }
+    
+    // VIP配置详情页面
+    if (pathname.startsWith('/finance/vip-configs/') && pathname !== '/finance/vip-configs/new') {
+      currentPath = '/finance/vip-configs'
     }
     
     // 字典项管理页面
@@ -135,6 +141,7 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     if (path === '/enterprises' && pathname.startsWith('/enterprises/')) return true
     if (path === '/content/products' && pathname.startsWith('/content/products/')) return true
     if (path === '/business/sample-requests' && pathname.startsWith('/business/sample-requests/')) return true
+    if (path === '/finance/vip-configs' && pathname.startsWith('/finance/vip-configs/')) return true
     if (path === '/system/dictionary' && pathname.startsWith('/system/dictionary/')) return true
     
     return false
@@ -203,7 +210,7 @@ export const navigationConfig = {
       title: '财务管理',
       icon: DollarSign,
       items: [
-        { title: '会员计划', path: '/finance/plans', key: 'plans' },
+        { title: '会员配置', path: '/finance/vip-configs', key: 'vip-configs' },
         { title: '订单管理', path: '/finance/orders', key: 'orders' },
         { title: '收入统计', path: '/finance/revenue', key: 'revenue' }
       ]
