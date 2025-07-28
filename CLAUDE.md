@@ -85,10 +85,62 @@ const label = getDictionaryLabel(businessTypes, 'manufacturing')
 
 ArgoChainHub智慧农化采购平台后台管理系统 - An admin dashboard for a smart agricultural chemical procurement platform built with Next.js 15, TypeScript, and Tailwind CSS.
 
+## 端口号配置
+
+项目的端口号统一在 `lib/config.ts` 文件中管理，无需在多个地方修改：
+
+```typescript
+export const APP_CONFIG = {
+  PORTS: {
+    FRONTEND_DEV: 3060,    // 开发环境前端端口
+    FRONTEND_PROD: 3060,   // 生产环境前端端口
+    BACKEND: 3050,         // 后端API端口
+  },
+  
+  API: {
+    // 环境变量优先，如果没有则使用默认值
+    BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || `http://localhost:3050/api/v1`,
+  }
+}
+```
+
+### 配置优先级
+
+配置的优先级从高到低：
+
+1. **环境变量** (`.env.local` 文件) - **最高优先级**
+2. **配置文件** (`lib/config.ts` 中的默认值) - 备用值
+
+**说明**：
+- 如果 `.env.local` 中设置了 `NEXT_PUBLIC_API_BASE_URL`，将使用环境变量的值
+- 如果环境变量不存在，则使用 `config.ts` 中的默认值
+- 这样设计便于在不同环境（开发、测试、生产）中灵活配置
+
+### 修改端口号的方式
+
+**方式一：修改环境变量（推荐）**
+```env
+# .env.local
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3080/api/v1
+```
+
+**方式二：修改配置文件**
+```typescript
+// lib/config.ts
+API: {
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || `http://localhost:3080/api/v1`,
+}
+```
+
+**修改端口号时**：
+1. 优先修改 `.env.local` 环境变量文件（无需修改代码）
+2. 或者修改 `lib/config.ts` 中的默认端口配置
+3. 重启开发服务器即可生效
+
 ## Development Commands
 
 ```bash
-# Start development server (runs on port 3020)
+# Start development server (runs on port 3060)
 npm run dev
 # or
 pnpm dev
@@ -98,7 +150,7 @@ npm run build
 # or
 pnpm build
 
-# Start production server (runs on port 3020)
+# Start production server (runs on port 3060)
 npm run start
 # or
 pnpm start
@@ -111,9 +163,9 @@ pnpm lint
 
 ## Development Server
 
-- **Frontend URL**: http://localhost:3020
-- **Backend API URL**: http://localhost:3010/api/v1
-- **Backend Swagger Docs**: http://localhost:3010/api/docs
+- **Frontend URL**: http://localhost:3060
+- **Backend API URL**: http://localhost:3050/api/v1
+- **Backend Swagger Docs**: http://localhost:3050/api/docs
 - **Package Manager**: npm (with legacy-peer-deps for compatibility)
 
 ## Architecture & Structure

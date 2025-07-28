@@ -1,4 +1,5 @@
 import type { UploadFile, UploadFileRequest } from '@/lib/types'
+import { getUploadUrl, APP_CONFIG } from '@/lib/config'
 
 // 文件上传API
 export const fileApi = {
@@ -6,7 +7,7 @@ export const fileApi = {
   async uploadFile(formData: FormData): Promise<UploadFile> {
     const token = localStorage.getItem('admin_token')
     
-    const response = await fetch('http://localhost:3010/api/v1/uploads', {
+    const response = await fetch(getUploadUrl(), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -35,7 +36,7 @@ export const fileApi = {
     if (params?.limit) query.append('limit', params.limit.toString())
     if (params?.type) query.append('type', params.type)
 
-    const response = await fetch(`http://localhost:3010/api/v1/uploads/my-files?${query}`, {
+    const response = await fetch(getUploadUrl(`/my-files?${query}`), {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -52,7 +53,7 @@ export const fileApi = {
   async deleteFile(fileId: number): Promise<void> {
     const token = localStorage.getItem('admin_token')
     
-    const response = await fetch(`http://localhost:3010/api/v1/uploads/${fileId}`, {
+    const response = await fetch(getUploadUrl(`/${fileId}`), {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -68,7 +69,7 @@ export const fileApi = {
   async getFileInfo(fileId: number): Promise<UploadFile> {
     const token = localStorage.getItem('admin_token')
     
-    const response = await fetch(`http://localhost:3010/api/v1/uploads/${fileId}`, {
+    const response = await fetch(getUploadUrl(`/${fileId}`), {
       headers: {
         'Authorization': `Bearer ${token}`
       }

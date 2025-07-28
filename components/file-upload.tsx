@@ -2,6 +2,7 @@
 
 import React, { useCallback, useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
+import { getUploadUrl, APP_CONFIG } from '@/lib/config'
 import Cookies from 'js-cookie'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -121,10 +122,10 @@ export function FileUpload({
       formData.append('relatedId', relatedId.toString())
     }
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010/api/v1'
-    const token = Cookies.get('auth_token')
+    const API_BASE_URL = APP_CONFIG.API.BASE_URL
+    const token = Cookies.get(APP_CONFIG.AUTH.TOKEN_KEY)
     
-    const response = await fetch(`${API_BASE_URL}/uploads`, {
+    const response = await fetch(getUploadUrl(), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`

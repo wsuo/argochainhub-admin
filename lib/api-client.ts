@@ -1,16 +1,15 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios'
 import Cookies from 'js-cookie'
 import { ApiError } from './types'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010/api/v1'
+import { APP_CONFIG } from './config'
 
 class ApiClient {
   private client: AxiosInstance
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 10000,
+      baseURL: APP_CONFIG.API.BASE_URL,
+      timeout: APP_CONFIG.API.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -23,7 +22,7 @@ class ApiClient {
     // 请求拦截器 - 自动添加认证token
     this.client.interceptors.request.use(
       (config) => {
-        const token = Cookies.get('auth_token')
+        const token = Cookies.get(APP_CONFIG.AUTH.TOKEN_KEY)
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }
@@ -63,8 +62,8 @@ class ApiClient {
 
   // 设置认证token
   setAuth(token: string) {
-    Cookies.set('auth_token', token, { 
-      expires: 7, // 7天过期
+    Cookies.set(APP_CONFIG.AUTH.TOKEN_KEY, token, { 
+      expires: APP_CONFIG.AUTH.TOKEN_EXPIRES_DAYS,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict'
     })
@@ -72,12 +71,12 @@ class ApiClient {
 
   // 清除认证信息
   clearAuth() {
-    Cookies.remove('auth_token')
+    Cookies.remove(APP_CONFIG.AUTH.TOKEN_KEY)
   }
 
   // 检查是否已认证
   isAuthenticated(): boolean {
-    return !!Cookies.get('auth_token')
+    return !!Cookies.get(APP_CONFIG.AUTH.TOKEN_KEY)
   }
 
   // GET请求
