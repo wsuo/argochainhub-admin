@@ -69,6 +69,10 @@ import type {
   UpdateVipConfigRequest,
   BatchToggleVipConfigStatusRequest,
   UpdateVipConfigSortOrderRequest,
+  News,
+  NewsQuery,
+  CreateNewsRequest,
+  UpdateNewsRequest,
 } from './types'
 
 // 认证相关API
@@ -450,6 +454,37 @@ export const vipConfigApi = {
     apiClient.get(`/admin/vip-configs/platform/${platform}`),
 }
 
+// 新闻资讯管理相关API（管理员接口）
+export const newsApi = {
+  // 获取新闻资讯列表
+  getNews: (query: NewsQuery = {}): Promise<ApiResponse<News[]>> =>
+    apiClient.get('/admin/news', filterQueryParams(query)),
+  
+  // 获取新闻资讯详情
+  getNewsById: (id: string): Promise<News> =>
+    apiClient.get(`/admin/news/${id}`),
+  
+  // 创建新闻资讯
+  createNews: (data: CreateNewsRequest): Promise<News> =>
+    apiClient.post('/admin/news', data),
+  
+  // 更新新闻资讯
+  updateNews: (id: string, data: UpdateNewsRequest): Promise<News> =>
+    apiClient.patch(`/admin/news/${id}`, data),
+  
+  // 删除新闻资讯
+  deleteNews: (id: string): Promise<{ message: string }> =>
+    apiClient.delete(`/admin/news/${id}`),
+  
+  // 发布新闻
+  publishNews: (id: string): Promise<News> =>
+    apiClient.post(`/admin/news/${id}/publish`),
+  
+  // 取消发布新闻
+  unpublishNews: (id: string): Promise<News> =>
+    apiClient.post(`/admin/news/${id}/unpublish`),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
@@ -467,6 +502,7 @@ export const api = {
   sampleRequest: sampleRequestApi,
   registrationRequest: registrationRequestApi,
   vipConfig: vipConfigApi,
+  news: newsApi,
 }
 
 export default api

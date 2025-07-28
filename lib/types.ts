@@ -1026,3 +1026,47 @@ export interface BatchToggleVipConfigStatusRequest {
 export interface UpdateVipConfigSortOrderRequest {
   sortOrder: number
 }
+
+// 新闻资讯相关类型
+export interface News {
+  id: string
+  title: MultiLangText
+  content: MultiLangText
+  category: string
+  coverImage?: string
+  sortOrder: number
+  isPublished: boolean
+  publishedAt?: string
+  viewCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+// 新闻查询参数
+export interface NewsQuery {
+  page?: number
+  pageSize?: number
+  category?: string
+  isPublished?: boolean
+  keyword?: string
+}
+
+// 创建新闻请求
+export interface CreateNewsRequest {
+  title: MultiLangText
+  content: MultiLangText
+  category: string
+  coverImage?: string
+  sortOrder?: number
+  isPublished?: boolean
+}
+
+// 更新新闻请求
+export interface UpdateNewsRequest {
+  title?: MultiLangText
+  content?: MultiLangText
+  category?: string
+  coverImage?: string
+  sortOrder?: number
+  isPublished?: boolean
+}

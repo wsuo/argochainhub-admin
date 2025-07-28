@@ -52,6 +52,10 @@ import type {
   UpdateVipConfigRequest,
   BatchToggleVipConfigStatusRequest,
   UpdateVipConfigSortOrderRequest,
+  News,
+  NewsQuery,
+  CreateNewsRequest,
+  UpdateNewsRequest,
 } from '@/lib/types'
 
 // 查询键常量
@@ -117,6 +121,10 @@ export const queryKeys = {
   vipConfig: (id: number) => ['vip-configs', id] as const,
   vipConfigStats: ['vip-configs', 'stats'] as const,
   vipConfigsByPlatform: (platform: 'supplier' | 'purchaser') => ['vip-configs', 'platform', platform] as const,
+  
+  // 新闻资讯管理
+  news: (query?: NewsQuery) => ['news', query] as const,
+  newsById: (id: string) => ['news', id] as const,
 }
 
 // 仪表盘相关hooks
@@ -1161,6 +1169,107 @@ export const useUpdateVipConfigSortOrder = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '排序更新失败')
+    },
+  })
+}
+
+// 新闻资讯相关hooks
+
+// 获取新闻资讯列表
+export const useNews = (query?: NewsQuery) => {
+  return useQuery({
+    queryKey: queryKeys.news(query),
+    queryFn: () => api.news.getNews(query),
+    staleTime: 30 * 1000, // 30秒内不重新请求
+  })
+}
+
+// 获取新闻资讯详情
+export const useNewsById = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.newsById(id),
+    queryFn: () => api.news.getNewsById(id),
+    enabled: !!id,
+  })
+}
+
+// 创建新闻资讯
+export const useCreateNews = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreateNewsRequest) => api.news.createNews(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['news'] })
+      toast.success('新闻创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '新闻创建失败')
+    },
+  })
+}
+
+// 更新新闻资讯
+export const useUpdateNews = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateNewsRequest }) => 
+      api.news.updateNews(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['news'] })
+      toast.success('新闻更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '新闻更新失败')
+    },
+  })
+}
+
+// 删除新闻资讯
+export const useDeleteNews = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: string) => api.news.deleteNews(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['news'] })
+      toast.success('新闻删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '新闻删除失败')
+    },
+  })
+}
+
+// 发布新闻
+export const usePublishNews = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: string) => api.news.publishNews(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['news'] })
+      toast.success('新闻发布成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '新闻发布失败')
+    },
+  })
+}
+
+// 取消发布新闻
+export const useUnpublishNews = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: string) => api.news.unpublishNews(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['news'] })
+      toast.success('新闻取消发布成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '新闻取消发布失败')
     },
   })
 }
