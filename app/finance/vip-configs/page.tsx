@@ -184,17 +184,6 @@ export default function VipConfigsPage() {
     return `${symbol}${price}`
   }
 
-  // 计算折扣
-  const calculateDiscount = (originalPrice: string, currentPrice: string) => {
-    const original = parseFloat(originalPrice)
-    const current = parseFloat(currentPrice)
-    if (original > current) {
-      const discount = Math.round((1 - current / original) * 100)
-      return `${discount}%`
-    }
-    return ''
-  }
-
   return (
     <div className="space-y-6">
       {/* 统计卡片 */}
@@ -381,7 +370,7 @@ export default function VipConfigsPage() {
                           )}
                           {config.discount && (
                             <Badge variant="outline" className="text-xs">
-                              {config.discount}折
+                              {config.discount}
                             </Badge>
                           )}
                         </div>
