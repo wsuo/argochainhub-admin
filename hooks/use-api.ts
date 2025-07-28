@@ -56,6 +56,7 @@ import type {
   NewsQuery,
   CreateNewsRequest,
   UpdateNewsRequest,
+  NewsListResponse,
 } from '@/lib/types'
 
 // 查询键常量

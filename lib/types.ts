@@ -1070,3 +1070,15 @@ export interface UpdateNewsRequest {
   sortOrder?: number
   isPublished?: boolean
 }
+
+// 新闻列表响应（特殊格式）
+export interface NewsListResponse {
+  success: boolean
+  data: {
+    data: News[]
+    total: number
+    page: number
+    pageSize: number
+  }
+  message: string
+}

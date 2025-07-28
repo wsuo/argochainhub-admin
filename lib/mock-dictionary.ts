@@ -46,6 +46,16 @@ export const mockDictionaryData = {
     { value: 'MEDIUM', label: '中等毒', description: '中等毒性农药' },
     { value: 'HIGH', label: '高毒', description: '高毒性农药' },
     { value: 'ACUTE', label: '剧毒', description: '剧毒性农药' }
+  ],
+  
+  // 新闻类别字典数据
+  news_category: [
+    { value: 'NEWS_POLICY', label: '政策法规', description: '政策法规相关新闻' },
+    { value: 'NEWS_MARKET', label: '市场动态', description: '市场动态相关新闻' },
+    { value: 'NEWS_TECHNOLOGY', label: '技术创新', description: '技术创新相关新闻' },
+    { value: 'NEWS_INDUSTRY', label: '行业资讯', description: '行业资讯相关新闻' },
+    { value: 'NEWS_COMPANY', label: '企业动态', description: '企业动态相关新闻' },
+    { value: 'NEWS_EXHIBITION', label: '展会活动', description: '展会活动相关新闻' }
   ]
 }
 

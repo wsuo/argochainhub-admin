@@ -131,9 +131,10 @@ export default function NewsPage() {
   }
 
   // 计算统计数据
-  const totalNews = data?.data.length || 0
-  const publishedNews = data?.data.filter(news => news.isPublished).length || 0
-  const draftNews = data?.data.filter(news => !news.isPublished).length || 0
+  const newsList = data?.data.data || []
+  const totalNews = newsList.length || 0
+  const publishedNews = newsList.filter(news => news.isPublished).length || 0
+  const draftNews = newsList.filter(news => !news.isPublished).length || 0
 
   if (error) {
     return (
@@ -317,7 +318,7 @@ export default function NewsPage() {
                 新闻列表
               </CardTitle>
               <CardDescription>
-                {data && `共 ${data.data.length} 篇新闻`}
+                {data && `共 ${newsList.length} 篇新闻`}
               </CardDescription>
             </div>
           </div>
@@ -330,7 +331,7 @@ export default function NewsPage() {
               description="正在获取最新的新闻信息"
               icon="newspaper"
             />
-          ) : data?.data.length === 0 ? (
+          ) : newsList.length === 0 ? (
             <div className="text-center py-12">
               <Newspaper className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
               <h3 className="text-xl font-semibold mb-2">
@@ -372,7 +373,7 @@ export default function NewsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data?.data.map((news) => (
+                    {newsList.map((news) => (
                       <TableRow key={news.id}>
                         <TableCell>
                           <div className="max-w-xs">
@@ -454,12 +455,12 @@ export default function NewsPage() {
               </ErrorBoundary>
 
               {/* 分页 */}
-              {data && (
+              {data && data.data && (
                 <DataPagination
-                  currentPage={query.page || 1}
-                  totalPages={Math.ceil((data.data.length || 0) / (query.pageSize || 20))}
-                  totalItems={data.data.length || 0}
-                  itemsPerPage={query.pageSize || 20}
+                  currentPage={data.data.page || 1}
+                  totalPages={Math.ceil((data.data.total || 0) / (data.data.pageSize || 20))}
+                  totalItems={data.data.total || 0}
+                  itemsPerPage={data.data.pageSize || 20}
                   onPageChange={handlePageChange}
                 />
               )}

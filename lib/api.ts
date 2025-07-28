@@ -73,6 +73,7 @@ import type {
   NewsQuery,
   CreateNewsRequest,
   UpdateNewsRequest,
+  NewsListResponse,
 } from './types'
 
 // 认证相关API
@@ -457,7 +458,7 @@ export const vipConfigApi = {
 // 新闻资讯管理相关API（管理员接口）
 export const newsApi = {
   // 获取新闻资讯列表
-  getNews: (query: NewsQuery = {}): Promise<ApiResponse<News[]>> =>
+  getNews: (query: NewsQuery = {}): Promise<NewsListResponse> =>
     apiClient.get('/admin/news', filterQueryParams(query)),
   
   // 获取新闻资讯详情
