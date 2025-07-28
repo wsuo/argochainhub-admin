@@ -74,6 +74,7 @@ import type {
   CreateNewsRequest,
   UpdateNewsRequest,
   NewsListResponse,
+  NewsDetailResponse,
 } from './types'
 
 // 认证相关API
@@ -462,27 +463,27 @@ export const newsApi = {
     apiClient.get('/admin/news', filterQueryParams(query)),
   
   // 获取新闻资讯详情
-  getNewsById: (id: string): Promise<News> =>
+  getNewsById: (id: string): Promise<NewsDetailResponse> =>
     apiClient.get(`/admin/news/${id}`),
   
   // 创建新闻资讯
-  createNews: (data: CreateNewsRequest): Promise<News> =>
+  createNews: (data: CreateNewsRequest): Promise<NewsDetailResponse> =>
     apiClient.post('/admin/news', data),
   
   // 更新新闻资讯
-  updateNews: (id: string, data: UpdateNewsRequest): Promise<News> =>
+  updateNews: (id: string, data: UpdateNewsRequest): Promise<NewsDetailResponse> =>
     apiClient.patch(`/admin/news/${id}`, data),
   
   // 删除新闻资讯
-  deleteNews: (id: string): Promise<{ message: string }> =>
+  deleteNews: (id: string): Promise<{ success: boolean; message: string }> =>
     apiClient.delete(`/admin/news/${id}`),
   
   // 发布新闻
-  publishNews: (id: string): Promise<News> =>
+  publishNews: (id: string): Promise<NewsDetailResponse> =>
     apiClient.post(`/admin/news/${id}/publish`),
   
   // 取消发布新闻
-  unpublishNews: (id: string): Promise<News> =>
+  unpublishNews: (id: string): Promise<NewsDetailResponse> =>
     apiClient.post(`/admin/news/${id}/unpublish`),
 }
 

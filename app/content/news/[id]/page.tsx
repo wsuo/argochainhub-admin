@@ -43,7 +43,8 @@ export default function NewsDetailPage() {
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
-  const { data: news, isLoading, error } = useNewsById(newsId)
+  const { data: newsResponse, isLoading, error } = useNewsById(newsId)
+  const news = newsResponse?.data
   const deleteMutation = useDeleteNews()
   const publishMutation = usePublishNews()
   const unpublishMutation = useUnpublishNews()

@@ -1082,3 +1082,10 @@ export interface NewsListResponse {
   }
   message: string
 }
+
+// 新闻详情响应
+export interface NewsDetailResponse {
+  success: boolean
+  data: News
+  message: string
+}

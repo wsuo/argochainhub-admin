@@ -61,7 +61,8 @@ export default function EditNewsPage() {
   const router = useRouter()
   const newsId = params.id as string
   
-  const { data: news, isLoading, error } = useNewsById(newsId)
+  const { data: newsResponse, isLoading, error } = useNewsById(newsId)
+  const news = newsResponse?.data
   const updateMutation = useUpdateNews()
   const newsCategories = useDictionaryOptions('news_category')
 
