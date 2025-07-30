@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import api from '@/lib/api'
+import { useDictionaryOptions } from '@/lib/dictionary-utils'
 import type {
   CompanyQuery,
   ProductQuery,
@@ -151,7 +152,6 @@ export const queryKeys = {
   // 邮件模板管理
   emailTemplates: (query?: EmailTemplateQuery) => ['email-templates', query] as const,
   emailTemplate: (id: number) => ['email-templates', id] as const,
-  emailTriggerEvents: ['email-templates', 'trigger-events'] as const,
 
   // 邮件发送历史
   emailHistories: (query?: EmailHistoryQuery) => ['email-histories', query] as const,
@@ -1409,11 +1409,18 @@ export const useEmailTemplate = (id: number) => {
   })
 }
 
-// 获取触发事件列表
+// 获取触发事件列表（使用字典数据）
 export const useEmailTriggerEvents = () => {
+  const { data: dictionaryOptions } = useDictionaryOptions('email_trigger_event')
+  
   return useQuery({
-    queryKey: queryKeys.emailTriggerEvents,
-    queryFn: () => api.emailTemplate.getTriggerEvents(),
+    queryKey: ['emailTriggerEvents', 'dictionary'],
+    queryFn: () => {
+      // 将字典选项转换为触发事件数组
+      const events = dictionaryOptions.map(option => option.value)
+      return Promise.resolve(events)
+    },
+    enabled: !!dictionaryOptions?.length,
     staleTime: 5 * 60 * 1000, // 5分钟内不重新请求
   })
 }

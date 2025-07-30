@@ -1372,23 +1372,3 @@ export interface EmailStatisticsResponse {
     days: number
   }
 }
-
-// 触发事件列表
-export type EmailTriggerEvent = 
-  | 'inquiry.created'
-  | 'inquiry.quoted'
-  | 'inquiry.accepted'
-  | 'inquiry.declined'
-  | 'inquiry.expired'
-  | 'sample_request.created'
-  | 'sample_request.approved'
-  | 'sample_request.rejected'
-  | 'sample_request.shipped'
-  | 'sample_request.delivered'
-  | 'registration_request.created'
-  | 'registration_request.processing'
-  | 'registration_request.completed'
-  | 'company.approved'
-  | 'company.rejected'
-  | 'user.welcome'
-  | 'user.password_reset'

@@ -90,7 +90,6 @@ import type {
   UpdateEmailTemplateRequest,
   PreviewEmailTemplateRequest,
   PreviewEmailTemplateResponse,
-  EmailTriggerEvent,
   EmailHistory,
   EmailHistoryQuery,
   EmailHistoryListResponse,
@@ -562,10 +561,6 @@ export const emailTemplateApi = {
   // 预览邮件模板
   previewEmailTemplate: (id: number, data: PreviewEmailTemplateRequest): Promise<PreviewEmailTemplateResponse> =>
     apiClient.post(`/admin/email-templates/${id}/preview`, data),
-  
-  // 获取触发事件列表
-  getTriggerEvents: (): Promise<EmailTriggerEvent[]> =>
-    apiClient.get('/admin/email-templates/trigger-events'),
 }
 
 // 邮件发送历史相关API

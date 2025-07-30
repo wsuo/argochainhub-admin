@@ -36,6 +36,7 @@ import type {
   PreviewEmailTemplateRequest
 } from '@/lib/types'
 import { createEmptyMultiLangText } from '@/lib/multi-lang-utils'
+import { useDictionaryOptions, getDictionaryLabel } from '@/lib/dictionary-utils'
 import { toast } from 'sonner'
 
 // 语言选项
@@ -72,6 +73,9 @@ export default function NewEmailTemplatePage() {
   const { data: triggerEvents } = useEmailTriggerEvents()
   const createEmailTemplateMutation = useCreateEmailTemplate()
   const previewEmailTemplateMutation = usePreviewEmailTemplate()
+  
+  // 获取字典选项用于显示触发事件名称
+  const triggerEventOptions = useDictionaryOptions('email_trigger_event')
 
   // 处理多语言字段更新
   const handleMultiLangChange = (
@@ -209,26 +213,7 @@ export default function NewEmailTemplatePage() {
 
   // 获取触发事件显示名称
   const getTriggerEventName = (event: string) => {
-    const eventNames: Record<string, string> = {
-      'inquiry.created': '询价创建',
-      'inquiry.quoted': '询价报价', 
-      'inquiry.accepted': '询价接受',
-      'inquiry.declined': '询价拒绝',
-      'inquiry.expired': '询价过期',
-      'sample_request.created': '样品申请创建',
-      'sample_request.approved': '样品申请批准',
-      'sample_request.rejected': '样品申请拒绝',
-      'sample_request.shipped': '样品发货',
-      'sample_request.delivered': '样品送达',
-      'registration_request.created': '登记申请创建',
-      'registration_request.processing': '登记申请处理中',
-      'registration_request.completed': '登记申请完成',
-      'company.approved': '企业审核通过',
-      'company.rejected': '企业审核拒绝',
-      'user.welcome': '用户欢迎',
-      'user.password_reset': '密码重置'
-    }
-    return eventNames[event] || event
+    return getDictionaryLabel(triggerEventOptions, event, event)
   }
 
   return (
