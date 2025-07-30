@@ -58,6 +58,22 @@ import type {
   UpdateNewsRequest,
   NewsListResponse,
   NewsDetailResponse,
+  // 邮件管理相关类型
+  EmailConfig,
+  EmailConfigQuery,
+  CreateEmailConfigRequest,
+  UpdateEmailConfigRequest,
+  TestEmailConfigRequest,
+  EmailTemplate,
+  EmailTemplateQuery,
+  CreateEmailTemplateRequest,
+  UpdateEmailTemplateRequest,
+  PreviewEmailTemplateRequest,
+  EmailHistory,
+  EmailHistoryQuery,
+  SendEmailRequest,
+  SendDirectEmailRequest,
+  ResendEmailRequest,
 } from '@/lib/types'
 
 // 查询键常量
@@ -127,6 +143,20 @@ export const queryKeys = {
   // 新闻资讯管理
   news: (query?: NewsQuery) => ['news', query] as const,
   newsById: (id: string) => ['news', id] as const,
+
+  // 邮件配置管理
+  emailConfigs: (query?: EmailConfigQuery) => ['email-configs', query] as const,
+  emailConfig: (id: number) => ['email-configs', id] as const,
+
+  // 邮件模板管理
+  emailTemplates: (query?: EmailTemplateQuery) => ['email-templates', query] as const,
+  emailTemplate: (id: number) => ['email-templates', id] as const,
+  emailTriggerEvents: ['email-templates', 'trigger-events'] as const,
+
+  // 邮件发送历史
+  emailHistories: (query?: EmailHistoryQuery) => ['email-histories', query] as const,
+  emailHistory: (id: number) => ['email-histories', id] as const,
+  emailStatistics: (days: number) => ['email-histories', 'statistics', days] as const,
 }
 
 // 仪表盘相关hooks
@@ -1272,6 +1302,256 @@ export const useUnpublishNews = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '新闻取消发布失败')
+    },
+  })
+}
+
+// ==================== 邮件配置管理相关hooks ====================
+
+// 获取邮件配置列表
+export const useEmailConfigs = (query?: EmailConfigQuery) => {
+  return useQuery({
+    queryKey: queryKeys.emailConfigs(query),
+    queryFn: () => api.emailConfig.getEmailConfigs(query),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取邮件配置详情
+export const useEmailConfig = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.emailConfig(id),
+    queryFn: () => api.emailConfig.getEmailConfig(id),
+    enabled: !!id,
+  })
+}
+
+// 创建邮件配置
+export const useCreateEmailConfig = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreateEmailConfigRequest) => api.emailConfig.createEmailConfig(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-configs'] })
+      toast.success('邮件配置创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件配置创建失败')
+    },
+  })
+}
+
+// 更新邮件配置
+export const useUpdateEmailConfig = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateEmailConfigRequest }) => 
+      api.emailConfig.updateEmailConfig(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-configs'] })
+      toast.success('邮件配置更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件配置更新失败')
+    },
+  })
+}
+
+// 删除邮件配置
+export const useDeleteEmailConfig = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.emailConfig.deleteEmailConfig(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-configs'] })
+      toast.success('邮件配置删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件配置删除失败')
+    },
+  })
+}
+
+// 测试邮件配置
+export const useTestEmailConfig = () => {
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: TestEmailConfigRequest }) => 
+      api.emailConfig.testEmailConfig(id, data),
+    onSuccess: (result) => {
+      toast.success(result.message || '邮件配置测试成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件配置测试失败')
+    },
+  })
+}
+
+// ==================== 邮件模板管理相关hooks ====================
+
+// 获取邮件模板列表
+export const useEmailTemplates = (query?: EmailTemplateQuery) => {
+  return useQuery({
+    queryKey: queryKeys.emailTemplates(query),
+    queryFn: () => api.emailTemplate.getEmailTemplates(query),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取邮件模板详情
+export const useEmailTemplate = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.emailTemplate(id),
+    queryFn: () => api.emailTemplate.getEmailTemplate(id),
+    enabled: !!id,
+  })
+}
+
+// 获取触发事件列表
+export const useEmailTriggerEvents = () => {
+  return useQuery({
+    queryKey: queryKeys.emailTriggerEvents,
+    queryFn: () => api.emailTemplate.getTriggerEvents(),
+    staleTime: 5 * 60 * 1000, // 5分钟内不重新请求
+  })
+}
+
+// 创建邮件模板
+export const useCreateEmailTemplate = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreateEmailTemplateRequest) => api.emailTemplate.createEmailTemplate(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] })
+      toast.success('邮件模板创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件模板创建失败')
+    },
+  })
+}
+
+// 更新邮件模板
+export const useUpdateEmailTemplate = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateEmailTemplateRequest }) => 
+      api.emailTemplate.updateEmailTemplate(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] })
+      toast.success('邮件模板更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件模板更新失败')
+    },
+  })
+}
+
+// 删除邮件模板
+export const useDeleteEmailTemplate = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.emailTemplate.deleteEmailTemplate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] })
+      toast.success('邮件模板删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件模板删除失败')
+    },
+  })
+}
+
+// 预览邮件模板
+export const usePreviewEmailTemplate = () => {
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: PreviewEmailTemplateRequest }) => 
+      api.emailTemplate.previewEmailTemplate(id, data),
+    onError: (error: any) => {
+      toast.error(error.message || '邮件模板预览失败')
+    },
+  })
+}
+
+// ==================== 邮件发送历史相关hooks ====================
+
+// 获取邮件发送历史列表
+export const useEmailHistories = (query?: EmailHistoryQuery) => {
+  return useQuery({
+    queryKey: queryKeys.emailHistories(query),
+    queryFn: () => api.emailHistory.getEmailHistories(query),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取邮件发送详情
+export const useEmailHistory = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.emailHistory(id),
+    queryFn: () => api.emailHistory.getEmailHistory(id),
+    enabled: !!id,
+  })
+}
+
+// 获取邮件统计信息
+export const useEmailStatistics = (days: number = 7) => {
+  return useQuery({
+    queryKey: queryKeys.emailStatistics(days),
+    queryFn: () => api.emailHistory.getEmailStatistics(days),
+    staleTime: 5 * 60 * 1000, // 5分钟内不重新请求
+  })
+}
+
+// 重新发送邮件
+export const useResendEmail = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data?: ResendEmailRequest }) => 
+      api.emailHistory.resendEmail(id, data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['email-histories'] })
+      toast.success(result.message || '邮件重新发送成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件重新发送失败')
+    },
+  })
+}
+
+// 发送邮件（使用模板）
+export const useSendEmail = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: SendEmailRequest) => api.emailHistory.sendEmail(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-histories'] })
+      toast.success('邮件发送成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件发送失败')
+    },
+  })
+}
+
+// 发送邮件（直接发送）
+export const useSendDirectEmail = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: SendDirectEmailRequest) => api.emailHistory.sendDirectEmail(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-histories'] })
+      toast.success('邮件发送成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '邮件发送失败')
     },
   })
 }

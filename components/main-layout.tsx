@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-import { NavigationProvider } from "@/components/navigation-provider"
+import { NavigationProvider, navigationConfig } from "@/components/navigation-provider"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -19,40 +19,108 @@ interface MainLayoutProps {
   children: React.ReactNode
 }
 
-// 路由映射配置
-const routeMap: Record<string, { title: string; parent?: string }> = {
-  '/': { title: '概览' },
-  '/enterprises': { title: '企业管理', parent: '企业管理' },
-  '/enterprises/pending': { title: '待审核企业', parent: '企业管理' },
-  '/enterprises/new': { title: '新增企业', parent: '企业管理' },
-  '/content/products': { title: '产品审核', parent: '内容管理' },
-  '/content/suppliers': { title: '供应商审核', parent: '内容管理' },
-  '/content/ai-knowledge': { title: 'AI知识库', parent: '内容管理' },
-  '/business/inquiries': { title: '询盘管理', parent: '业务运营' },
-  '/business/sample-requests': { title: '样品管理', parent: '业务运营' },
-  '/business/registrations': { title: '登记管理', parent: '业务运营' },
-  '/finance/plans': { title: '会员计划', parent: '财务管理' },
-  '/finance/orders': { title: '订单管理', parent: '财务管理' },
-  '/finance/revenue': { title: '收入统计', parent: '财务管理' },
-  '/system/admins': { title: '管理员账户', parent: '系统管理' },
-  '/system/roles': { title: '角色权限', parent: '系统管理' },
-  '/system/dictionary': { title: '数据字典', parent: '系统管理' },
-  '/system/logs': { title: '操作日志', parent: '系统管理' },
+// 从导航配置自动生成路由映射
+function buildRouteMapFromNavigation() {
+  const routeMap: Record<string, { title: string; parent?: string }> = {}
+  
+  // 添加仪表盘首页
+  routeMap['/'] = { title: navigationConfig.sections.dashboard.title }
+  
+  // 遍历所有导航配置生成路由映射
+  Object.entries(navigationConfig.sections).forEach(([sectionKey, section]) => {
+    if (sectionKey === 'dashboard') return // 已经处理了
+    
+    if ('items' in section && section.items) {
+      section.items.forEach(item => {
+        routeMap[item.path] = {
+          title: item.title,
+          parent: section.title
+        }
+      })
+    }
+  })
+  
+  return routeMap
 }
 
+// 动态路由的特殊处理映射
+const dynamicRouteHandlers: Array<{
+  pattern: (path: string) => boolean
+  handler: (path: string) => { title: string; parent?: string } | null
+}> = [
+  {
+    pattern: (path) => path.startsWith('/enterprises/') && path !== '/enterprises/new' && !path.includes('/edit'),
+    handler: () => ({ title: '企业详情', parent: '企业管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/enterprises/') && path.includes('/edit'),
+    handler: () => ({ title: '编辑企业', parent: '企业管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/content/products/') && !path.startsWith('/content/products/pending') && !path.startsWith('/content/products/new') && !path.includes('/edit'),
+    handler: () => ({ title: '产品详情', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/content/products/') && path.includes('/edit'),
+    handler: () => ({ title: '编辑产品', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/content/products/') && path.includes('/control-methods'),
+    handler: () => ({ title: '防治方法管理', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/content/news/') && path !== '/content/news/new' && !path.includes('/edit'),
+    handler: () => ({ title: '新闻详情', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/content/news/') && path.includes('/edit'),
+    handler: () => ({ title: '编辑新闻', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path === '/content/news/new',
+    handler: () => ({ title: '新增新闻', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/business/sample-requests/') && !path.includes('/edit'),
+    handler: () => ({ title: '样品申请详情', parent: '业务运营' })
+  },
+  {
+    pattern: (path) => path.startsWith('/business/inquiries/') && !path.includes('/edit'),
+    handler: () => ({ title: '询盘详情', parent: '业务运营' })
+  },
+  {
+    pattern: (path) => path.startsWith('/business/registrations/') && !path.includes('/edit'),
+    handler: () => ({ title: '登记详情', parent: '业务运营' })
+  },
+  {
+    pattern: (path) => path.startsWith('/finance/vip-configs/') && path !== '/finance/vip-configs/new' && !path.includes('/edit'),
+    handler: () => ({ title: '配置详情', parent: '财务管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/finance/vip-configs/') && path.includes('/edit'),
+    handler: () => ({ title: '编辑配置', parent: '财务管理' })
+  },
+  {
+    pattern: (path) => path === '/finance/vip-configs/new',
+    handler: () => ({ title: '新增配置', parent: '财务管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/system/dictionary/') && path !== '/system/dictionary/new',
+    handler: () => ({ title: '字典项管理', parent: '系统管理' })
+  }
+]
+
 function generateBreadcrumbs(pathname: string) {
+  const routeMap = buildRouteMapFromNavigation()
   let route = routeMap[pathname]
   
-  // 处理动态路由，如 /enterprises/123
+  // 处理动态路由
   if (!route) {
-    if (pathname.startsWith('/enterprises/') && pathname !== '/enterprises/new') {
-      route = { title: '企业详情', parent: '企业管理' }
-    } else if (pathname.startsWith('/business/sample-requests/')) {
-      route = { title: '样品申请详情', parent: '业务运营' }
-    } else if (pathname.startsWith('/business/inquiries/')) {
-      route = { title: '询盘详情', parent: '业务运营' }
-    } else if (pathname.startsWith('/system/dictionary/') && pathname !== '/system/dictionary/new') {
-      route = { title: '字典项管理', parent: '系统管理' }
+    for (const handler of dynamicRouteHandlers) {
+      if (handler.pattern(pathname)) {
+        route = handler.handler(pathname)
+        break
+      }
     }
   }
   
@@ -62,9 +130,9 @@ function generateBreadcrumbs(pathname: string) {
 
   const breadcrumbs = []
   
-  // 添加仪表盘首页
+  // 添加仪表盘首页（除非当前就是首页）
   if (pathname !== '/') {
-    breadcrumbs.push({ title: '仪表盘', href: '/' })
+    breadcrumbs.push({ title: navigationConfig.sections.dashboard.title, href: '/' })
   }
   
   // 添加父级菜单

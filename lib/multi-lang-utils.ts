@@ -123,6 +123,17 @@ export function createMultiLangText(
 }
 
 /**
+ * 创建空的多语言文本对象
+ */
+export function createEmptyMultiLangText(): MultiLangText {
+  return {
+    'zh-CN': '',
+    'en': '',
+    'es': ''
+  }
+}
+
+/**
  * 获取多语言文本的所有可用语言
  */
 export function getAvailableLanguages(text: MultiLangText | string | any): string[] {

@@ -1089,3 +1089,306 @@ export interface NewsDetailResponse {
   data: News
   message: string
 }
+
+// ==================== 邮件管理相关类型 ====================
+
+// 多语言文本类型
+export interface MultiLanguageText {
+  'zh-CN': string
+  'en': string
+  'es'?: string
+}
+
+// 支持的语言类型
+export type SupportedLanguage = 'zh-CN' | 'en' | 'es'
+
+// 邮件配置类型
+export interface EmailConfig {
+  id: number
+  name: string
+  host: string
+  port: number
+  secure: boolean
+  authUser: string
+  authPass: string // 显示时为 ******
+  fromEmail: string
+  fromName: string
+  isDefault: boolean
+  isActive: boolean
+  maxRetries: number
+  retryDelay: number // 重试延迟（秒）
+  createdAt: string
+  updatedAt: string
+}
+
+// 邮件配置查询参数
+export interface EmailConfigQuery {
+  page?: number
+  limit?: number
+  name?: string
+  isDefault?: boolean
+  isActive?: boolean
+}
+
+// 邮件配置列表响应
+export interface EmailConfigListResponse {
+  items: EmailConfig[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+// 创建邮件配置请求
+export interface CreateEmailConfigRequest {
+  name: string
+  host: string
+  port: number
+  secure: boolean
+  authUser: string
+  authPass: string
+  fromEmail: string
+  fromName: string
+  isDefault?: boolean
+  maxRetries?: number
+  retryDelay?: number
+}
+
+// 更新邮件配置请求
+export interface UpdateEmailConfigRequest {
+  name?: string
+  host?: string
+  port?: number
+  secure?: boolean
+  authUser?: string
+  authPass?: string
+  fromEmail?: string
+  fromName?: string
+  isDefault?: boolean
+  isActive?: boolean
+  maxRetries?: number
+  retryDelay?: number
+}
+
+// 测试邮件配置请求
+export interface TestEmailConfigRequest {
+  testEmail: string
+}
+
+// 测试邮件配置响应
+export interface TestEmailConfigResponse {
+  success: boolean
+  message: string
+}
+
+// 邮件模板变量
+export interface EmailTemplateVariable {
+  name: string
+  description: string
+  example: string
+}
+
+// 邮件模板类型
+export interface EmailTemplate {
+  id: number
+  code: string
+  name: MultiLanguageText
+  description: MultiLanguageText
+  subject: MultiLanguageText
+  body: MultiLanguageText
+  variables: EmailTemplateVariable[]
+  isActive: boolean
+  triggerEvent: string
+  createdAt: string
+  updatedAt: string
+}
+
+// 邮件模板查询参数
+export interface EmailTemplateQuery {
+  page?: number
+  limit?: number
+  code?: string
+  name?: string
+  isActive?: boolean
+  triggerEvent?: string
+}
+
+// 邮件模板列表响应
+export interface EmailTemplateListResponse {
+  items: EmailTemplate[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+// 创建邮件模板请求
+export interface CreateEmailTemplateRequest {
+  code: string
+  name: MultiLanguageText
+  description: MultiLanguageText
+  subject: MultiLanguageText
+  body: MultiLanguageText
+  variables: EmailTemplateVariable[]
+  triggerEvent: string
+}
+
+// 更新邮件模板请求
+export interface UpdateEmailTemplateRequest {
+  name?: MultiLanguageText
+  description?: MultiLanguageText
+  subject?: MultiLanguageText
+  body?: MultiLanguageText
+  variables?: EmailTemplateVariable[]
+  isActive?: boolean
+  triggerEvent?: string
+}
+
+// 预览邮件模板请求
+export interface PreviewEmailTemplateRequest {
+  variables: Record<string, string>
+  language: SupportedLanguage
+}
+
+// 预览邮件模板响应
+export interface PreviewEmailTemplateResponse {
+  subject: string
+  body: string
+}
+
+// 邮件发送状态
+export type EmailStatus = 'pending' | 'sending' | 'sent' | 'failed' | 'retry'
+
+// 邮件发送历史类型
+export interface EmailHistory {
+  id: number
+  template?: {
+    id: number
+    code: string
+    name: MultiLanguageText
+  }
+  config: {
+    id: number
+    name: string
+    authPass: string // 显示为 ******
+  }
+  toEmail: string
+  toName: string
+  ccEmails?: string[]
+  bccEmails?: string[]
+  subject: string
+  body?: string // 详情时返回
+  variables?: Record<string, string> // 详情时返回
+  language: SupportedLanguage
+  status: EmailStatus
+  attempts: number
+  sentAt?: string
+  errorMessage?: string
+  relatedType?: string
+  relatedId?: number
+  createdBy?: number
+  createdAt: string
+  updatedAt: string
+}
+
+// 邮件发送历史查询参数
+export interface EmailHistoryQuery {
+  page?: number
+  limit?: number
+  status?: EmailStatus
+  toEmail?: string
+  relatedType?: string
+  relatedId?: number
+  startDate?: string
+  endDate?: string
+}
+
+// 邮件发送历史列表响应
+export interface EmailHistoryListResponse {
+  items: EmailHistory[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+// 发送邮件请求（使用模板）
+export interface SendEmailRequest {
+  templateId: number
+  toEmail: string
+  toName: string
+  variables: Record<string, string>
+  language: SupportedLanguage
+  relatedType?: string
+  relatedId?: number
+  ccEmails?: string[]
+  bccEmails?: string[]
+}
+
+// 发送邮件请求（直接发送）
+export interface SendDirectEmailRequest {
+  toEmail: string
+  toName: string
+  subject: string
+  body: string
+  language: SupportedLanguage
+  ccEmails?: string[]
+  bccEmails?: string[]
+}
+
+// 重新发送邮件请求
+export interface ResendEmailRequest {
+  configId?: number // 可选，使用其他邮件配置
+}
+
+// 邮件统计状态计数
+export interface EmailStatusCount {
+  status: EmailStatus
+  count: string
+}
+
+// 邮件日统计
+export interface EmailDailyCount {
+  date: string
+  count: string
+}
+
+// 邮件模板使用统计
+export interface EmailTemplateUsage {
+  templateId: string
+  templateCode: string
+  templateName: MultiLanguageText
+  count: string
+}
+
+// 邮件统计响应
+export interface EmailStatisticsResponse {
+  statusCounts: EmailStatusCount[]
+  dailyCounts: EmailDailyCount[]
+  templateUsage: EmailTemplateUsage[]
+  period: {
+    startDate: string
+    endDate: string
+    days: number
+  }
+}
+
+// 触发事件列表
+export type EmailTriggerEvent = 
+  | 'inquiry.created'
+  | 'inquiry.quoted'
+  | 'inquiry.accepted'
+  | 'inquiry.declined'
+  | 'inquiry.expired'
+  | 'sample_request.created'
+  | 'sample_request.approved'
+  | 'sample_request.rejected'
+  | 'sample_request.shipped'
+  | 'sample_request.delivered'
+  | 'registration_request.created'
+  | 'registration_request.processing'
+  | 'registration_request.completed'
+  | 'company.approved'
+  | 'company.rejected'
+  | 'user.welcome'
+  | 'user.password_reset'

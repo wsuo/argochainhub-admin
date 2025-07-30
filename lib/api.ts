@@ -75,6 +75,29 @@ import type {
   UpdateNewsRequest,
   NewsListResponse,
   NewsDetailResponse,
+  // 邮件管理相关类型
+  EmailConfig,
+  EmailConfigQuery,
+  EmailConfigListResponse,
+  CreateEmailConfigRequest,
+  UpdateEmailConfigRequest,
+  TestEmailConfigRequest,
+  TestEmailConfigResponse,
+  EmailTemplate,
+  EmailTemplateQuery,
+  EmailTemplateListResponse,
+  CreateEmailTemplateRequest,
+  UpdateEmailTemplateRequest,
+  PreviewEmailTemplateRequest,
+  PreviewEmailTemplateResponse,
+  EmailTriggerEvent,
+  EmailHistory,
+  EmailHistoryQuery,
+  EmailHistoryListResponse,
+  SendEmailRequest,
+  SendDirectEmailRequest,
+  ResendEmailRequest,
+  EmailStatisticsResponse,
 } from './types'
 
 // 认证相关API
@@ -487,6 +510,91 @@ export const newsApi = {
     apiClient.post(`/admin/news/${id}/unpublish`),
 }
 
+// 邮件配置管理相关API
+export const emailConfigApi = {
+  // 获取邮件配置列表
+  getEmailConfigs: (query: EmailConfigQuery = {}): Promise<EmailConfigListResponse> =>
+    apiClient.get('/admin/email-configs', filterQueryParams(query)),
+  
+  // 获取邮件配置详情
+  getEmailConfig: (id: number): Promise<EmailConfig> =>
+    apiClient.get(`/admin/email-configs/${id}`),
+  
+  // 创建邮件配置
+  createEmailConfig: (data: CreateEmailConfigRequest): Promise<EmailConfig> =>
+    apiClient.post('/admin/email-configs', data),
+  
+  // 更新邮件配置
+  updateEmailConfig: (id: number, data: UpdateEmailConfigRequest): Promise<EmailConfig> =>
+    apiClient.put(`/admin/email-configs/${id}`, data),
+  
+  // 删除邮件配置
+  deleteEmailConfig: (id: number): Promise<{ success: boolean; message: string }> =>
+    apiClient.delete(`/admin/email-configs/${id}`),
+  
+  // 测试邮件配置
+  testEmailConfig: (id: number, data: TestEmailConfigRequest): Promise<TestEmailConfigResponse> =>
+    apiClient.post(`/admin/email-configs/${id}/test`, data),
+}
+
+// 邮件模板管理相关API
+export const emailTemplateApi = {
+  // 获取邮件模板列表
+  getEmailTemplates: (query: EmailTemplateQuery = {}): Promise<EmailTemplateListResponse> =>
+    apiClient.get('/admin/email-templates', filterQueryParams(query)),
+  
+  // 获取邮件模板详情
+  getEmailTemplate: (id: number): Promise<EmailTemplate> =>
+    apiClient.get(`/admin/email-templates/${id}`),
+  
+  // 创建邮件模板
+  createEmailTemplate: (data: CreateEmailTemplateRequest): Promise<EmailTemplate> =>
+    apiClient.post('/admin/email-templates', data),
+  
+  // 更新邮件模板
+  updateEmailTemplate: (id: number, data: UpdateEmailTemplateRequest): Promise<EmailTemplate> =>
+    apiClient.put(`/admin/email-templates/${id}`, data),
+  
+  // 删除邮件模板
+  deleteEmailTemplate: (id: number): Promise<{ success: boolean; message: string }> =>
+    apiClient.delete(`/admin/email-templates/${id}`),
+  
+  // 预览邮件模板
+  previewEmailTemplate: (id: number, data: PreviewEmailTemplateRequest): Promise<PreviewEmailTemplateResponse> =>
+    apiClient.post(`/admin/email-templates/${id}/preview`, data),
+  
+  // 获取触发事件列表
+  getTriggerEvents: (): Promise<EmailTriggerEvent[]> =>
+    apiClient.get('/admin/email-templates/trigger-events'),
+}
+
+// 邮件发送历史相关API
+export const emailHistoryApi = {
+  // 获取邮件发送历史列表
+  getEmailHistories: (query: EmailHistoryQuery = {}): Promise<EmailHistoryListResponse> =>
+    apiClient.get('/admin/email-histories', filterQueryParams(query)),
+  
+  // 获取邮件详情
+  getEmailHistory: (id: number): Promise<EmailHistory> =>
+    apiClient.get(`/admin/email-histories/${id}`),
+  
+  // 重新发送邮件
+  resendEmail: (id: number, data?: ResendEmailRequest): Promise<{ success: boolean; message: string }> =>
+    apiClient.post(`/admin/email-histories/${id}/resend`, data || {}),
+  
+  // 发送邮件（使用模板）
+  sendEmail: (data: SendEmailRequest): Promise<EmailHistory> =>
+    apiClient.post('/admin/email-histories/send', data),
+  
+  // 发送邮件（直接发送）
+  sendDirectEmail: (data: SendDirectEmailRequest): Promise<EmailHistory> =>
+    apiClient.post('/admin/email-histories/send', data),
+  
+  // 获取邮件统计信息
+  getEmailStatistics: (days: number = 7): Promise<EmailStatisticsResponse> =>
+    apiClient.get('/admin/email-histories/statistics', { days }),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
@@ -505,6 +613,9 @@ export const api = {
   registrationRequest: registrationRequestApi,
   vipConfig: vipConfigApi,
   news: newsApi,
+  emailConfig: emailConfigApi,
+  emailTemplate: emailTemplateApi,
+  emailHistory: emailHistoryApi,
 }
 
 export default api

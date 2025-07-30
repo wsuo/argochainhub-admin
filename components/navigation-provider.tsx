@@ -46,6 +46,9 @@ const routeToNavigation: Record<string, { section: string; page?: string }> = {
   '/system/roles': { section: 'system', page: 'roles' },
   '/system/logs': { section: 'system', page: 'logs' },
   '/system/dictionary': { section: 'system', page: 'dictionary' },
+  '/system/email-configs': { section: 'system', page: 'email-configs' },
+  '/system/email-templates': { section: 'system', page: 'email-templates' },
+  '/system/email-histories': { section: 'system', page: 'email-histories' },
 }
 
 interface NavigationProviderProps {
@@ -94,6 +97,21 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     // VIP配置详情页面
     if (pathname.startsWith('/finance/vip-configs/') && pathname !== '/finance/vip-configs/new') {
       currentPath = '/finance/vip-configs'
+    }
+    
+    // 邮件配置相关页面
+    if (pathname.startsWith('/system/email-configs/') && pathname !== '/system/email-configs/new') {
+      currentPath = '/system/email-configs'
+    }
+    
+    // 邮件模板相关页面
+    if (pathname.startsWith('/system/email-templates/') && pathname !== '/system/email-templates/new') {
+      currentPath = '/system/email-templates'
+    }
+    
+    // 邮件历史详情页面
+    if (pathname.startsWith('/system/email-histories/')) {
+      currentPath = '/system/email-histories'
     }
     
     // 字典项管理页面
@@ -151,6 +169,9 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     if (path === '/business/sample-requests' && pathname.startsWith('/business/sample-requests/')) return true
     if (path === '/finance/vip-configs' && pathname.startsWith('/finance/vip-configs/')) return true
     if (path === '/system/dictionary' && pathname.startsWith('/system/dictionary/')) return true
+    if (path === '/system/email-configs' && pathname.startsWith('/system/email-configs/')) return true
+    if (path === '/system/email-templates' && pathname.startsWith('/system/email-templates/')) return true
+    if (path === '/system/email-histories' && pathname.startsWith('/system/email-histories/')) return true
     
     return false
   }
@@ -231,7 +252,10 @@ export const navigationConfig = {
         { title: '管理员账户', path: '/system/accounts', key: 'accounts' },
         { title: '角色权限', path: '/system/roles', key: 'roles' },
         { title: '操作日志', path: '/system/logs', key: 'logs' },
-        { title: '数据字典', path: '/system/dictionary', key: 'dictionary' }
+        { title: '数据字典', path: '/system/dictionary', key: 'dictionary' },
+        { title: '邮件配置', path: '/system/email-configs', key: 'email-configs' },
+        { title: '邮件模板', path: '/system/email-templates', key: 'email-templates' },
+        { title: '邮件历史', path: '/system/email-histories', key: 'email-histories' }
       ]
     }
   },

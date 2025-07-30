@@ -1,0 +1,540 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import { ArrowLeft, Loader2, Save, Plus, Trash2, Eye } from 'lucide-react'
+import { ErrorBoundary } from '@/components/error-boundary'
+import { LoadingState } from '@/components/ui/loading-state'
+import { ErrorDisplay } from '@/components/ui/error-display'
+import { 
+  useEmailTemplate,
+  useUpdateEmailTemplate, 
+  useEmailTriggerEvents,
+  usePreviewEmailTemplate
+} from '@/hooks/use-api'
+import type { 
+  UpdateEmailTemplateRequest, 
+  EmailTemplateVariable,
+  SupportedLanguage,
+  PreviewEmailTemplateRequest
+} from '@/lib/types'
+import { createEmptyMultiLangText } from '@/lib/multi-lang-utils'
+import { toast } from 'sonner'
+
+// 语言选项
+const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string }[] = [
+  { value: 'zh-CN', label: '中文', flag: '🇨🇳' },
+  { value: 'en', label: 'English', flag: '🇺🇸' },
+  { value: 'es', label: 'Español', flag: '🇪🇸' }
+]
+
+export default function EditEmailTemplatePage() {
+  const router = useRouter()
+  const params = useParams()
+  const templateId = parseInt(params.id as string)
+
+  const [activeTab, setActiveTab] = useState('zh-CN')
+  const [formData, setFormData] = useState<UpdateEmailTemplateRequest>({})
+  const [newVariable, setNewVariable] = useState<EmailTemplateVariable>({
+    name: '',
+    description: '',
+    example: ''
+  })
+  const [previewData, setPreviewData] = useState<{
+    language: SupportedLanguage
+    variables: Record<string, string>
+    result?: { subject: string; body: string }
+  } | null>(null)
+
+  // API调用
+  const { data: emailTemplate, isLoading, error } = useEmailTemplate(templateId)
+  const { data: triggerEvents } = useEmailTriggerEvents()
+  const updateEmailTemplateMutation = useUpdateEmailTemplate()
+  const previewEmailTemplateMutation = usePreviewEmailTemplate()
+
+  // 初始化表单数据
+  useEffect(() => {
+    if (emailTemplate) {
+      setFormData({
+        name: emailTemplate.name,
+        description: emailTemplate.description,
+        subject: emailTemplate.subject,
+        body: emailTemplate.body,
+        variables: emailTemplate.variables,
+        isActive: emailTemplate.isActive,
+        triggerEvent: emailTemplate.triggerEvent,
+      })
+    }
+  }, [emailTemplate])
+
+  // 处理多语言字段更新
+  const handleMultiLangChange = (
+    field: 'name' | 'description' | 'subject' | 'body',
+    language: SupportedLanguage,
+    value: string
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: {
+        ...prev[field],
+        [language]: value
+      }
+    }))
+  }
+
+  // 添加变量
+  const handleAddVariable = () => {
+    if (!newVariable.name.trim()) {
+      toast.error('请输入变量名称')
+      return
+    }
+    
+    const currentVariables = formData.variables || []
+    if (currentVariables.some(v => v.name === newVariable.name)) {
+      toast.error('变量名称已存在')
+      return
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      variables: [...currentVariables, { ...newVariable }]
+    }))
+    
+    setNewVariable({
+      name: '',
+      description: '',
+      example: ''
+    })
+  }
+
+  // 删除变量
+  const handleRemoveVariable = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      variables: (prev.variables || []).filter((_, i) => i !== index)
+    }))
+  }
+
+  // 表单验证
+  const validateForm = (): boolean => {
+    if (formData.triggerEvent !== undefined && !formData.triggerEvent) {
+      toast.error('请选择触发事件')
+      return false
+    }
+
+    // 验证至少有一种语言的名称
+    if (formData.name) {
+      const hasName = Object.values(formData.name).some(name => name?.trim())
+      if (!hasName) {
+        toast.error('请至少填写一种语言的模板名称')
+        return false
+      }
+    }
+
+    // 验证变量名称格式
+    if (formData.variables) {
+      const invalidVariable = formData.variables.find(v => 
+        !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(v.name)
+      )
+      if (invalidVariable) {
+        toast.error(`变量名称 "${invalidVariable.name}" 格式不正确，只能包含字母、数字和下划线，且以字母开头`)
+        return false
+      }
+    }
+
+    return true
+  }
+
+  // 处理保存
+  const handleSave = () => {
+    if (!validateForm()) return
+
+    updateEmailTemplateMutation.mutate(
+      { id: templateId, data: formData },
+      {
+        onSuccess: () => {
+          toast.success('邮件模板更新成功')
+          router.push('/system/email-templates')
+        }
+      }
+    )
+  }
+
+  // 处理预览
+  const handlePreview = (language: SupportedLanguage) => {
+    const variables: Record<string, string> = {}
+    const currentVariables = formData.variables || emailTemplate?.variables || []
+    currentVariables.forEach(variable => {
+      variables[variable.name] = variable.example || `{{${variable.name}}}`
+    })
+
+    const previewRequest: PreviewEmailTemplateRequest = {
+      variables,
+      language
+    }
+
+    previewEmailTemplateMutation.mutate(
+      { id: templateId, data: previewRequest },
+      {
+        onSuccess: (result) => {
+          setPreviewData({
+            language,
+            variables,
+            result
+          })
+        }
+      }
+    )
+  }
+
+  // 获取触发事件显示名称
+  const getTriggerEventName = (event: string) => {
+    const eventNames: Record<string, string> = {
+      'inquiry.created': '询价创建',
+      'inquiry.quoted': '询价报价', 
+      'inquiry.accepted': '询价接受',
+      'inquiry.declined': '询价拒绝',
+      'inquiry.expired': '询价过期',
+      'sample_request.created': '样品申请创建',
+      'sample_request.approved': '样品申请批准',
+      'sample_request.rejected': '样品申请拒绝',
+      'sample_request.shipped': '样品发货',
+      'sample_request.delivered': '样品送达',
+      'registration_request.created': '登记申请创建',
+      'registration_request.processing': '登记申请处理中',
+      'registration_request.completed': '登记申请完成',
+      'company.approved': '企业审核通过',
+      'company.rejected': '企业审核拒绝',
+      'user.welcome': '用户欢迎',
+      'user.password_reset': '密码重置'
+    }
+    return eventNames[event] || event
+  }
+
+  if (isLoading) {
+    return <LoadingState />
+  }
+
+  if (error || !emailTemplate) {
+    return <ErrorDisplay error={error || new Error('邮件模板不存在')} />
+  }
+
+  const currentVariables = formData.variables || emailTemplate.variables || []
+
+  return (
+    <ErrorBoundary>
+      <div className="space-y-6">
+        {/* 页面标题 */}
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            返回
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">编辑邮件模板</h1>
+            <p className="text-sm text-gray-600">修改邮件通知模板</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 主要内容 */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* 基本信息 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>基本信息</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>模板代码</Label>
+                    <Input
+                      value={emailTemplate.code}
+                      disabled
+                      className="bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-500">
+                      模板代码创建后不可修改
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>触发事件</Label>
+                    <Select 
+                      value={formData.triggerEvent || emailTemplate.triggerEvent} 
+                      onValueChange={(value) => 
+                        setFormData(prev => ({ ...prev, triggerEvent: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {triggerEvents?.map((event) => (
+                          <SelectItem key={event} value={event}>
+                            {getTriggerEventName(event)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isActive"
+                    checked={formData.isActive !== false}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                  />
+                  <Label htmlFor="isActive">启用模板</Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 多语言内容 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>多语言内容</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-3">
+                    {LANGUAGE_OPTIONS.map((lang) => (
+                      <TabsTrigger key={lang.value} value={lang.value}>
+                        {lang.flag} {lang.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  
+                  {LANGUAGE_OPTIONS.map((lang) => (
+                    <TabsContent key={lang.value} value={lang.value} className="space-y-4 mt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`name-${lang.value}`}>模板名称</Label>
+                        <Input
+                          id={`name-${lang.value}`}
+                          placeholder="输入模板名称..."
+                          value={(formData.name || emailTemplate.name)[lang.value] || ''}
+                          onChange={(e) => handleMultiLangChange('name', lang.value, e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`description-${lang.value}`}>模板描述</Label>
+                        <Textarea
+                          id={`description-${lang.value}`}
+                          placeholder="输入模板描述..."
+                          rows={3}
+                          value={(formData.description || emailTemplate.description)[lang.value] || ''}
+                          onChange={(e) => handleMultiLangChange('description', lang.value, e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`subject-${lang.value}`}>邮件主题</Label>
+                        <Input
+                          id={`subject-${lang.value}`}
+                          placeholder="输入邮件主题，可使用变量如 {{inquiryNumber}}"
+                          value={(formData.subject || emailTemplate.subject)[lang.value] || ''}
+                          onChange={(e) => handleMultiLangChange('subject', lang.value, e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor={`body-${lang.value}`}>邮件内容</Label>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePreview(lang.value)}
+                            disabled={previewEmailTemplateMutation.isPending}
+                          >
+                            {previewEmailTemplateMutation.isPending ? (
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            ) : (
+                              <Eye className="w-3 h-3 mr-1" />
+                            )}
+                            预览
+                          </Button>
+                        </div>
+                        <Textarea
+                          id={`body-${lang.value}`}
+                          placeholder="输入邮件内容，支持HTML格式，可使用变量如 {{inquiryNumber}}"
+                          rows={12}
+                          value={(formData.body || emailTemplate.body)[lang.value] || ''}
+                          onChange={(e) => handleMultiLangChange('body', lang.value, e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500">
+                          支持HTML格式，使用变量格式：{'{{'}{'{变量名}'}{'}'}
+                        </p>
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 侧边栏 */}
+          <div className="space-y-6">
+            {/* 模板变量 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>模板变量</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* 已有变量列表 */}
+                {currentVariables.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">已添加变量</Label>
+                    {currentVariables.map((variable, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 border rounded">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-mono text-sm">
+                            {'{{'}{variable.name}{'}}'}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {variable.description}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveVariable(index)}
+                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 添加新变量 */}
+                <div className="space-y-3 pt-2 border-t">
+                  <Label className="text-sm font-medium">添加变量</Label>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="变量名称 (如: inquiryNumber)"
+                      value={newVariable.name}
+                      onChange={(e) => setNewVariable(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                    <Input
+                      placeholder="变量描述"
+                      value={newVariable.description}
+                      onChange={(e) => setNewVariable(prev => ({ ...prev, description: e.target.value }))}
+                    />
+                    <Input
+                      placeholder="示例值"
+                      value={newVariable.example}
+                      onChange={(e) => setNewVariable(prev => ({ ...prev, example: e.target.value }))}
+                    />
+                    <Button
+                      onClick={handleAddVariable}
+                      size="sm"
+                      className="w-full"
+                      disabled={!newVariable.name.trim()}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      添加变量
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 操作按钮 */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleSave}
+                    disabled={updateEmailTemplateMutation.isPending}
+                    className="w-full"
+                  >
+                    {updateEmailTemplateMutation.isPending && (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    )}
+                    <Save className="w-4 h-4 mr-2" />
+                    保存更改
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.back()}
+                    className="w-full"
+                  >
+                    取消
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* 预览对话框 */}
+        {previewData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">邮件预览</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPreviewData(null)}
+                  >
+                    ×
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  {LANGUAGE_OPTIONS.find(l => l.value === previewData.language)?.flag} {' '}
+                  {LANGUAGE_OPTIONS.find(l => l.value === previewData.language)?.label}
+                </p>
+              </div>
+              <div className="p-6 space-y-4">
+                {previewData.result && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">邮件主题</Label>
+                      <div className="p-3 border rounded-lg bg-gray-50">
+                        {previewData.result.subject}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">邮件内容</Label>
+                      <div 
+                        className="p-4 border rounded-lg bg-white min-h-[300px]"
+                        dangerouslySetInnerHTML={{ __html: previewData.result.body }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
+  )
+}
