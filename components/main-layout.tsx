@@ -107,6 +107,24 @@ const dynamicRouteHandlers: Array<{
   {
     pattern: (path) => path.startsWith('/system/dictionary/') && path !== '/system/dictionary/new',
     handler: () => ({ title: '字典项管理', parent: '系统管理' })
+  },
+  // 邮件配置相关路由
+  {
+    pattern: (path) => path === '/system/email-configs/new',
+    handler: () => ({ title: '新增邮件配置', parent: '系统管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/system/email-configs/') && path.includes('/edit'),
+    handler: () => ({ title: '编辑邮件配置', parent: '系统管理' })
+  },
+  // 邮件模板相关路由
+  {
+    pattern: (path) => path === '/system/email-templates/new',
+    handler: () => ({ title: '新增邮件模板', parent: '系统管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/system/email-templates/') && path.includes('/edit'),
+    handler: () => ({ title: '编辑邮件模板', parent: '系统管理' })
   }
 ]
 
