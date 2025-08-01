@@ -1,356 +1,59 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 核心开发约束
 
-请你尽可能的复用组件，本项目 /components 文件夹下面是封装的组件。多复用组件，多复用工具类，要想实现一个功能之前先检查其它模块有没有实现，有没有已经存在的，如果实在没有，在考虑新建。
+### 1. 代码复用原则 (必须遵守)
+- **严禁重复造轮子**：实现功能前必须先检查 `/components` 目录下的现有组件
+- **严禁硬编码数据**：下拉框、选择器必须使用字典系统 (`useDictionaryOptions`)
+- **严禁新建孤立文件**：测试文件整合到 `tests/` 目录，文档更新现有文件
 
-代码质量与复用 (Code Quality & Reuse)​​*   复用优先 (Reuse First): 在实现任何功能前，必须优先检查项目中是否已有可复用的组件、工具函数或逻辑。​    *   组件复用: 优先使用 `/components` 目录下的现有组件。如果新功能需要一个可在多处使用的组件，应将其封装并放入此目录。​    *   数据源管理: 如果项目提供字典管理系统或工具函数，**严禁硬编码**下拉框、选择器等的数据源。必须通过调用现有系统来获取数据。​    *   枚举与字典: 如需新增枚举值，必须先检查数据库字典管理中是否已定义。若无，需在字典中新增，并确保其与代码定义一致。任务完成后，需在总结中明确指出新增的字典项。​*   友好的错误处理 (User-Friendly Error Handling): 当接口返回后端内部错误时，禁止仅向前端返回 "Internal Server Error"。必须提供具体的、对用户友好的中文错误原因。
-
-​​项目维护 (Project Maintenance)​​*   测试规范 (Testing Standards): 整合而非新建。 严禁在根目录或不相关位置创建孤立的测试文件。必须将新测试用例整合到 `tests/` 目录下与被测模块最相关的现有测试文件中。​*   文档规范 (Documentation Standards): 整合而非新建。 严禁为单个任务创建独立的总结文档（如 `CODE_REFACTORING_SUMMARY.md`）。所有总结、变更或补充内容，都必须直接更新到项目已有的相关文档（如 `README.md`、设计文档或 `docs/` 目录下的对应模块文档）中。​*   及时清理 (Timely Cleanup): 任务完成时，若发现任何过时或无用的代码、文件、注释，应主动提出清理建议。
-
-## 字典数据工具说明
-
-项目提供了完整的字典管理系统和工具函数，用于处理下拉框、选择器等组件的数据源。
-
-### 字典工具函数 (`lib/dictionary-utils.ts`)
-
-**核心Hooks：**
-- `useDictionaryOptions(code, includeDisabled?)` - 获取字典选项列表
-- `useCountryOptions(includeDisabled?)` - 获取国家选项（含国旗）
-
-**工具函数：**
-- `getDictionaryLabel(options, value, defaultLabel?)` - 获取字典标签
-- `getDictionaryExtra(options, value, field)` - 获取额外字段
-- `getDictionaryLabels(options, values, separator?)` - 批量获取标签
-
-**使用示例：**
+### 2. 字典数据使用 (强制要求)
 ```tsx
-// 获取业务类型选项
-const businessTypes = useDictionaryOptions('business_type')
+// ✅ 正确使用
+const categories = useDictionaryOptions('product_category')
+const formulations = useDictionaryOptions('formulation')
 
-// 获取国家选项（含国旗）
-const countries = useCountryOptions()
-
-// 获取标签文本
-const label = getDictionaryLabel(businessTypes, 'manufacturing')
+// ❌ 禁止硬编码
+const categories = [{ value: 'herbicide', label: '除草剂' }]
 ```
 
-### 字典组件 (`components/dictionary-components.tsx`)
-
-**预置组件：**
-- `<DictionarySelect />` - 通用字典下拉框
-- `<CountrySelect />` - 国家选择器（含国旗）
-- `<BusinessTypeSelect />` - 业务类型选择器
-
-**使用示例：**
-```tsx
-// 业务类型选择
-<BusinessTypeSelect 
-  value={businessType} 
-  onValueChange={setBusinessType} 
-/>
-
-// 国家选择（含国旗）
-<CountrySelect 
-  value={country} 
-  onValueChange={setCountry}
-  showFlag={true}
-/>
-
-// 自定义字典选择
-<DictionarySelect 
-  code="your_dict_code"
-  value={value}
-  onValueChange={setValue}
-/>
-```
-
-**常用字典分类代码：**
-- `countries` - 国家字典
+**常用字典代码：**
+- `product_category` - 产品类别
+- `formulation` - 剂型
 - `business_type` - 业务类型
+- `countries` - 国家
 
-在开发新功能时，优先使用这些字典工具和组件，避免重复实现下拉框数据获取逻辑。
+### 3. 主题色规范 (设计约束)
+- **主题色：** `#47AC48` (绿色)
+- **使用方式：** `bg-primary`、`text-primary`、`border-primary`
+- **变体：** `bg-primary/10`、`text-primary/70`
 
-**开发环境调试说明：**
-- 字典工具已优化调试日志输出，正常情况下不会产生冗余日志
-- 只在数据加载失败或使用模拟数据时输出必要的调试信息
-- 使用分级日志策略：错误时使用`console.error`，调试提示使用`console.debug`
-
-在数据管理页面，筛选条件组件中，一般有搜索输入框和下拉筛选框，搜索框和筛选框都要靠左，右侧是搜索按钮和重置按钮。其中的操作逻辑如下：
-1. 搜索输入框，用户输入内容后点击搜索按钮或者按下回车键，调用接口；
-2. 筛选框，用户下拉选择后，立即调用接口搜索；
-3. 重置按钮，重置所有搜索条件。
-
-## Project Overview
-
-ArgoChainHub智慧农化采购平台后台管理系统 - An admin dashboard for a smart agricultural chemical procurement platform built with Next.js 15, TypeScript, and Tailwind CSS.
-
-## 端口号配置
-
-项目的端口号统一在 `lib/config.ts` 文件中管理，无需在多个地方修改：
-
+### 4. API 接口对接 (技术约束)
 ```typescript
-export const APP_CONFIG = {
-  PORTS: {
-    FRONTEND_DEV: 3060,    // 开发环境前端端口
-    FRONTEND_PROD: 3060,   // 生产环境前端端口
-    BACKEND: 3050,         // 后端API端口
-  },
-  
-  API: {
-    // 环境变量优先，如果没有则使用默认值
-    BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || `http://localhost:3050/api/v1`,
-  }
+// ✅ 分页接口使用 getWithMeta
+const companies = await apiClient.getWithMeta<Company[]>('/admin/companies')
+const { data, meta } = companies  // data: 数据, meta: 分页信息
+
+// ✅ 单条记录使用 get  
+const company = await apiClient.get<Company>('/admin/companies/1')
+
+// 统一响应格式
+interface ApiResponse<T> {
+  success: boolean
+  message: string  
+  data: T
+  meta?: PaginationMeta
 }
 ```
 
-### 配置优先级
+### 5. 筛选组件布局 (UI 约束)
+- 搜索框、筛选框靠左
+- 搜索按钮、重置按钮靠右
+- 筛选框选择后立即触发搜索
+- 搜索框支持回车键触发
 
-配置的优先级从高到低：
-
-1. **环境变量** (`.env.local` 文件) - **最高优先级**
-2. **配置文件** (`lib/config.ts` 中的默认值) - 备用值
-
-**说明**：
-- 如果 `.env.local` 中设置了 `NEXT_PUBLIC_API_BASE_URL`，将使用环境变量的值
-- 如果环境变量不存在，则使用 `config.ts` 中的默认值
-- 这样设计便于在不同环境（开发、测试、生产）中灵活配置
-
-### 修改端口号的方式
-
-**方式一：修改环境变量（推荐）**
-```env
-# .env.local
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3080/api/v1
-```
-
-**方式二：修改配置文件**
-```typescript
-// lib/config.ts
-API: {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || `http://localhost:3080/api/v1`,
-}
-```
-
-**修改端口号时**：
-1. 优先修改 `.env.local` 环境变量文件（无需修改代码）
-2. 或者修改 `lib/config.ts` 中的默认端口配置
-3. 重启开发服务器即可生效
-
-## Development Commands
-
-```bash
-# Start development server (runs on port 3060)
-npm run dev
-# or
-pnpm dev
-
-# Build for production  
-npm run build
-# or
-pnpm build
-
-# Start production server (runs on port 3060)
-npm run start
-# or
-pnpm start
-
-# Run linting
-npm run lint
-# or
-pnpm lint
-```
-
-## Development Server
-
-- **Frontend URL**: http://localhost:3060
-- **Backend API URL**: http://localhost:3050/api/v1
-- **Backend Swagger Docs**: http://localhost:3050/api/docs
-- **Package Manager**: npm (with legacy-peer-deps for compatibility)
-
-## Architecture & Structure
-
-### Tech Stack
-- **Framework**: Next.js 15 with App Router
-- **UI Library**: shadcn/ui components built on Radix UI primitives
-- **Styling**: Tailwind CSS with CSS variables for theming
-- **Icons**: Lucide React
-- **Forms**: React Hook Form with Zod validation
-- **Package Manager**: pnpm
-
-### Key Components Architecture
-
-**Layout Structure**:
-- `app/layout.tsx` - Root layout with sidebar navigation and breadcrumb system
-- `components/app-sidebar.tsx` - Main navigation sidebar with role-based menu filtering
-- Language: Chinese (zh-CN) interface with English variable names
-
-**Sidebar Navigation System**:
-The sidebar uses a role-based access control system with three user roles:
-- `super_admin` - Full system access
-- `operations_manager` - Business operations and content management
-- `customer_support` - Limited access to inquiries and basic operations
-
-Menu items are filtered based on `currentUserRole` and organized into modules:
-- 企业管理 (Enterprise Management) - Buyers, suppliers, pending reviews
-- 内容管理 (Content Management) - Product/supplier review, AI knowledge base
-- 业务运营 (Business Operations) - Inquiries, samples, registrations
-- 财务管理 (Financial Management) - Membership plans, orders, revenue
-- 系统管理 (System Management) - Admin accounts, roles, logs
-
-### Path Aliases
-- `@/components` → `./components`
-- `@/lib` → `./lib`  
-- `@/hooks` → `./hooks`
-- `@/ui` → `./components/ui`
-
-### Styling System
-- Uses CSS custom properties for theming (defined in `app/globals.css`)
-- Extended Tailwind config with sidebar-specific color tokens
-- `cn()` utility function in `lib/utils.ts` combines clsx and tailwind-merge
-
-## 主题色彩规范
-
-项目采用绿色作为主题色，符合农化行业的环保理念。所有组件开发应遵循统一的色彩规范。
-
-### 主题色定义
-
-**主题色：#47AC48** (绿色)
-- **RGB值：** `rgb(71, 172, 72)`
-- **HSL值：** `hsl(120, 41%, 48%)`
-
-### CSS 变量配置
-
-**Light 模式：**
-```css
---primary: 120 45% 42%;           /* 主题色 */
---primary-foreground: 0 0% 100%;  /* 主题色前景(白色文字) */
---ring: 120 45% 42%;              /* 焦点环颜色 */
-```
-
-**Dark 模式：**
-```css
---primary: 120 41% 55%;           /* 深色模式下的主题色(稍亮) */
---primary-foreground: 0 0% 100%;  /* 主题色前景(白色文字) */
---ring: 120 45% 42%;              /* 焦点环颜色 */
-```
-
-### 在组件中使用主题色
-
-**1. 使用 Tailwind CSS 类名：**
-```tsx
-// 背景色
-<Button className="bg-primary text-primary-foreground">
-  确认操作
-</Button>
-
-// 边框色
-<div className="border-primary">
-  内容区域
-</div>
-
-// 文字色
-<span className="text-primary">
-  重要信息
-</span>
-```
-
-**2. 使用 CSS 变量：**
-```tsx
-// 内联样式
-<div style={{ 
-  backgroundColor: 'hsl(var(--primary))',
-  color: 'hsl(var(--primary-foreground))'
-}}>
-  自定义样式
-</div>
-```
-
-**3. 在 CSS 文件中使用：**
-```css
-.custom-button {
-  background-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border: 1px solid hsl(var(--primary));
-}
-
-.custom-button:focus {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-}
-```
-
-### 可访问性标准
-
-项目主题色符合 WCAG AA 级对比度标准：
-- **对比度比例：** 4.85:1 (超过4.5:1的最低要求)
-- **文字可读性：** 白色文字在绿色背景上具有良好的可读性
-- **色盲友好：** 绿色在常见色盲类型中仍具有较好的区分度
-
-### 最佳实践
-
-**1. 主题色使用场景：**
-- 主要操作按钮 (确认、提交、保存)
-- 重要状态指示 (成功、激活)
-- 关键信息高亮
-- 导航活跃状态
-
-**2. 避免过度使用：**
-- 不要在大面积区域使用主题色作为背景
-- 普通文本链接使用次级颜色
-- 装饰性元素适度使用主题色
-
-**3. 组件开发建议：**
-```tsx
-// 推荐：使用语义化类名
-<Button variant="default">主要操作</Button>
-
-// 推荐：条件性应用主题色
-<div className={cn(
-  "border rounded-lg p-4",
-  isActive && "border-primary bg-primary/5"
-)}>
-  内容
-</div>
-
-// 避免：硬编码颜色值
-<div style={{ backgroundColor: '#47AC48' }}>
-  不推荐的做法
-</div>
-```
-
-**4. 主题色变体：**
-- `bg-primary/10` - 浅色背景 (10% 透明度)
-- `bg-primary/20` - 中等背景 (20% 透明度)
-- `text-primary/70` - 次要文字 (70% 透明度)
-- `border-primary/30` - 轻微边框 (30% 透明度)
-
-### Configuration Notes
-- ESLint and TypeScript errors are ignored during builds (`next.config.mjs`)
-- Images are unoptimized for deployment flexibility
-- shadcn/ui configured with neutral base color and CSS variables
-
-### Development Patterns
-- All UI components are client-side (`"use client"`)
-- Consistent import path aliasing with `@/` prefix
-- Role-based component rendering patterns in sidebar
-- Badge indicators for pending items (审核待处理)
-
-### File Organization
-- `/app` - Next.js app router pages and layouts
-- `/components` - Reusable React components
-- `/components/ui` - shadcn/ui component library
-- `/hooks` - Custom React hooks
-- `/lib` - Utility functions and shared logic
-- `/public` - Static assets (placeholder images)
-
-## 模块化开发文档
-
-为了保持文档的简洁性和可维护性，各模块的详细开发规范已拆分到对应目录下：
-
-### API 调用规范
-- 文档位置：`/hooks/API-GUIDE.md`
-- 适用场景：开发新的 API 功能、使用 React Query hooks、处理数据请求
-- 包含内容：类型定义规范、API 方法定义、React Query Hooks 使用、组件集成示例
-
-在开发涉及 API 调用的功能时，请先查阅对应的规范文档。
+## 项目信息
+- **框架：** Next.js 15 + TypeScript + Tailwind CSS
+- **前端端口：** 3060
+- **后端API：** http://localhost:3050/api/v1
+- **包管理：** pnpm

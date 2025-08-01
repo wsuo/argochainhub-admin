@@ -1,5 +1,7 @@
 // API响应基础类型
 export interface ApiResponse<T> {
+  success: boolean
+  message: string
   data: T
   meta?: PaginationMeta
 }
@@ -517,7 +519,16 @@ export interface DetectLanguageResponse {
   confidence: number
 }
 
-// API错误类型
+// API错误响应类型
+export interface ApiErrorResponse {
+  success: false
+  message: string
+  data?: any
+  error?: string
+  statusCode?: number
+}
+
+// 旧的API错误类型（保持兼容）
 export interface ApiError {
   statusCode: number
   message: string
@@ -1371,4 +1382,125 @@ export interface EmailStatisticsResponse {
     endDate: string
     days: number
   }
+}
+
+// 农药相关类型
+export interface Pesticide {
+  id: number | string
+  category: 'insecticide' | 'herbicide' | 'fungicide' | 'acaricide' | 'plant_growth_regulator' | 'rodenticide' | 'other'
+  formulation: string // 剂型
+  productName: MultiLangText
+  concentration: string // 浓度规格
+  isVisible: boolean
+  createdAt: string
+  updatedAt: string
+  // 衍生字段
+  latestPrice?: number // 最新价格
+  priceChangeRate?: number // 价格变化率
+}
+
+// 农药查询参数
+export interface PesticideQuery {
+  page?: number
+  limit?: number
+  category?: string
+  formulation?: string
+  isVisible?: boolean
+  search?: string
+}
+
+// 创建农药请求
+export interface CreatePesticideRequest {
+  category: string
+  formulation: string
+  productName: MultiLangText
+  concentration: string
+  isVisible?: boolean
+}
+
+// 更新农药请求
+export interface UpdatePesticideRequest {
+  category?: string
+  formulation?: string
+  productName?: MultiLangText
+  concentration?: string
+  isVisible?: boolean
+}
+
+// 价格走势
+export interface PriceTrend {
+  id: number
+  pesticideId: number
+  pesticide?: Pesticide
+  weekEndDate: string // YYYY-MM-DD
+  unitPrice: number // 人民币单价
+  exchangeRate: number // 汇率
+  usdPrice?: number // 美元价格（计算得出）
+  createdAt: string
+  updatedAt: string
+}
+
+// 价格走势查询参数
+export interface PriceTrendQuery {
+  page?: number
+  limit?: number
+  pesticideId?: number
+  startDate?: string
+  endDate?: string
+  sortBy?: 'weekEndDate' | 'unitPrice' | 'exchangeRate' | 'createdAt'
+  sortOrder?: 'ASC' | 'DESC'
+}
+
+// 创建价格走势请求
+export interface CreatePriceTrendRequest {
+  pesticideId: number
+  weekEndDate: string
+  unitPrice: number
+  exchangeRate: number
+}
+
+// 更新价格走势请求
+export interface UpdatePriceTrendRequest {
+  weekEndDate?: string
+  unitPrice?: number
+  exchangeRate?: number
+}
+
+// 价格走势图表数据
+export interface PriceTrendChartData {
+  pesticideId: number
+  pesticide: Pesticide
+  trends: Array<{
+    weekEndDate: string
+    unitPrice: number
+    exchangeRate: number
+    usdPrice: number
+  }>
+  summary: {
+    minPrice: number
+    maxPrice: number
+    avgPrice: number
+    latestPrice: number
+    priceChangeRate: number // 相对于第一条记录的变化率
+  }
+}
+
+// 图片解析请求
+export interface ImageParseRequest {
+  images: File[]
+  exchangeRate: number
+}
+
+// 图片解析响应
+export interface ImageParseResponse {
+  totalImages: number
+  totalParsedData: number
+  successfulSaves: number
+  failedSaves: number
+  parsedData: Array<{
+    productName: string
+    weekEndDate: string
+    unitPrice: number
+  }>
+  errors?: string[]
 }

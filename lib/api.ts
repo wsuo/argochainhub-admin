@@ -97,6 +97,18 @@ import type {
   SendDirectEmailRequest,
   ResendEmailRequest,
   EmailStatisticsResponse,
+  // 农药管理相关类型
+  Pesticide,
+  PesticideQuery,
+  CreatePesticideRequest,
+  UpdatePesticideRequest,
+  PriceTrend,
+  PriceTrendQuery,
+  CreatePriceTrendRequest,
+  UpdatePriceTrendRequest,
+  PriceTrendChartData,
+  ImageParseRequest,
+  ImageParseResponse,
 } from './types'
 
 // 认证相关API
@@ -131,11 +143,11 @@ export const dashboardApi = {
 export const companyApi = {
   // 获取所有企业列表
   getCompanies: (query: CompanyQuery = {}): Promise<ApiResponse<Company[]>> =>
-    apiClient.get('/admin/companies', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/companies', filterQueryParams(query)),
 
   // 获取待审核企业列表
   getPendingCompanies: (query: Omit<CompanyQuery, 'status'> = {}): Promise<ApiResponse<Company[]>> =>
-    apiClient.get('/admin/companies/pending', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/companies/pending', filterQueryParams(query)),
 
   // 获取企业详情
   getCompany: (id: number): Promise<Company> =>
@@ -151,7 +163,7 @@ export const companyApi = {
 
   // 获取企业订阅历史
   getCompanySubscriptions: (id: number, query: { page?: number; limit?: number } = {}): Promise<ApiResponse<Subscription[]>> =>
-    apiClient.get(`/admin/companies/${id}/subscriptions`, query),
+    apiClient.getWithMeta(`/admin/companies/${id}/subscriptions`, query),
 
   // 创建企业
   createCompany: (data: CreateCompanyRequest): Promise<Company> =>
@@ -166,11 +178,11 @@ export const companyApi = {
 export const productApi = {
   // 获取所有产品列表
   getProducts: (query: ProductQuery = {}): Promise<ApiResponse<Product[]>> =>
-    apiClient.get('/admin/products', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/products', filterQueryParams(query)),
 
   // 获取待审核产品列表
   getPendingProducts: (query: Omit<ProductQuery, 'status'> = {}): Promise<ApiResponse<Product[]>> =>
-    apiClient.get('/admin/products/pending', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/products/pending', filterQueryParams(query)),
 
   // 获取产品详情
   getProduct: (id: number): Promise<Product> =>
@@ -233,7 +245,7 @@ export const productApi = {
 export const userApi = {
   // 获取所有用户列表
   getUsers: (query: UserQuery = {}): Promise<ApiResponse<User[]>> =>
-    apiClient.get('/admin/users', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/users', filterQueryParams(query)),
 
   // 获取用户详情
   getUser: (id: number): Promise<User> =>
@@ -244,7 +256,7 @@ export const userApi = {
 export const orderApi = {
   // 获取所有订单列表
   getOrders: (query: OrderQuery = {}): Promise<ApiResponse<Order[]>> =>
-    apiClient.get('/admin/orders', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/orders', filterQueryParams(query)),
 
   // 获取订单详情
   getOrder: (id: number): Promise<Order> =>
@@ -255,7 +267,7 @@ export const orderApi = {
 export const planApi = {
   // 获取所有会员计划
   getPlans: (query: PlanQuery = {}): Promise<ApiResponse<Plan[]>> =>
-    apiClient.get('/admin/plans', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/plans', filterQueryParams(query)),
 
   // 创建会员计划
   createPlan: (data: CreatePlanRequest): Promise<Plan> =>
@@ -284,11 +296,11 @@ export const subscriptionApi = {
 // 工具相关API
 export const utilityApi = {
   // 文本翻译
-  translate: (data: TranslateRequest): Promise<{ data: TranslateResponse }> =>
+  translate: (data: TranslateRequest): Promise<TranslateResponse> =>
     apiClient.post('/admin/utilities/translate', data),
 
   // 语言检测
-  detectLanguage: (data: DetectLanguageRequest): Promise<{ data: DetectLanguageResponse }> =>
+  detectLanguage: (data: DetectLanguageRequest): Promise<DetectLanguageResponse> =>
     apiClient.post('/admin/utilities/detect-language', data),
 }
 
@@ -296,7 +308,7 @@ export const utilityApi = {
 export const dictionaryApi = {
   // 字典分类管理
   getCategories: (query: DictionaryCategoryQuery = {}): Promise<ApiResponse<DictionaryCategory[]>> =>
-    apiClient.get('/admin/dictionaries/categories', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/dictionaries/categories', filterQueryParams(query)),
 
   getCategory: (code: string): Promise<DictionaryCategory> =>
     apiClient.get(`/admin/dictionaries/categories/${code}`),
@@ -312,7 +324,7 @@ export const dictionaryApi = {
 
   // 字典项管理
   getCategoryItems: (code: string, query: DictionaryItemQuery = {}): Promise<ApiResponse<DictionaryItem[]>> =>
-    apiClient.get(`/admin/dictionaries/${code}/items`, filterQueryParams(query)),
+    apiClient.getWithMeta(`/admin/dictionaries/${code}/items`, filterQueryParams(query)),
 
   createItem: (code: string, data: CreateDictionaryItemRequest): Promise<DictionaryItem> =>
     apiClient.post(`/admin/dictionaries/${code}/items`, data),
@@ -338,7 +350,7 @@ export const dictionaryApi = {
 export const companyUserApi = {
   // 获取企业用户列表
   getCompanyUsers: (companyId: number, query: CompanyUserQuery = {}): Promise<ApiResponse<CompanyUser[]>> =>
-    apiClient.get(`/companies/${companyId}/users`, filterQueryParams(query)),
+    apiClient.getWithMeta(`/companies/${companyId}/users`, filterQueryParams(query)),
 
   // 获取企业用户详情
   getCompanyUser: (companyId: number, userId: number): Promise<CompanyUser> =>
@@ -365,7 +377,7 @@ export const companyUserApi = {
 export const inquiryApi = {
   // 获取询盘列表（管理员）
   getInquiries: (query: InquiryQuery = {}): Promise<ApiResponse<Inquiry[]>> =>
-    apiClient.get('/admin/inquiries', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/inquiries', filterQueryParams(query)),
 
   // 获取询盘统计数据（管理员）
   getInquiryStats: (): Promise<InquiryStats> =>
@@ -393,7 +405,7 @@ export const inquiryApi = {
 export const sampleRequestApi = {
   // 获取样品申请列表
   getSampleRequests: (query: SampleRequestQuery = {}): Promise<ApiResponse<SampleRequest[]>> =>
-    apiClient.get('/admin/sample-requests', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/sample-requests', filterQueryParams(query)),
   
   // 获取样品申请统计数据
   getSampleRequestStats: (): Promise<SampleRequestStats> =>
@@ -416,7 +428,7 @@ export const sampleRequestApi = {
 export const registrationRequestApi = {
   // 获取登记申请列表
   getRegistrationRequests: (query: RegistrationRequestQuery = {}): Promise<ApiResponse<RegistrationRequest[]>> =>
-    apiClient.get('/admin/registration-requests', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/registration-requests', filterQueryParams(query)),
   
   // 获取登记申请统计数据
   getRegistrationRequestStats: (): Promise<RegistrationRequestStats> =>
@@ -439,7 +451,7 @@ export const registrationRequestApi = {
 export const vipConfigApi = {
   // 获取VIP配置列表
   getVipConfigs: (query: VipConfigQuery = {}): Promise<ApiResponse<VipConfig[]>> =>
-    apiClient.get('/admin/vip-configs', filterQueryParams(query)),
+    apiClient.getWithMeta('/admin/vip-configs', filterQueryParams(query)),
   
   // 获取VIP配置统计数据
   getVipConfigStats: (): Promise<VipConfigStats> =>
@@ -481,8 +493,8 @@ export const vipConfigApi = {
 // 新闻资讯管理相关API（管理员接口）
 export const newsApi = {
   // 获取新闻资讯列表
-  getNews: (query: NewsQuery = {}): Promise<NewsListResponse> =>
-    apiClient.get('/admin/news', filterQueryParams(query)),
+  getNews: (query: NewsQuery = {}): Promise<ApiResponse<News[]>> =>
+    apiClient.getWithMeta('/admin/news', filterQueryParams(query)),
   
   // 获取新闻资讯详情
   getNewsById: (id: string): Promise<NewsDetailResponse> =>
@@ -512,8 +524,8 @@ export const newsApi = {
 // 邮件配置管理相关API
 export const emailConfigApi = {
   // 获取邮件配置列表
-  getEmailConfigs: (query: EmailConfigQuery = {}): Promise<EmailConfigListResponse> =>
-    apiClient.get('/admin/email-configs', filterQueryParams(query)),
+  getEmailConfigs: (query: EmailConfigQuery = {}): Promise<ApiResponse<EmailConfig[]>> =>
+    apiClient.getWithMeta('/admin/email-configs', filterQueryParams(query)),
   
   // 获取邮件配置详情
   getEmailConfig: (id: number): Promise<EmailConfig> =>
@@ -539,8 +551,8 @@ export const emailConfigApi = {
 // 邮件模板管理相关API
 export const emailTemplateApi = {
   // 获取邮件模板列表
-  getEmailTemplates: (query: EmailTemplateQuery = {}): Promise<EmailTemplateListResponse> =>
-    apiClient.get('/admin/email-templates', filterQueryParams(query)),
+  getEmailTemplates: (query: EmailTemplateQuery = {}): Promise<ApiResponse<EmailTemplate[]>> =>
+    apiClient.getWithMeta('/admin/email-templates', filterQueryParams(query)),
   
   // 获取邮件模板详情
   getEmailTemplate: (id: number): Promise<EmailTemplate> =>
@@ -566,8 +578,8 @@ export const emailTemplateApi = {
 // 邮件发送历史相关API
 export const emailHistoryApi = {
   // 获取邮件发送历史列表
-  getEmailHistories: (query: EmailHistoryQuery = {}): Promise<EmailHistoryListResponse> =>
-    apiClient.get('/admin/email-histories', filterQueryParams(query)),
+  getEmailHistories: (query: EmailHistoryQuery = {}): Promise<ApiResponse<EmailHistory[]>> =>
+    apiClient.getWithMeta('/admin/email-histories', filterQueryParams(query)),
   
   // 获取邮件详情
   getEmailHistory: (id: number): Promise<EmailHistory> =>
@@ -588,6 +600,75 @@ export const emailHistoryApi = {
   // 获取邮件统计信息
   getEmailStatistics: (days: number = 7): Promise<EmailStatisticsResponse> =>
     apiClient.get('/admin/email-histories/statistics', { days }),
+}
+
+// 农药管理相关API
+export const pesticideApi = {
+  // 获取农药列表
+  getPesticides: (query: PesticideQuery = {}): Promise<ApiResponse<Pesticide[]>> =>
+    apiClient.getWithMeta('/admin/pesticides', filterQueryParams(query)),
+  
+  // 获取农药详情
+  getPesticide: (id: number): Promise<Pesticide> =>
+    apiClient.get(`/admin/pesticides/${id}`),
+  
+  // 创建农药
+  createPesticide: (data: CreatePesticideRequest): Promise<Pesticide> =>
+    apiClient.post('/admin/pesticides', data),
+  
+  // 更新农药
+  updatePesticide: (id: number, data: UpdatePesticideRequest): Promise<Pesticide> =>
+    apiClient.patch(`/admin/pesticides/${id}`, data),
+  
+  // 删除农药
+  deletePesticide: (id: number): Promise<{ success: boolean; message: string }> =>
+    apiClient.delete(`/admin/pesticides/${id}`),
+}
+
+// 价格走势管理相关API
+export const priceTrendApi = {
+  // 获取价格走势列表
+  getPriceTrends: (query: PriceTrendQuery = {}): Promise<ApiResponse<PriceTrend[]>> =>
+    apiClient.getWithMeta('/admin/price-trends', filterQueryParams(query)),
+  
+  // 获取价格走势详情
+  getPriceTrend: (id: number): Promise<PriceTrend> =>
+    apiClient.get(`/admin/price-trends/${id}`),
+  
+  // 创建价格走势
+  createPriceTrend: (data: CreatePriceTrendRequest): Promise<PriceTrend> =>
+    apiClient.post('/admin/price-trends', data),
+  
+  // 更新价格走势
+  updatePriceTrend: (id: number, data: UpdatePriceTrendRequest): Promise<PriceTrend> =>
+    apiClient.patch(`/admin/price-trends/${id}`, data),
+  
+  // 删除价格走势
+  deletePriceTrend: (id: number): Promise<{ success: boolean; message: string }> =>
+    apiClient.delete(`/admin/price-trends/${id}`),
+  
+  // 获取价格走势图表数据
+  getPriceTrendChart: (pesticideId: number, query?: { startDate?: string; endDate?: string }): Promise<PriceTrendChartData> =>
+    apiClient.get(`/admin/price-trends/chart/${pesticideId}`, filterQueryParams(query || {})),
+  
+  // 上传图片解析价格数据
+  parsePriceImage: async (data: { images: File[]; exchangeRate: number }): Promise<ImageParseResponse> => {
+    const formData = new FormData()
+    data.images.forEach(image => {
+      formData.append('images', image)
+    })
+    formData.append('exchangeRate', data.exchangeRate.toString())
+    
+    const client = apiClient.getClient()
+    const response = await client.post<ApiResponse<ImageParseResponse>>('/admin/image-parse/price-data', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    
+    // 从统一响应格式中提取data字段
+    return response.data.data
+  },
 }
 
 // 导出所有API
@@ -611,6 +692,8 @@ export const api = {
   emailConfig: emailConfigApi,
   emailTemplate: emailTemplateApi,
   emailHistory: emailHistoryApi,
+  pesticide: pesticideApi,
+  priceTrend: priceTrendApi,
 }
 
 export default api

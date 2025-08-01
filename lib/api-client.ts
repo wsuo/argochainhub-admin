@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios'
 import Cookies from 'js-cookie'
-import { ApiError } from './types'
+import { ApiError, ApiErrorResponse, ApiResponse } from './types'
 import { APP_CONFIG } from './config'
 
 class ApiClient {
@@ -38,7 +38,7 @@ class ApiClient {
       (response: AxiosResponse) => {
         return response
       },
-      (error: AxiosError<ApiError>) => {
+      (error: AxiosError<ApiErrorResponse>) => {
         // 处理认证失败
         if (error.response?.status === 401) {
           this.clearAuth()
@@ -48,7 +48,22 @@ class ApiClient {
           }
         }
 
-        // 格式化错误信息
+        // 处理新的统一响应格式
+        if (error.response?.data && typeof error.response.data === 'object') {
+          const errorData = error.response.data
+          
+          // 如果是新的统一格式
+          if ('success' in errorData && 'message' in errorData) {
+            const apiError: ApiError = {
+              statusCode: error.response.status,
+              message: errorData.message || '操作失败',
+              error: errorData.error || 'API Error',
+            }
+            return Promise.reject(apiError)
+          }
+        }
+
+        // 备用错误处理（兼容旧格式）
         const apiError: ApiError = error.response?.data || {
           statusCode: error.response?.status || 500,
           message: error.message || '网络请求失败',
@@ -79,34 +94,46 @@ class ApiClient {
     return !!Cookies.get(APP_CONFIG.AUTH.TOKEN_KEY)
   }
 
+  // GET请求 - 返回完整响应(包含meta)
+  async getWithMeta<T>(url: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+    const response = await this.client.get<ApiResponse<T>>(url, { params })
+    // 直接返回后端的统一格式，已经包含success, message, data, meta字段
+    return response.data
+  }
+
   // GET请求
   async get<T>(url: string, params?: Record<string, any>): Promise<T> {
-    const response = await this.client.get<T>(url, { params })
-    return response.data
+    const response = await this.client.get<ApiResponse<T>>(url, { params })
+    // 从统一响应格式中提取data字段
+    return response.data.data
   }
 
   // POST请求
   async post<T>(url: string, data?: any): Promise<T> {
-    const response = await this.client.post<T>(url, data)
-    return response.data
+    const response = await this.client.post<ApiResponse<T>>(url, data)
+    // 从统一响应格式中提取data字段
+    return response.data.data
   }
 
   // PUT请求
   async put<T>(url: string, data?: any): Promise<T> {
-    const response = await this.client.put<T>(url, data)
-    return response.data
+    const response = await this.client.put<ApiResponse<T>>(url, data)
+    // 从统一响应格式中提取data字段
+    return response.data.data
   }
 
   // PATCH请求
   async patch<T>(url: string, data?: any): Promise<T> {
-    const response = await this.client.patch<T>(url, data)
-    return response.data
+    const response = await this.client.patch<ApiResponse<T>>(url, data)
+    // 从统一响应格式中提取data字段
+    return response.data.data
   }
 
   // DELETE请求
   async delete<T>(url: string): Promise<T> {
-    const response = await this.client.delete<T>(url)
-    return response.data
+    const response = await this.client.delete<ApiResponse<T>>(url)
+    // 从统一响应格式中提取data字段
+    return response.data.data
   }
 
   // 获取原始axios实例（如果需要更复杂的配置）

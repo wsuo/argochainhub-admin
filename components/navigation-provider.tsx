@@ -33,6 +33,8 @@ const routeToNavigation: Record<string, { section: string; page?: string }> = {
   '/content/products/pending': { section: 'content', page: 'products-pending' },
   '/content/products/new': { section: 'content', page: 'products-new' },
   '/content/suppliers': { section: 'content', page: 'suppliers' },
+  '/content/pesticides': { section: 'content', page: 'pesticides' },
+  '/content/pesticides/new': { section: 'content', page: 'pesticides' },
   '/content/news': { section: 'content', page: 'news' },
   '/content/news/new': { section: 'content', page: 'news' },
   '/business/inquiries': { section: 'business', page: 'inquiries' },
@@ -118,6 +120,17 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     if (pathname.startsWith('/system/dictionary/') && pathname !== '/system/dictionary/new') {
       currentPath = '/system/dictionary'
     }
+    
+    // 农药价格管理相关页面
+    if (pathname.startsWith('/content/pesticides/')) {
+      if (pathname === '/content/pesticides/new') {
+        currentPath = '/content/pesticides/new'
+      } else if (pathname.includes('/prices')) {
+        currentPath = '/content/pesticides'
+      } else {
+        currentPath = '/content/pesticides'
+      }
+    }
 
     const navInfo = routeToNavigation[currentPath]
     
@@ -165,6 +178,7 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     // 处理动态路由的激活状态
     if (path === '/enterprises' && pathname.startsWith('/enterprises/')) return true
     if (path === '/content/products' && pathname.startsWith('/content/products/')) return true
+    if (path === '/content/pesticides' && pathname.startsWith('/content/pesticides/')) return true
     if (path === '/content/news' && pathname.startsWith('/content/news/')) return true
     if (path === '/business/sample-requests' && pathname.startsWith('/business/sample-requests/')) return true
     if (path === '/finance/vip-configs' && pathname.startsWith('/finance/vip-configs/')) return true
@@ -224,6 +238,7 @@ export const navigationConfig = {
       items: [
         { title: '产品管理', path: '/content/products', key: 'products' },
         { title: '待审核产品', path: '/content/products/pending', key: 'products-pending' },
+        { title: '农药价格', path: '/content/pesticides', key: 'pesticides' },
         { title: '新闻资讯', path: '/content/news', key: 'news' }
       ]
     },

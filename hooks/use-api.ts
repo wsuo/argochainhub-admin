@@ -75,6 +75,18 @@ import type {
   SendEmailRequest,
   SendDirectEmailRequest,
   ResendEmailRequest,
+  // 农药管理相关类型
+  Pesticide,
+  PesticideQuery,
+  CreatePesticideRequest,
+  UpdatePesticideRequest,
+  PriceTrend,
+  PriceTrendQuery,
+  CreatePriceTrendRequest,
+  UpdatePriceTrendRequest,
+  PriceTrendChartData,
+  ImageParseRequest,
+  ImageParseResponse,
 } from '@/lib/types'
 
 // 查询键常量
@@ -157,6 +169,16 @@ export const queryKeys = {
   emailHistories: (query?: EmailHistoryQuery) => ['email-histories', query] as const,
   emailHistory: (id: number) => ['email-histories', id] as const,
   emailStatistics: (days: number) => ['email-histories', 'statistics', days] as const,
+  
+  // 农药管理
+  pesticides: (query?: PesticideQuery) => ['pesticides', query] as const,
+  pesticide: (id: number) => ['pesticides', id] as const,
+  
+  // 价格走势管理
+  priceTrends: (query?: PriceTrendQuery) => ['price-trends', query] as const,
+  priceTrend: (id: number) => ['price-trends', id] as const,
+  priceTrendChart: (pesticideId: number, query?: { startDate?: string; endDate?: string }) => 
+    ['price-trends', 'chart', pesticideId, query] as const,
 }
 
 // 仪表盘相关hooks
@@ -1559,6 +1581,171 @@ export const useSendDirectEmail = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || '邮件发送失败')
+    },
+  })
+}
+
+// ==================== 农药管理相关hooks ====================
+
+// 获取农药列表
+export const usePesticides = (query?: PesticideQuery) => {
+  return useQuery({
+    queryKey: queryKeys.pesticides(query),
+    queryFn: () => api.pesticide.getPesticides(query),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取农药详情
+export const usePesticide = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.pesticide(id),
+    queryFn: () => api.pesticide.getPesticide(id),
+    enabled: !!id,
+  })
+}
+
+// 创建农药
+export const useCreatePesticide = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreatePesticideRequest) => api.pesticide.createPesticide(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pesticides'] })
+      toast.success('农药创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '农药创建失败')
+    },
+  })
+}
+
+// 更新农药
+export const useUpdatePesticide = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdatePesticideRequest }) => 
+      api.pesticide.updatePesticide(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pesticides'] })
+      toast.success('农药更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '农药更新失败')
+    },
+  })
+}
+
+// 删除农药
+export const useDeletePesticide = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.pesticide.deletePesticide(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pesticides'] })
+      toast.success('农药删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '农药删除失败')
+    },
+  })
+}
+
+// ==================== 价格走势管理相关hooks ====================
+
+// 获取价格走势列表
+export const usePriceTrends = (query?: PriceTrendQuery) => {
+  return useQuery({
+    queryKey: queryKeys.priceTrends(query),
+    queryFn: () => api.priceTrend.getPriceTrends(query),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取价格走势详情
+export const usePriceTrend = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.priceTrend(id),
+    queryFn: () => api.priceTrend.getPriceTrend(id),
+    enabled: !!id,
+  })
+}
+
+// 获取价格走势图表数据
+export const usePriceTrendChart = (pesticideId: number, query?: { startDate?: string; endDate?: string }) => {
+  return useQuery({
+    queryKey: queryKeys.priceTrendChart(pesticideId, query),
+    queryFn: () => api.priceTrend.getPriceTrendChart(pesticideId, query),
+    enabled: !!pesticideId,
+    staleTime: 5 * 60 * 1000, // 5分钟内不重新请求
+  })
+}
+
+// 创建价格走势
+export const useCreatePriceTrend = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: CreatePriceTrendRequest) => api.priceTrend.createPriceTrend(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['price-trends'] })
+      toast.success('价格记录创建成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '价格记录创建失败')
+    },
+  })
+}
+
+// 更新价格走势
+export const useUpdatePriceTrend = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdatePriceTrendRequest }) => 
+      api.priceTrend.updatePriceTrend(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['price-trends'] })
+      toast.success('价格记录更新成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '价格记录更新失败')
+    },
+  })
+}
+
+// 删除价格走势
+export const useDeletePriceTrend = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number) => api.priceTrend.deletePriceTrend(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['price-trends'] })
+      toast.success('价格记录删除成功')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '价格记录删除失败')
+    },
+  })
+}
+
+// 图片解析价格数据
+export const useParsePriceImage = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: { images: File[]; exchangeRate: number }) => 
+      api.priceTrend.parsePriceImage(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['price-trends'] })
+      toast.success(result.message || `成功解析${result.successfulSaves}条价格数据`)
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '图片解析失败')
     },
   })
 }
