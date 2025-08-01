@@ -114,22 +114,19 @@ export function PesticideListTable({
                 
                 <TableCell>
                   {pesticide.latestPrice ? (
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3 text-muted-foreground" />
-                      <span className="font-medium">
-                        {pesticide.latestPrice.toLocaleString('zh-CN', { 
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2 
-                        })}
-                      </span>
-                      {pesticide.priceChangeRate && (
-                        <span className={`text-xs ${pesticide.priceChangeRate > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          ({pesticide.priceChangeRate > 0 ? '+' : ''}{pesticide.priceChangeRate.toFixed(2)}%)
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-3 w-3 text-muted-foreground" />
+                        <span className="font-medium">
+                          ¥{pesticide.latestPrice.unitPrice.toLocaleString('zh-CN')}
                         </span>
-                      )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(pesticide.latestPrice.weekEndDate), 'yyyy-MM-dd', { locale: zhCN })}
+                      </div>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">-</span>
+                    <span className="text-muted-foreground">暂无价格</span>
                   )}
                 </TableCell>
                 

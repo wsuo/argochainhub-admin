@@ -5,11 +5,12 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Package, Plus, Beaker, TrendingUp, Eye, EyeOff } from 'lucide-react'
+import { Package, Plus, Beaker, TrendingUp, Eye, EyeOff, Upload } from 'lucide-react'
 import { usePesticides, useDeletePesticide } from '@/hooks/use-api'
 import { DataPagination } from '@/components/data-pagination'
 import { PesticideListTable } from '@/components/pesticide/pesticide-list-table'
 import { PesticideFilters } from '@/components/pesticide/pesticide-filters'
+import { ImageUploadDialog } from '@/components/pesticide/image-upload-dialog'
 import { ErrorDisplay } from '@/components/ui/error-display'
 import { LoadingState, StatCardSkeleton } from '@/components/ui/loading-state'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -39,6 +40,7 @@ export default function PesticidesPage() {
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [pesticideToDelete, setPesticideToDelete] = useState<number | null>(null)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
 
   const { data, isLoading, error } = usePesticides(query)
   const deleteMutation = useDeletePesticide()
@@ -66,12 +68,9 @@ export default function PesticidesPage() {
 
   // 计算统计数据
   const totalPesticides = data?.meta?.totalItems || 0
-  // 注意：以下统计只基于当前页数据，不是总数据
   const currentPageVisiblePesticides = data?.data.filter(pesticide => pesticide.isVisible).length || 0
   const currentPageHiddenPesticides = data?.data.filter(pesticide => !pesticide.isVisible).length || 0
   const currentPageCategoriesCount = data?.data ? new Set(data.data.map(p => p.category)).size : 0
-  
-  // TODO: 从后端获取总的统计数据，而不是只基于当前页
 
   if (error) {
     return (
@@ -156,6 +155,13 @@ export default function PesticidesPage() {
               <Plus className="h-4 w-4 mr-2" />
               新建农药
             </Link>
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setUploadDialogOpen(true)}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            图片解析价格
           </Button>
         </div>
       </div>
@@ -247,11 +253,6 @@ export default function PesticidesPage() {
               </CardTitle>
               <CardDescription>
                 {data && data.meta && `共 ${data.meta.totalItems} 种农药，当前显示第 ${data.meta.currentPage} 页（共 ${data.meta.totalPages} 页）`}
-                {process.env.NODE_ENV === 'development' && data && (
-                  <div className="text-xs text-yellow-600 mt-1">
-                    调试信息: 当前页数据数量: {data.data?.length || 0}
-                  </div>
-                )}
               </CardDescription>
             </div>
           </div>
@@ -345,6 +346,12 @@ export default function PesticidesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 图片上传解析对话框 */}
+      <ImageUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+      />
     </div>
   )
 }

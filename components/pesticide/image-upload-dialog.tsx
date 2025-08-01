@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -34,8 +35,54 @@ export function ImageUploadDialog({ open, onOpenChange }: ImageUploadDialogProps
   const [exchangeRate, setExchangeRate] = useState('7.2100')
   const [dragActive, setDragActive] = useState(false)
   const [parseResult, setParseResult] = useState<any>(null)
+  const [justPasted, setJustPasted] = useState(false)
   
   const parseMutation = useParsePriceImage()
+  
+  // 处理剪切板粘贴
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    // 只在对话框打开时处理粘贴
+    if (!open) return
+    
+    const items = e.clipboardData?.items
+    if (!items) return
+    
+    const imageFiles: File[] = []
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (file) {
+          // 为剪切板图片生成一个名称
+          const timestamp = new Date().getTime()
+          const extension = file.type.split('/')[1] || 'png'
+          const renamedFile = new File([file], `pasted-image-${timestamp}.${extension}`, {
+            type: file.type
+          })
+          imageFiles.push(renamedFile)
+        }
+      }
+    }
+    
+    if (imageFiles.length > 0) {
+      setFiles(prev => [...prev, ...imageFiles].slice(0, 10))
+      setJustPasted(true)
+      // 3秒后清除粘贴提示
+      setTimeout(() => setJustPasted(false), 3000)
+      e.preventDefault()
+    }
+  }, [open])
+  
+  // 监听全局粘贴事件
+  useEffect(() => {
+    if (open) {
+      document.addEventListener('paste', handlePaste)
+      return () => {
+        document.removeEventListener('paste', handlePaste)
+      }
+    }
+  }, [open, handlePaste])
   
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -93,6 +140,7 @@ export function ImageUploadDialog({ open, onOpenChange }: ImageUploadDialogProps
     setFiles([])
     setExchangeRate('7.2100')
     setParseResult(null)
+    setJustPasted(false)
     onOpenChange(false)
   }
   
@@ -102,7 +150,7 @@ export function ImageUploadDialog({ open, onOpenChange }: ImageUploadDialogProps
         <DialogHeader>
           <DialogTitle>上传图片解析价格</DialogTitle>
           <DialogDescription>
-            上传包含价格数据的图片，系统将自动识别并解析价格信息
+            上传包含价格数据的图片，系统将自动识别并解析价格信息。支持拖拽、选择文件或直接粘贴剪切板中的图片。
           </DialogDescription>
         </DialogHeader>
         
@@ -155,9 +203,22 @@ export function ImageUploadDialog({ open, onOpenChange }: ImageUploadDialogProps
                   <p className="text-xs text-muted-foreground mt-1">
                     支持 PNG、JPEG、GIF、WebP 格式，最多10张，单文件最大10MB
                   </p>
+                  <p className="text-xs text-primary mt-1 flex items-center justify-center gap-1">
+                    💡 提示：您也可以直接粘贴剪切板中的图片 (Ctrl+V 或 Cmd+V)
+                  </p>
                 </div>
               </div>
             </div>
+            
+            {/* 粘贴成功提示 */}
+            {justPasted && (
+              <Alert className="border-green-200 bg-green-50">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  ✨ 已成功粘贴剪切板中的图片！
+                </AlertDescription>
+              </Alert>
+            )}
             
             {/* 已选择的文件列表 */}
             {files.length > 0 && (
@@ -171,7 +232,14 @@ export function ImageUploadDialog({ open, onOpenChange }: ImageUploadDialogProps
                     >
                       <FileImage className="h-4 w-4 text-muted-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium truncate">{file.name}</p>
+                          {file.name.startsWith('pasted-image-') && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0">
+                              粘贴
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {(file.size / 1024 / 1024).toFixed(2)} MB
                         </p>

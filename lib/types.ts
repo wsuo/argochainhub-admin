@@ -1394,9 +1394,12 @@ export interface Pesticide {
   isVisible: boolean
   createdAt: string
   updatedAt: string
-  // 衍生字段
-  latestPrice?: number // 最新价格
-  priceChangeRate?: number // 价格变化率
+  deletedAt?: string | null
+  // 最新价格信息
+  latestPrice?: {
+    unitPrice: number
+    weekEndDate: string
+  } | null
 }
 
 // 农药查询参数

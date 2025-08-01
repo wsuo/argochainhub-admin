@@ -6,12 +6,11 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Plus, TrendingUp, Upload, Beaker } from 'lucide-react'
+import { ArrowLeft, Plus, TrendingUp, Beaker } from 'lucide-react'
 import { usePesticide, usePriceTrends, useDeletePriceTrend } from '@/hooks/use-api'
 import { DataPagination } from '@/components/data-pagination'
 import { PriceTrendTable } from '@/components/pesticide/price-trend-table'
 import { PriceTrendChart } from '@/components/pesticide/price-trend-chart'
-import { ImageUploadDialog } from '@/components/pesticide/image-upload-dialog'
 import { PriceTrendDialog } from '@/components/pesticide/price-trend-dialog'
 import { ErrorDisplay } from '@/components/ui/error-display'
 import { LoadingState, StatCardSkeleton } from '@/components/ui/loading-state'
@@ -45,7 +44,6 @@ export default function PriceTrendsPage({ params }: PriceTrendsPageProps) {
     sortOrder: 'DESC'
   })
   
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [priceDialogOpen, setPriceDialogOpen] = useState(false)
   const [editingPriceId, setEditingPriceId] = useState<number | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -166,16 +164,10 @@ export default function PriceTrendsPage({ params }: PriceTrendsPageProps) {
             {getMultiLangText(pesticide.productName, 'zh-CN')} ({pesticide.concentration})
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setUploadDialogOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            上传图片解析
-          </Button>
-          <Button onClick={handleCreatePrice}>
-            <Plus className="h-4 w-4 mr-2" />
-            新增价格
-          </Button>
-        </div>
+        <Button onClick={handleCreatePrice}>
+          <Plus className="h-4 w-4 mr-2" />
+          新增价格
+        </Button>
       </div>
       
       {/* 统计卡片 */}
@@ -275,10 +267,6 @@ export default function PriceTrendsPage({ params }: PriceTrendsPageProps) {
                 还没有添加任何价格记录，点击下方按钮开始添加
               </p>
               <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={() => setUploadDialogOpen(true)}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  上传图片解析
-                </Button>
                 <Button onClick={handleCreatePrice}>
                   <Plus className="h-4 w-4 mr-2" />
                   手动添加价格
@@ -308,12 +296,6 @@ export default function PriceTrendsPage({ params }: PriceTrendsPageProps) {
           )}
         </CardContent>
       </Card>
-      
-      {/* 图片上传对话框 */}
-      <ImageUploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-      />
       
       {/* 价格新增/编辑对话框 */}
       <PriceTrendDialog
