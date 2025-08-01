@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Package, Plus, Beaker, TrendingUp, Eye, EyeOff, Upload } from 'lucide-react'
 import { usePesticides, useDeletePesticide } from '@/hooks/use-api'
 import { DataPagination } from '@/components/data-pagination'
@@ -30,6 +31,7 @@ export default function PesticidesPage() {
   const [query, setQuery] = useState<PesticideQuery>({
     page: 1,
     limit: 20,
+    hasPrice: true, // 默认显示有价格的农药
   })
   
   // 筛选状态
@@ -37,6 +39,9 @@ export default function PesticidesPage() {
   const [formulationFilter, setFormulationFilter] = useState('')
   const [visibilityFilter, setVisibilityFilter] = useState('all')
   const [searchInput, setSearchInput] = useState('')
+  
+  // 价格筛选状态
+  const [priceType, setPriceType] = useState<'has_price' | 'no_price' | 'all'>('has_price')
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [pesticideToDelete, setPesticideToDelete] = useState<number | null>(null)
@@ -46,11 +51,36 @@ export default function PesticidesPage() {
   const deleteMutation = useDeletePesticide()
 
   const handleFilterChange = useCallback((newQuery: Partial<PesticideQuery>) => {
-    setQuery(prev => ({ ...prev, ...newQuery, page: 1 }))
-  }, [])
+    // 保持当前的价格筛选状态
+    const finalQuery = { ...newQuery, page: 1 }
+    if (priceType === 'has_price') finalQuery.hasPrice = true
+    else if (priceType === 'no_price') finalQuery.hasPrice = false
+    // 如果是 'all'，则不设置 hasPrice 参数
+    
+    setQuery(prev => ({ ...prev, ...finalQuery }))
+  }, [priceType])
 
   const handlePageChange = (page: number) => {
     setQuery(prev => ({ ...prev, page }))
+  }
+
+  const handlePriceTypeChange = (type: 'has_price' | 'no_price' | 'all') => {
+    setPriceType(type)
+    
+    setQuery(prev => {
+      const newQuery = { ...prev, page: 1 }
+      
+      if (type === 'has_price') {
+        newQuery.hasPrice = true
+      } else if (type === 'no_price') {
+        newQuery.hasPrice = false
+      } else {
+        // 当选择 'all' 时，删除 hasPrice 参数
+        delete newQuery.hasPrice
+      }
+      
+      return newQuery
+    })
   }
 
   const handleDeleteClick = (pesticideId: number) => {
@@ -229,6 +259,41 @@ export default function PesticidesPage() {
         </Card>
       </div>
 
+      {/* 价格类型切换 */}
+      <div className="flex justify-center">
+        <Tabs value={priceType} onValueChange={(value) => handlePriceTypeChange(value as 'has_price' | 'no_price' | 'all')}>
+          <TabsList className="grid w-auto grid-cols-3">
+            <TabsTrigger value="has_price" className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-green-500"></div>
+              有价格
+              {data?.meta?.totalItems && priceType === 'has_price' && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {data.meta.totalItems}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="no_price" className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-gray-400"></div>
+              无价格
+              {data?.meta?.totalItems && priceType === 'no_price' && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {data.meta.totalItems}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+              全部
+              {data?.meta?.totalItems && priceType === 'all' && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {data.meta.totalItems}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* 筛选器 */}
       <PesticideFilters
         onSearch={handleFilterChange}
@@ -286,7 +351,7 @@ export default function PesticidesPage() {
                       setFormulationFilter('')
                       setVisibilityFilter('all')
                       setSearchInput('')
-                      setQuery({ page: 1, limit: 20 })
+                      handleFilterChange({}) // 使用 handleFilterChange 来保持价格筛选状态
                     }}
                   >
                     清除筛选条件

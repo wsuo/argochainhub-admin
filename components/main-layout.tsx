@@ -80,6 +80,23 @@ const dynamicRouteHandlers: Array<{
     pattern: (path) => path === '/content/news/new',
     handler: () => ({ title: '新增新闻', parent: '内容管理' })
   },
+  // 农药管理相关路由
+  {
+    pattern: (path) => path === '/content/pesticides/new',
+    handler: () => ({ title: '新增农药', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/content/pesticides/') && path.includes('/edit'),
+    handler: () => ({ title: '编辑农药', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/content/pesticides/') && path.includes('/prices'),
+    handler: () => ({ title: '价格走势管理', parent: '内容管理' })
+  },
+  {
+    pattern: (path) => path.startsWith('/content/pesticides/') && path !== '/content/pesticides/new' && !path.includes('/edit') && !path.includes('/prices'),
+    handler: () => ({ title: '农药详情', parent: '内容管理' })
+  },
   {
     pattern: (path) => path.startsWith('/business/sample-requests/') && !path.includes('/edit'),
     handler: () => ({ title: '样品申请详情', parent: '业务运营' })

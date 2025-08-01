@@ -42,7 +42,8 @@ export function PesticideFilters({
   const categories = useDictionaryOptions('product_category')
   const formulations = useDictionaryOptions('formulation')
 
-  const handleSearch = () => {
+  // 构建查询参数的辅助函数
+  const buildQuery = () => {
     const query: Partial<PesticideQuery> = {}
     
     if (searchInput) query.search = searchInput
@@ -51,7 +52,11 @@ export function PesticideFilters({
     if (visibilityFilter === 'visible') query.isVisible = true
     else if (visibilityFilter === 'hidden') query.isVisible = false
     
-    onSearch(query)
+    return query
+  }
+
+  const handleSearch = () => {
+    onSearch(buildQuery())
   }
 
   const handleReset = () => {
@@ -70,38 +75,17 @@ export function PesticideFilters({
 
   const handleCategoryChange = (value: string) => {
     setCategoryFilter(value)
-    // 立即触发搜索
-    const query: Partial<PesticideQuery> = {}
-    if (searchInput) query.search = searchInput
-    if (value !== 'all') query.category = value
-    if (formulationFilter && formulationFilter !== 'all') query.formulation = formulationFilter
-    if (visibilityFilter === 'visible') query.isVisible = true
-    else if (visibilityFilter === 'hidden') query.isVisible = false
-    onSearch(query)
+    onSearch(buildQuery())
   }
 
   const handleFormulationChange = (value: string) => {
     setFormulationFilter(value)
-    // 立即触发搜索
-    const query: Partial<PesticideQuery> = {}
-    if (searchInput) query.search = searchInput
-    if (categoryFilter !== 'all') query.category = categoryFilter
-    if (value && value !== 'all') query.formulation = value
-    if (visibilityFilter === 'visible') query.isVisible = true
-    else if (visibilityFilter === 'hidden') query.isVisible = false
-    onSearch(query)
+    onSearch(buildQuery())
   }
 
   const handleVisibilityChange = (value: string) => {
     setVisibilityFilter(value)
-    // 立即触发搜索
-    const query: Partial<PesticideQuery> = {}
-    if (searchInput) query.search = searchInput
-    if (categoryFilter !== 'all') query.category = categoryFilter
-    if (formulationFilter && formulationFilter !== 'all') query.formulation = formulationFilter
-    if (value === 'visible') query.isVisible = true
-    else if (value === 'hidden') query.isVisible = false
-    onSearch(query)
+    onSearch(buildQuery())
   }
 
   return (

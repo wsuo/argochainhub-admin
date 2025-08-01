@@ -1409,6 +1409,7 @@ export interface PesticideQuery {
   category?: string
   formulation?: string
   isVisible?: boolean
+  hasPrice?: boolean
   search?: string
 }
 
