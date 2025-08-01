@@ -1472,21 +1472,13 @@ export interface UpdatePriceTrendRequest {
 
 // 价格走势图表数据
 export interface PriceTrendChartData {
-  pesticideId: number
   pesticide: Pesticide
-  trends: Array<{
-    weekEndDate: string
-    unitPrice: number
-    exchangeRate: number
+  priceData: Array<{
+    date: string
+    cnyPrice: number
     usdPrice: number
+    exchangeRate: number
   }>
-  summary: {
-    minPrice: number
-    maxPrice: number
-    avgPrice: number
-    latestPrice: number
-    priceChangeRate: number // 相对于第一条记录的变化率
-  }
 }
 
 // 图片解析请求

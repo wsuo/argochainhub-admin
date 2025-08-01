@@ -94,18 +94,28 @@ export function PriceTrendChart({ pesticideId }: PriceTrendChartProps) {
     )
   }
   
-  if (!data || data.trends.length === 0) {
+  if (!data || !data.priceData || data.priceData.length === 0) {
     return null
   }
   
   // 准备图表数据
-  const chartData = data.trends.map(trend => ({
-    date: format(new Date(trend.weekEndDate), 'MM-dd', { locale: zhCN }),
-    fullDate: trend.weekEndDate,
-    rmbPrice: trend.unitPrice,
-    usdPrice: trend.usdPrice,
-    exchangeRate: trend.exchangeRate
+  const chartData = data.priceData.map(item => ({
+    date: format(new Date(item.date), 'MM-dd', { locale: zhCN }),
+    fullDate: item.date,
+    rmbPrice: item.cnyPrice,
+    usdPrice: item.usdPrice,
+    exchangeRate: item.exchangeRate
   }))
+  
+  // 计算价格变化率
+  const calculatePriceChangeRate = () => {
+    if (data.priceData.length < 2) return 0
+    const firstPrice = data.priceData[0].cnyPrice
+    const lastPrice = data.priceData[data.priceData.length - 1].cnyPrice
+    return ((lastPrice - firstPrice) / firstPrice) * 100
+  }
+  
+  const priceChangeRate = calculatePriceChangeRate()
   
   // 格式化工具提示
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -136,9 +146,9 @@ export function PriceTrendChart({ pesticideId }: PriceTrendChartProps) {
   
   // 计算趋势图标
   const getTrendIcon = () => {
-    if (data.summary.priceChangeRate > 0) {
+    if (priceChangeRate > 0) {
       return <TrendingUp className="h-4 w-4 text-red-600" />
-    } else if (data.summary.priceChangeRate < 0) {
+    } else if (priceChangeRate < 0) {
       return <TrendingDown className="h-4 w-4 text-green-600" />
     }
     return <Minus className="h-4 w-4 text-gray-600" />
@@ -160,8 +170,8 @@ export function PriceTrendChart({ pesticideId }: PriceTrendChartProps) {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm text-muted-foreground">价格变化</p>
-              <p className={`text-lg font-semibold ${data.summary.priceChangeRate > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {data.summary.priceChangeRate > 0 ? '+' : ''}{data.summary.priceChangeRate.toFixed(2)}%
+              <p className={`text-lg font-semibold ${priceChangeRate > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                {priceChangeRate > 0 ? '+' : ''}{priceChangeRate.toFixed(2)}%
               </p>
             </div>
             <Select value={dateRange} onValueChange={setDateRange}>
