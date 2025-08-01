@@ -44,8 +44,10 @@ export function PriceTrendTable({
   onDelete
 }: PriceTrendTableProps) {
   
-  const calculateUsdPrice = (rmb: number, rate: number) => {
-    return rmb / rate
+  const calculateUsdPrice = (rmb: number | string | null | undefined, rate: number | string | null | undefined) => {
+    const rmbNum = Number(rmb) || 0
+    const rateNum = Number(rate) || 1
+    return rateNum > 0 ? rmbNum / rateNum : 0
   }
   
   return (
@@ -87,7 +89,7 @@ export function PriceTrendTable({
                     <div className="flex items-center gap-1">
                       <span className="text-muted-foreground">¥</span>
                       <span className="font-medium">
-                        {trend.unitPrice.toLocaleString('zh-CN', { 
+                        {Number(trend.unitPrice || 0).toLocaleString('zh-CN', { 
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2 
                         })}
@@ -97,7 +99,7 @@ export function PriceTrendTable({
                   
                   <TableCell>
                     <Badge variant="outline">
-                      {trend.exchangeRate.toFixed(4)}
+                      {trend.exchangeRate ? Number(trend.exchangeRate).toFixed(4) : '0.0000'}
                     </Badge>
                   </TableCell>
                   
