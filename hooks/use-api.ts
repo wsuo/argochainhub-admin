@@ -1733,7 +1733,7 @@ export const useDeletePriceTrend = () => {
   })
 }
 
-// 图片解析价格数据
+// 图片解析价格数据（异步接口）
 export const useParsePriceImage = () => {
   const queryClient = useQueryClient()
   
@@ -1742,10 +1742,77 @@ export const useParsePriceImage = () => {
       api.priceTrend.parsePriceImage(data),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['price-trends'] })
-      toast.success(result.message || `成功解析${result.successfulSaves}条价格数据`)
+      toast.success(`图片解析任务已创建：${result.taskId}`)
     },
     onError: (error: any) => {
-      toast.error(error.message || '图片解析失败')
+      toast.error(error.message || '图片解析任务创建失败')
+    },
+  })
+}
+
+// 查询任务状态
+export const useTaskStatus = (taskId: string | null, enabled: boolean = false) => {
+  console.log('🔍 useTaskStatus called:', { taskId, enabled })
+  
+  return useQuery({
+    queryKey: ['task-status', taskId],
+    queryFn: async () => {
+      console.log('🌐 Calling getTaskStatus for:', taskId)
+      const result = await api.priceTrend.getTaskStatus(taskId!)
+      console.log('📥 API Response:', result)
+      return result
+    },
+    enabled: !!taskId && enabled,
+    refetchInterval: (query) => {
+      // 从 query.state.data 获取实际的任务状态数据
+      const taskData = query.state.data
+      console.log('⏰ Checking refetch interval:', { 
+        taskData: taskData,
+        status: taskData?.status, 
+        hasData: !!taskData,
+        progress: taskData?.progress,
+        queryStatus: query.state.status
+      })
+      
+      // 如果任务还在处理中，每3秒查询一次
+      if (taskData?.status === 'processing') {
+        console.log('🔄 Setting refetch interval to 3000ms for processing task')
+        return 3000
+      }
+      
+      console.log('⏹️ Stopping refetch interval, final status:', taskData?.status)
+      // 任务完成或失败时停止轮询
+      return false
+    },
+    refetchIntervalInBackground: false,
+    staleTime: 0, // 始终被认为是过期的，每次都重新请求
+  })
+}
+
+// 保存编辑后的价格数据
+export const useSavePriceData = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: api.priceTrend.savePriceData,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['price-trends'] })
+      queryClient.invalidateQueries({ queryKey: ['pesticides'] })
+      
+      // 显示保存成功信息
+      toast.success(`成功保存 ${result.successfulSaves} 条价格数据${result.failedSaves > 0 ? `，${result.failedSaves} 条保存失败` : ''}`)
+      
+      // 如果有错误信息，显示警告提示
+      if (result.errors && result.errors.length > 0) {
+        result.errors.forEach(error => {
+          toast.error(error, {
+            duration: 6000, // 错误信息显示更长时间
+          })
+        })
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '价格数据保存失败')
     },
   })
 }

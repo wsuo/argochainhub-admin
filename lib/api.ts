@@ -109,6 +109,10 @@ import type {
   PriceTrendChartData,
   ImageParseRequest,
   ImageParseResponse,
+  ImageParseTaskResponse,
+  TaskStatusResponse,
+  SavePriceDataRequest,
+  SavePriceDataResponse,
 } from './types'
 
 // 认证相关API
@@ -651,8 +655,8 @@ export const priceTrendApi = {
   getPriceTrendChart: (pesticideId: number, query?: { startDate?: string; endDate?: string }): Promise<PriceTrendChartData> =>
     apiClient.get(`/admin/price-trends/chart/${pesticideId}`, filterQueryParams(query || {})),
   
-  // 上传图片解析价格数据
-  parsePriceImage: async (data: { images: File[]; exchangeRate: number }): Promise<ImageParseResponse> => {
+  // 上传图片解析价格数据（新的异步接口）
+  parsePriceImage: async (data: { images: File[]; exchangeRate: number }): Promise<ImageParseTaskResponse> => {
     const formData = new FormData()
     data.images.forEach(image => {
       formData.append('images', image)
@@ -660,7 +664,7 @@ export const priceTrendApi = {
     formData.append('exchangeRate', data.exchangeRate.toString())
     
     const client = apiClient.getClient()
-    const response = await client.post<ApiResponse<ImageParseResponse>>('/admin/image-parse/price-data', formData, {
+    const response = await client.post<ApiResponse<ImageParseTaskResponse>>('/admin/image-parse/price-data', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -669,6 +673,14 @@ export const priceTrendApi = {
     // 从统一响应格式中提取data字段
     return response.data.data
   },
+
+  // 查询任务状态
+  getTaskStatus: (taskId: string): Promise<TaskStatusResponse> =>
+    apiClient.get(`/admin/image-parse/task-status/${taskId}`),
+
+  // 保存编辑后的价格数据
+  savePriceData: (data: SavePriceDataRequest): Promise<SavePriceDataResponse> =>
+    apiClient.post('/admin/image-parse/save-price-data', data),
 }
 
 // 导出所有API

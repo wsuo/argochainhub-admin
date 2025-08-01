@@ -1495,7 +1495,7 @@ export interface ImageParseRequest {
   exchangeRate: number
 }
 
-// 图片解析响应
+// 图片解析响应（旧格式，已废弃）
 export interface ImageParseResponse {
   totalImages: number
   totalParsedData: number
@@ -1507,4 +1507,67 @@ export interface ImageParseResponse {
     unitPrice: number
   }>
   errors?: string[]
+}
+
+// 🆕 新的异步图片解析响应
+export interface ImageParseTaskResponse {
+  taskId: string
+  totalImages: number
+  estimatedTime: string
+}
+
+// 🆕 任务状态类型
+export type TaskStatus = 'processing' | 'completed' | 'failed'
+
+// 🆕 图片解析结果
+export interface ImageParseResult {
+  imageIndex: number
+  imageName: string
+  imageUrl: string
+  parseStatus: 'success' | 'failed'  
+  parsedData: Array<{
+    productName: string
+    weekEndDate: string
+    unitPrice: number
+  }>
+  errorMessage?: string
+}
+
+// 🆕 任务状态查询响应
+export interface TaskStatusResponse {
+  taskId: string
+  status: TaskStatus
+  totalImages: number
+  processedImages: number
+  totalParsedData: number
+  progress: number // 0-100
+  imageResults: ImageParseResult[]
+  globalErrors: string[]
+  createdAt: string
+  completedAt?: string
+}
+
+// 🆕 保存价格数据请求
+export interface SavePriceDataRequest {
+  taskId?: string
+  exchangeRate: number
+  priceData: Array<{
+    productName: string
+    weekEndDate: string
+    unitPrice: number
+  }>
+}
+
+// 🆕 保存价格数据响应
+export interface SavePriceDataResponse {
+  operationSuccess: boolean
+  totalItems: number
+  successfulSaves: number
+  failedSaves: number
+  savedData: Array<{
+    productName: string
+    weekEndDate: string
+    unitPrice: number
+  }>
+  errors: string[]
 }

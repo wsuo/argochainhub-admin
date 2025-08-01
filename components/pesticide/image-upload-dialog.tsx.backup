@@ -1,0 +1,435 @@
+'use client'
+
+import { useState, useCallback, useEffect } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  AlertCircle,
+  CheckCircle2,
+  FileImage,
+  Eye,
+  Clock,
+  Edit,
+  Save,
+  Loader2
+} from 'lucide-react'
+import { useParsePriceImage, useTaskStatus, useSavePriceData } from '@/hooks/use-api'
+import { cn } from '@/lib/utils'
+import type { TaskStatusResponse, ImageParseResult } from '@/lib/types'
+
+interface ImageUploadDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+// 定义组件的不同阶段
+type DialogStage = 'upload' | 'processing' | 'preview' | 'completed'
+
+// 编辑数据接口
+interface EditableData {
+  productName: string
+  weekEndDate: string
+  unitPrice: number
+  id: string // 用于唯一标识
+}
+
+export function ImageUploadDialog({ open, onOpenChange }: ImageUploadDialogProps) {
+  const [files, setFiles] = useState<File[]>([])
+  const [exchangeRate, setExchangeRate] = useState('7.2100')
+  const [dragActive, setDragActive] = useState(false)
+  const [parseResult, setParseResult] = useState<any>(null)
+  const [justPasted, setJustPasted] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  
+  const parseMutation = useParsePriceImage()
+  
+  // 处理剪切板粘贴
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    // 只在对话框打开时处理粘贴
+    if (!open) return
+    
+    const items = e.clipboardData?.items
+    if (!items) return
+    
+    const imageFiles: File[] = []
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (file) {
+          // 为剪切板图片生成一个名称
+          const timestamp = new Date().getTime()
+          const extension = file.type.split('/')[1] || 'png'
+          const renamedFile = new File([file], `pasted-image-${timestamp}.${extension}`, {
+            type: file.type
+          })
+          imageFiles.push(renamedFile)
+        }
+      }
+    }
+    
+    if (imageFiles.length > 0) {
+      setFiles(prev => [...prev, ...imageFiles].slice(0, 10))
+      setJustPasted(true)
+      // 3秒后清除粘贴提示
+      setTimeout(() => setJustPasted(false), 3000)
+      e.preventDefault()
+    }
+  }, [open])
+  
+  // 监听全局粘贴事件
+  useEffect(() => {
+    if (open) {
+      document.addEventListener('paste', handlePaste)
+      return () => {
+        document.removeEventListener('paste', handlePaste)
+      }
+    }
+  }, [open, handlePaste])
+  
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }, [])
+  
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(file =>
+      file.type.startsWith('image/')
+    )
+    
+    if (droppedFiles.length > 0) {
+      setFiles(prev => [...prev, ...droppedFiles].slice(0, 10))
+    }
+  }, [])
+  
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []).filter(file =>
+      file.type.startsWith('image/')
+    )
+    
+    if (selectedFiles.length > 0) {
+      setFiles(prev => [...prev, ...selectedFiles].slice(0, 10))
+    }
+  }
+  
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index))
+  }
+  
+  const previewFile = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setPreviewImage(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+  
+  const handleSubmit = async () => {
+    if (files.length === 0 || !exchangeRate) return
+    
+    try {
+      const result = await parseMutation.mutateAsync({
+        images: files,
+        exchangeRate: parseFloat(exchangeRate)
+      })
+      setParseResult(result)
+    } catch (error) {
+      // 错误已由mutation处理
+    }
+  }
+  
+  const handleClose = () => {
+    setFiles([])
+    setExchangeRate('7.2100')
+    setParseResult(null)
+    setJustPasted(false)
+    setPreviewImage(null)
+    onOpenChange(false)
+  }
+  
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>上传图片解析价格</DialogTitle>
+          <DialogDescription>
+            上传包含价格数据的图片，系统将自动识别并解析价格信息。支持拖拽、选择文件或直接粘贴剪切板中的图片。
+          </DialogDescription>
+        </DialogHeader>
+        
+        {!parseResult ? (
+          <div className="space-y-6">
+            {/* 汇率输入 */}
+            <div className="space-y-2">
+              <Label htmlFor="exchangeRate">当前汇率</Label>
+              <Input
+                id="exchangeRate"
+                type="number"
+                step="0.0001"
+                value={exchangeRate}
+                onChange={(e) => setExchangeRate(e.target.value)}
+                placeholder="7.2100"
+              />
+              <p className="text-sm text-muted-foreground">
+                人民币对美元汇率（1美元 = ?人民币）
+              </p>
+            </div>
+            
+            {/* 文件上传区域 */}
+            <div
+              className={cn(
+                "relative rounded-lg border-2 border-dashed p-8 text-center transition-colors",
+                dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25",
+                files.length > 0 && "pb-4"
+              )}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+              />
+              
+              <div className="space-y-3">
+                <div className="mx-auto h-12 w-12 text-muted-foreground">
+                  <Upload className="h-full w-full" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">
+                    拖拽图片到此处，或点击选择文件
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    支持 PNG、JPEG、GIF、WebP 格式，最多10张，单文件最大10MB
+                  </p>
+                  <p className="text-xs text-primary mt-1 flex items-center justify-center gap-1">
+                    💡 提示：您也可以直接粘贴剪切板中的图片 (Ctrl+V 或 Cmd+V)
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* 粘贴成功提示 */}
+            {justPasted && (
+              <Alert className="border-green-200 bg-green-50">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  ✨ 已成功粘贴剪切板中的图片！
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {/* 已选择的文件列表 */}
+            {files.length > 0 && (
+              <div className="space-y-2">
+                <Label>已选择的文件 ({files.length}/10)</Label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {files.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 rounded-lg border p-3"
+                    >
+                      <FileImage className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium truncate">{file.name}</p>
+                          {file.name.startsWith('pasted-image-') && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0">
+                              粘贴
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => previewFile(file)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => removeFile(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* 操作按钮 */}
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={handleClose}>
+                取消
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={files.length === 0 || !exchangeRate || parseMutation.isPending}
+              >
+                {parseMutation.isPending ? (
+                  <>
+                    <span className="mr-2">解析中...</span>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    开始解析
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* 解析结果 */}
+            <Alert className={parseResult.successfulSaves > 0 ? '' : 'border-destructive'}>
+              <div className="flex items-start gap-3">
+                {parseResult.successfulSaves > 0 ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <AlertDescription className="text-base font-medium mb-2">
+                    解析完成
+                  </AlertDescription>
+                  <div className="space-y-1 text-sm">
+                    <p>图片数量：{parseResult.totalImages} 张</p>
+                    <p>解析数据：{parseResult.totalParsedData} 条</p>
+                    <p>成功保存：{parseResult.successfulSaves} 条</p>
+                    {parseResult.failedSaves > 0 && (
+                      <p className="text-destructive">
+                        失败数量：{parseResult.failedSaves} 条
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Alert>
+            
+            {/* 错误信息 */}
+            {parseResult.errors && parseResult.errors.length > 0 && (
+              <div className="space-y-2">
+                <Label>错误信息</Label>
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-1">
+                  {parseResult.errors.map((error: string, index: number) => (
+                    <p key={index} className="text-sm text-destructive">
+                      • {error}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* 解析的数据预览 */}
+            {parseResult.parsedData && parseResult.parsedData.length > 0 && (
+              <div className="space-y-2">
+                <Label>解析的数据</Label>
+                <div className="rounded-lg border max-h-48 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-muted/50">
+                      <tr>
+                        <th className="text-left p-2">产品名称</th>
+                        <th className="text-left p-2">日期</th>
+                        <th className="text-right p-2">价格</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parseResult.parsedData.slice(0, 10).map((item: any, index: number) => (
+                        <tr key={index} className="border-b">
+                          <td className="p-2">{item.productName}</td>
+                          <td className="p-2">{item.weekEndDate}</td>
+                          <td className="p-2 text-right">
+                            ¥{item.unitPrice.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {parseResult.parsedData.length > 10 && (
+                    <p className="text-center text-sm text-muted-foreground py-2">
+                      还有 {parseResult.parsedData.length - 10} 条数据...
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* 操作按钮 */}
+            <div className="flex justify-end">
+              <Button onClick={handleClose}>
+                完成
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+      
+      {/* 图片预览对话框 */}
+      {previewImage && (
+        <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+          <DialogContent className="sm:max-w-[800px]">
+            <DialogHeader>
+              <DialogTitle>图片预览</DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center">
+              <img 
+                src={previewImage} 
+                alt="预览图片" 
+                className="max-w-full max-h-[600px] object-contain rounded-lg"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setPreviewImage(null)}>
+                关闭
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </Dialog>
+  )
+}
