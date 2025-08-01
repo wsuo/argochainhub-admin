@@ -107,7 +107,7 @@ export function PriceTrendChart({ pesticideId }: PriceTrendChartProps) {
     exchangeRate: item.exchangeRate
   }))
   
-  // 计算价格变化率
+  // 计算价格变化率和统计信息
   const calculatePriceChangeRate = () => {
     if (data.priceData.length < 2) return 0
     const firstPrice = data.priceData[0].cnyPrice
@@ -115,7 +115,22 @@ export function PriceTrendChart({ pesticideId }: PriceTrendChartProps) {
     return ((lastPrice - firstPrice) / firstPrice) * 100
   }
   
+  const calculatePriceStats = () => {
+    if (data.priceData.length === 0) {
+      return { maxPrice: 0, minPrice: 0, avgPrice: 0, latestPrice: 0 }
+    }
+    
+    const prices = data.priceData.map(item => item.cnyPrice)
+    const maxPrice = Math.max(...prices)
+    const minPrice = Math.min(...prices)
+    const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length
+    const latestPrice = prices[prices.length - 1]
+    
+    return { maxPrice, minPrice, avgPrice, latestPrice }
+  }
+  
   const priceChangeRate = calculatePriceChangeRate()
+  const priceStats = calculatePriceStats()
   
   // 格式化工具提示
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -196,19 +211,19 @@ export function PriceTrendChart({ pesticideId }: PriceTrendChartProps) {
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">最高价格</p>
-              <p className="text-lg font-semibold">¥{data.summary.maxPrice.toLocaleString()}</p>
+              <p className="text-lg font-semibold">¥{priceStats.maxPrice.toLocaleString()}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">最低价格</p>
-              <p className="text-lg font-semibold">¥{data.summary.minPrice.toLocaleString()}</p>
+              <p className="text-lg font-semibold">¥{priceStats.minPrice.toLocaleString()}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">平均价格</p>
-              <p className="text-lg font-semibold">¥{data.summary.avgPrice.toLocaleString()}</p>
+              <p className="text-lg font-semibold">¥{priceStats.avgPrice.toLocaleString()}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">最新价格</p>
-              <p className="text-lg font-semibold">¥{data.summary.latestPrice.toLocaleString()}</p>
+              <p className="text-lg font-semibold">¥{priceStats.latestPrice.toLocaleString()}</p>
             </div>
           </div>
           
@@ -241,7 +256,7 @@ export function PriceTrendChart({ pesticideId }: PriceTrendChartProps) {
                   iconType="line"
                 />
                 <ReferenceLine 
-                  y={data.summary.avgPrice} 
+                  y={priceStats.avgPrice} 
                   stroke="currentColor" 
                   strokeDasharray="5 5"
                   opacity={0.3}
