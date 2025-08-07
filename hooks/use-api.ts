@@ -87,6 +87,14 @@ import type {
   PriceTrendChartData,
   ImageParseRequest,
   ImageParseResponse,
+  // 管理员通知相关类型
+  AdminNotification,
+  AdminNotificationQuery,
+  UnreadNotificationCountResponse,
+  UnreadCountByPriorityResponse,
+  BroadcastNotificationRequest,
+  PermissionNotificationRequest,
+  SystemAlertRequest,
 } from '@/lib/types'
 
 // 查询键常量
@@ -179,6 +187,12 @@ export const queryKeys = {
   priceTrend: (id: number) => ['price-trends', id] as const,
   priceTrendChart: (pesticideId: number, query?: { startDate?: string; endDate?: string }) => 
     ['price-trends', 'chart', pesticideId, query] as const,
+  
+  // 管理员通知管理
+  adminNotifications: (query?: AdminNotificationQuery) => ['admin-notifications', query] as const,
+  unreadNotificationCount: ['admin-notifications', 'unread-count'] as const,
+  unreadCountByPriority: ['admin-notifications', 'unread-count-by-priority'] as const,
+  filterTree: ['admin-notifications', 'filter-tree'] as const,
 }
 
 // 仪表盘相关hooks
@@ -1814,5 +1828,190 @@ export const useSavePriceData = () => {
     onError: (error: any) => {
       toast.error(error.message || '价格数据保存失败')
     },
+  })
+}
+
+// ==================== 管理员通知相关hooks ====================
+
+// 获取管理员通知列表
+export const useAdminNotifications = (query?: AdminNotificationQuery) => {
+  return useQuery({
+    queryKey: queryKeys.adminNotifications(query),
+    queryFn: () => api.adminNotification.getNotifications(query),
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取未读通知数量
+export const useUnreadNotificationCount = () => {
+  return useQuery({
+    queryKey: queryKeys.unreadNotificationCount,
+    queryFn: () => api.adminNotification.getUnreadCount(),
+    refetchInterval: 60 * 1000, // 每分钟刷新一次
+    staleTime: 30 * 1000,
+  })
+}
+
+// 获取按优先级分组的未读数量
+export const useUnreadCountByPriority = () => {
+  return useQuery({
+    queryKey: queryKeys.unreadCountByPriority,
+    queryFn: () => api.adminNotification.getUnreadCountByPriority(),
+    refetchInterval: 60 * 1000, // 每分钟刷新一次
+    staleTime: 30 * 1000,
+  })
+}
+
+// 标记通知为已读
+export const useMarkNotificationAsRead = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number | string) => api.adminNotification.markAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      toast.success('通知已标记为已读')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '标记失败')
+    },
+  })
+}
+
+// 标记所有通知为已读
+export const useMarkAllNotificationsAsRead = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: () => api.adminNotification.markAllAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      toast.success('所有通知已标记为已读')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '批量标记失败')
+    },
+  })
+}
+
+// 归档通知
+export const useArchiveNotification = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number | string) => api.adminNotification.archiveNotification(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      toast.success('通知已归档')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '归档失败')
+    },
+  })
+}
+
+// 删除通知
+export const useDeleteNotification = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: number | string) => api.adminNotification.deleteNotification(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      toast.success('通知已删除')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '删除失败')
+    },
+  })
+}
+
+// 发送广播通知
+export const useSendBroadcastNotification = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: BroadcastNotificationRequest) => api.adminNotification.sendBroadcast(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      toast.success(`广播通知发送成功，共 ${result.count} 个管理员收到通知`)
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '广播通知发送失败')
+    },
+  })
+}
+
+// 根据权限发送通知
+export const useSendPermissionNotification = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: PermissionNotificationRequest) => api.adminNotification.sendByPermission(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      toast.success(`权限通知发送成功，共 ${result.count} 个管理员收到通知`)
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '权限通知发送失败')
+    },
+  })
+}
+
+// 发送系统告警
+export const useSendSystemAlert = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: SystemAlertRequest) => api.adminNotification.sendSystemAlert(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      toast.success(`系统告警发送成功，共 ${result.count} 个管理员收到通知`)
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '系统告警发送失败')
+    },
+  })
+}
+
+// 清理过期通知
+export const useCleanupExpiredNotifications = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: () => api.adminNotification.cleanupExpired(),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      toast.success(`清理完成，共清理 ${result.count} 个过期通知`)
+    },
+    onError: (error: any) => {
+      toast.error(error.message || '清理过期通知失败')
+    },
+  })
+}
+
+// 获取筛选树结构
+export const useFilterTree = () => {
+  return useQuery({
+    queryKey: queryKeys.filterTree,
+    queryFn: () => api.adminNotification.getFilterTree(),
+    staleTime: 10 * 60 * 1000, // 10分钟缓存
+    gcTime: 30 * 60 * 1000, // 30分钟垃圾回收
   })
 }
