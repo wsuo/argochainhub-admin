@@ -1563,3 +1563,139 @@ export interface SavePriceDataResponse {
   }>
   errors: string[]
 }
+
+// ==================== 管理员通知系统相关类型 ====================
+
+// 通知优先级
+export type AdminNotificationPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT' | 'CRITICAL'
+
+// 通知分类
+export type AdminNotificationCategory = 'review' | 'business' | 'operation' | 'system' | 'security'
+
+// 通知状态
+export type AdminNotificationStatus = 'UNREAD' | 'READ' | 'ARCHIVED'
+
+// 管理员通知类型
+export interface AdminNotification {
+  id: number | string
+  type: string // 通知类型，对应字典 admin_notification_type
+  title: string
+  content: string
+  priority: AdminNotificationPriority
+  category: AdminNotificationCategory
+  status: AdminNotificationStatus
+  data?: Record<string, any> // 通知携带的额外数据
+  readAt?: string | null
+  archivedAt?: string | null
+  expiresAt?: string | null
+  adminUserId: number
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
+}
+
+// 管理员通知查询参数
+export interface AdminNotificationQuery {
+  page?: number
+  limit?: number
+  status?: AdminNotificationStatus
+  priority?: AdminNotificationPriority
+  category?: AdminNotificationCategory
+  type?: string // 具体的通知类型，对应字典 admin_notification_type
+}
+
+// 未读通知数量响应
+export interface UnreadNotificationCountResponse {
+  count: number
+}
+
+// 按优先级分组的未读数量响应
+export interface UnreadCountByPriorityResponse {
+  CRITICAL?: number
+  URGENT?: number
+  HIGH?: number
+  NORMAL?: number
+  LOW?: number
+}
+
+// 标记通知已读请求
+export interface MarkNotificationReadRequest {
+  // 空请求体，通过路径参数传递ID
+}
+
+// 标记所有通知已读请求
+export interface MarkAllNotificationsReadRequest {
+  // 空请求体
+}
+
+// 归档通知请求
+export interface ArchiveNotificationRequest {
+  // 空请求体，通过路径参数传递ID
+}
+
+// 广播通知请求（需要管理权限）
+export interface BroadcastNotificationRequest {
+  type: string
+  title: string
+  content: string
+  priority: AdminNotificationPriority
+  category: AdminNotificationCategory
+  data?: Record<string, any>
+}
+
+// 权限通知请求（需要管理权限）
+export interface PermissionNotificationRequest {
+  requiredPermissions: string[]
+  type: string
+  title: string
+  content: string
+  priority: AdminNotificationPriority
+  category: AdminNotificationCategory
+  data?: Record<string, any>
+}
+
+// 系统告警请求（需要系统配置权限）
+export interface SystemAlertRequest {
+  alertType: string // 如 'MEMORY_WARNING', 'CPU_CRITICAL', 'DISK_FULL'
+  message: string
+  level: 'warning' | 'error' | 'critical'
+}
+
+// Socket.IO 消息类型（简化版本）
+export interface WebSocketMessage {
+  type: string
+  [key: string]: any
+}
+
+// Socket.IO 通知消息
+export interface WebSocketNotificationMessage {
+  type: 'notification'
+  id: number
+  notificationType: string
+  title: string
+  content: string
+  priority: AdminNotificationPriority
+  category: AdminNotificationCategory
+  data?: Record<string, any>
+  createdAt: string
+}
+
+// Socket.IO 未读数量更新消息
+export interface WebSocketUnreadCountMessage {
+  type: 'unread_count_update'
+  count: number
+}
+
+// 筛选树节点结构
+export interface FilterTreeNode {
+  label: string  // 显示文本
+  value: string  // 实际值
+  children?: FilterTreeNode[]  // 子节点（仅根节点有）
+}
+
+// 筛选树响应
+export interface FilterTreeResponse {
+  success: boolean
+  message: string
+  data: FilterTreeNode[]
+}

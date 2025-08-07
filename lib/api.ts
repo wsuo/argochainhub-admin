@@ -113,6 +113,15 @@ import type {
   TaskStatusResponse,
   SavePriceDataRequest,
   SavePriceDataResponse,
+  // 管理员通知相关类型
+  AdminNotification,
+  AdminNotificationQuery,
+  UnreadNotificationCountResponse,
+  UnreadCountByPriorityResponse,
+  BroadcastNotificationRequest,
+  PermissionNotificationRequest,
+  SystemAlertRequest,
+  FilterTreeResponse,
 } from './types'
 
 // 认证相关API
@@ -683,6 +692,57 @@ export const priceTrendApi = {
     apiClient.post('/admin/image-parse/save-price-data', data),
 }
 
+// 管理员通知相关API
+export const adminNotificationApi = {
+  // 获取我的通知列表
+  getNotifications: (query: AdminNotificationQuery = {}): Promise<ApiResponse<AdminNotification[]>> =>
+    apiClient.getWithMeta('/admin/notifications', filterQueryParams(query)),
+  
+  // 获取未读通知数量
+  getUnreadCount: (): Promise<UnreadNotificationCountResponse> =>
+    apiClient.get('/admin/notifications/unread-count'),
+  
+  // 获取按优先级分组的未读数量
+  getUnreadCountByPriority: (): Promise<UnreadCountByPriorityResponse> =>
+    apiClient.get('/admin/notifications/unread-count/by-priority'),
+  
+  // 标记通知为已读
+  markAsRead: (id: number | string): Promise<AdminNotification> =>
+    apiClient.patch(`/admin/notifications/${id}/read`),
+  
+  // 标记所有通知为已读
+  markAllAsRead: (): Promise<{ success: boolean; message: string }> =>
+    apiClient.patch('/admin/notifications/read-all'),
+  
+  // 归档通知
+  archiveNotification: (id: number | string): Promise<AdminNotification> =>
+    apiClient.patch(`/admin/notifications/${id}/archive`),
+  
+  // 删除通知
+  deleteNotification: (id: number | string): Promise<{ success: boolean; message: string }> =>
+    apiClient.delete(`/admin/notifications/${id}`),
+  
+  // 发送广播通知（需要管理权限）
+  sendBroadcast: (data: BroadcastNotificationRequest): Promise<{ count: number }> =>
+    apiClient.post('/admin/notifications/broadcast', data),
+  
+  // 根据权限发送通知（需要管理权限）
+  sendByPermission: (data: PermissionNotificationRequest): Promise<{ count: number }> =>
+    apiClient.post('/admin/notifications/by-permission', data),
+  
+  // 发送系统告警（需要系统配置权限）
+  sendSystemAlert: (data: SystemAlertRequest): Promise<{ count: number }> =>
+    apiClient.post('/admin/notifications/system-alert', data),
+  
+  // 清理过期通知
+  cleanupExpired: (): Promise<{ count: number }> =>
+    apiClient.delete('/admin/notifications/cleanup-expired'),
+  
+  // 获取筛选树结构
+  getFilterTree: (): Promise<FilterTreeResponse> =>
+    apiClient.get('/admin/notifications/filter-tree'),
+}
+
 // 导出所有API
 export const api = {
   auth: authApi,
@@ -706,6 +766,7 @@ export const api = {
   emailHistory: emailHistoryApi,
   pesticide: pesticideApi,
   priceTrend: priceTrendApi,
+  adminNotification: adminNotificationApi,
 }
 
 export default api
