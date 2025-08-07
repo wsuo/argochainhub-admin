@@ -317,10 +317,10 @@ export function NotificationPanel({
           {/* 筛选器 */}
           <div className="mt-3 flex items-center space-x-2">
             <Select
-              value={filter.status || ''}
+              value={filter.status || 'all'}
               onValueChange={(value) => setFilter(prev => ({ 
                 ...prev, 
-                status: value || undefined,
+                status: value === 'all' ? undefined : value,
                 page: 1 
               }))}
             >
@@ -328,17 +328,17 @@ export function NotificationPanel({
                 <SelectValue placeholder="状态" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部</SelectItem>
+                <SelectItem value="all">全部</SelectItem>
                 <SelectItem value="UNREAD">未读</SelectItem>
                 <SelectItem value="READ">已读</SelectItem>
               </SelectContent>
             </Select>
             
             <Select
-              value={filter.priority || ''}
+              value={filter.priority || 'all'}
               onValueChange={(value) => setFilter(prev => ({ 
                 ...prev, 
-                priority: value || undefined,
+                priority: value === 'all' ? undefined : value,
                 page: 1 
               }))}
             >
@@ -346,7 +346,7 @@ export function NotificationPanel({
                 <SelectValue placeholder="优先级" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部</SelectItem>
+                <SelectItem value="all">全部</SelectItem>
                 <SelectItem value="CRITICAL">严重</SelectItem>
                 <SelectItem value="URGENT">紧急</SelectItem>
                 <SelectItem value="HIGH">高</SelectItem>

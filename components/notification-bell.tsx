@@ -79,10 +79,10 @@ export function NotificationBell({
 
   // 获取优先级最高的未读通知数量显示颜色
   const getBadgeColor = () => {
-    if (unreadCountByPriority.CRITICAL > 0) return 'bg-red-600 hover:bg-red-700'
-    if (unreadCountByPriority.URGENT > 0) return 'bg-orange-600 hover:bg-orange-700'
-    if (unreadCountByPriority.HIGH > 0) return 'bg-yellow-600 hover:bg-yellow-700'
-    if (unreadCountByPriority.NORMAL > 0) return 'bg-primary hover:bg-primary/90'
+    if (unreadCountByPriority.critical > 0) return 'bg-red-600 hover:bg-red-700'
+    if (unreadCountByPriority.urgent > 0) return 'bg-orange-600 hover:bg-orange-700'
+    if (unreadCountByPriority.high > 0) return 'bg-yellow-600 hover:bg-yellow-700'
+    if (unreadCountByPriority.normal > 0) return 'bg-primary hover:bg-primary/90'
     return 'bg-gray-600 hover:bg-gray-700'
   }
 
@@ -112,19 +112,12 @@ export function NotificationBell({
       {unreadCount > 0 && (
         <Badge 
           className={cn(
-            'absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs font-medium text-white border-2 border-background',
+            'absolute -top-3 -right-3 h-5 w-5 rounded-full p-0 text-xs font-bold text-white flex items-center justify-center min-w-[20px] shadow-md border-2 border-white',
             getBadgeColor()
           )}
         >
-          {unreadCount > 99 ? '99+' : unreadCount}
+          {unreadCount > 9 ? '9+' : unreadCount}
         </Badge>
-      )}
-      
-      {/* 连接状态指示器 */}
-      {showConnectionStatus && (
-        <div className="absolute -bottom-1 -right-1">
-          {getConnectionIcon()}
-        </div>
       )}
       
       {/* 加载状态指示器 */}
