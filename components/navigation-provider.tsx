@@ -51,6 +51,7 @@ const routeToNavigation: Record<string, { section: string; page?: string }> = {
   '/system/email-configs': { section: 'system', page: 'email-configs' },
   '/system/email-templates': { section: 'system', page: 'email-templates' },
   '/system/email-histories': { section: 'system', page: 'email-histories' },
+  '/system/notifications': { section: 'system', page: 'notifications' },
 }
 
 interface NavigationProviderProps {
@@ -114,6 +115,11 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     // 邮件历史详情页面
     if (pathname.startsWith('/system/email-histories/')) {
       currentPath = '/system/email-histories'
+    }
+    
+    // 通知管理相关页面
+    if (pathname.startsWith('/system/notifications')) {
+      currentPath = '/system/notifications'
     }
     
     // 字典项管理页面
@@ -186,6 +192,7 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     if (path === '/system/email-configs' && pathname.startsWith('/system/email-configs/')) return true
     if (path === '/system/email-templates' && pathname.startsWith('/system/email-templates/')) return true
     if (path === '/system/email-histories' && pathname.startsWith('/system/email-histories/')) return true
+    if (path === '/system/notifications' && pathname.startsWith('/system/notifications')) return true
     
     return false
   }
@@ -270,7 +277,8 @@ export const navigationConfig = {
         { title: '数据字典', path: '/system/dictionary', key: 'dictionary' },
         { title: '邮件配置', path: '/system/email-configs', key: 'email-configs' },
         { title: '邮件模板', path: '/system/email-templates', key: 'email-templates' },
-        { title: '邮件历史', path: '/system/email-histories', key: 'email-histories' }
+        { title: '邮件历史', path: '/system/email-histories', key: 'email-histories' },
+        { title: '通知管理', path: '/system/notifications', key: 'notifications' }
       ]
     }
   },
