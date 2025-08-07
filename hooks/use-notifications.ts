@@ -153,13 +153,60 @@ export const useNotifications = (options: NotificationOptions = {}) => {
 
   // 处理未读数量更新
   const handleUnreadCountUpdate = useCallback((count: number) => {
-    console.log('Unread count updated:', count)
+    console.log('未读数量更新:', count)
     
     // 直接更新查询缓存
     queryClient.setQueryData(queryKeys.unreadNotificationCount, { count })
     
     // 同时刷新优先级分组数据
     queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+  }, [queryClient])
+
+  // 处理通知状态变更事件
+  const handleNotificationStatusChanged = useCallback((data: { 
+    type: string, 
+    notificationId?: string, 
+    count?: number 
+  }) => {
+    console.log('通知状态变更:', data)
+    
+    // 根据事件类型更新缓存
+    switch (data.type) {
+      case 'read':
+      case 'unread':
+        // 标记已读/未读时，刷新计数
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+        if (data.notificationId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminNotifications() })
+        }
+        break
+      case 'deleted':
+      case 'archived':
+        // 删除/归档时，刷新所有相关数据
+        queryClient.invalidateQueries({ queryKey: queryKeys.adminNotifications() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+        break
+      default:
+        console.warn('未知的通知状态变更类型:', data.type)
+    }
+  }, [queryClient])
+
+  // 处理批量操作事件
+  const handleNotificationsBulkUpdated = useCallback((data: { 
+    type: string, 
+    affectedCount: number, 
+    newUnreadCount: number 
+  }) => {
+    console.log('批量通知更新:', data)
+    
+    // 直接更新未读数量缓存
+    queryClient.setQueryData(queryKeys.unreadNotificationCount, { count: data.newUnreadCount })
+    
+    // 刷新其他相关数据
+    queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+    queryClient.invalidateQueries({ queryKey: queryKeys.adminNotifications() })
   }, [queryClient])
 
   // WebSocket事件处理
@@ -192,6 +239,8 @@ export const useNotifications = (options: NotificationOptions = {}) => {
     mergedOptions.enableRealtime ? {
       onNotification: handleNewNotification,
       onUnreadCountUpdate: handleUnreadCountUpdate,
+      onNotificationStatusChanged: handleNotificationStatusChanged,
+      onNotificationsBulkUpdated: handleNotificationsBulkUpdated,
       onConnected: handleWebSocketConnected,
       onDisconnected: handleWebSocketDisconnected,
       onError: handleWebSocketError,

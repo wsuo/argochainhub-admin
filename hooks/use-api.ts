@@ -1842,23 +1842,25 @@ export const useAdminNotifications = (query?: AdminNotificationQuery) => {
   })
 }
 
-// 获取未读通知数量
+// 获取未读通知数量 - 移除定时轮询，基于Socket.IO事件触发
 export const useUnreadNotificationCount = () => {
   return useQuery({
     queryKey: queryKeys.unreadNotificationCount,
     queryFn: () => api.adminNotification.getUnreadCount(),
-    refetchInterval: 60 * 1000, // 每分钟刷新一次
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000, // 5分钟内认为数据新鲜
+    gcTime: 10 * 60 * 1000, // 10分钟后回收缓存
+    // 移除 refetchInterval，改为通过 Socket.IO 事件触发刷新
   })
 }
 
-// 获取按优先级分组的未读数量
+// 获取按优先级分组的未读数量 - 移除定时轮询，基于Socket.IO事件触发
 export const useUnreadCountByPriority = () => {
   return useQuery({
     queryKey: queryKeys.unreadCountByPriority,
     queryFn: () => api.adminNotification.getUnreadCountByPriority(),
-    refetchInterval: 60 * 1000, // 每分钟刷新一次
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000, // 5分钟内认为数据新鲜
+    gcTime: 10 * 60 * 1000, // 10分钟后回收缓存
+    // 移除 refetchInterval，改为通过 Socket.IO 事件触发刷新
   })
 }
 

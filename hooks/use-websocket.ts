@@ -17,6 +17,8 @@ export type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'err
 export interface WebSocketEvents {
   onNotification?: (notification: WebSocketNotificationMessage) => void
   onUnreadCountUpdate?: (count: number) => void
+  onNotificationStatusChanged?: (data: { type: string, notificationId?: string, count?: number }) => void
+  onNotificationsBulkUpdated?: (data: { type: string, affectedCount: number, newUnreadCount: number }) => void
   onConnected?: (data: any) => void
   onDisconnected?: () => void
   onError?: (error: Error) => void
@@ -128,6 +130,18 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
       socketRef.current.on('unread_count_update', (data) => {
         console.log('📊 未读数量更新:', data.count)
         events?.onUnreadCountUpdate?.(data.count)
+      })
+
+      // 通知状态变更事件（标记已读、删除等）
+      socketRef.current.on('notification_status_changed', (data) => {
+        console.log('📝 通知状态变更:', data)
+        events?.onNotificationStatusChanged?.(data)
+      })
+
+      // 批量操作事件（如全部标记为已读）
+      socketRef.current.on('notifications_bulk_updated', (data) => {
+        console.log('📋 批量通知更新:', data)
+        events?.onNotificationsBulkUpdated?.(data)
       })
 
       // 连接断开事件
