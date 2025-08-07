@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { 
@@ -72,8 +72,19 @@ export default function NotificationsPage() {
   const [availableTypes, setAvailableTypes] = useState<FilterTreeNode[]>([]) // 可用的小类选项
   
   // 获取筛选树数据
-  const { data: filterTreeData, isLoading: filterTreeLoading } = useFilterTree()
+  const { data: filterTreeData, isLoading: filterTreeLoading, error: filterTreeError } = useFilterTree()
   const filterTree = filterTreeData?.data || []
+  
+  // 调试筛选树数据加载
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('筛选树数据状态:')
+      console.log('- isLoading:', filterTreeLoading)
+      console.log('- error:', filterTreeError)
+      console.log('- rawData:', filterTreeData)
+      console.log('- processedData:', filterTree)
+    }
+  }, [filterTreeData, filterTreeLoading, filterTreeError, filterTree])
 
   const {
     notifications,
@@ -189,7 +200,7 @@ export default function NotificationsPage() {
 
   const handleNotificationClick = (notification: AdminNotification) => {
     // 标记为已读
-    if (notification.status === 'UNREAD') {
+    if (notification.readAt === null) {
       markAsRead(notification.id)
     }
     
@@ -223,24 +234,38 @@ export default function NotificationsPage() {
     return categoryMap[category] || category
   }
   
-  // 获取类型显示文本（使用字典）
+  // 获取类型显示文本（优先使用筛选树，再使用字典）
   const getTypeText = (type: string, category: string) => {
-    // 先从字典中查找
-    const typeOption = notificationTypes.find(option => option.value === type)
+    // 优先从筛选树中查找，因为筛选树提供了完整的中文名称
+    if (filterTree && filterTree.length > 0) {
+      const categoryNode = filterTree.find(item => item.value === category)
+      if (categoryNode?.children) {
+        const typeNode = categoryNode.children.find(child => child.value === type)
+        if (typeNode) {
+          return typeNode.label
+        }
+      }
+    }
+    
+    // 如果筛选树中没有，再从字典中查找（处理大小写不匹配）
+    // 先尝试精确匹配
+    let typeOption = notificationTypes.find(option => option.value === type)
+    
+    // 如果精确匹配失败，尝试大写匹配
+    if (!typeOption) {
+      typeOption = notificationTypes.find(option => option.value === type.toUpperCase())
+    }
+    
+    // 如果大写匹配也失败，尝试小写匹配
+    if (!typeOption) {
+      typeOption = notificationTypes.find(option => option.value.toLowerCase() === type.toLowerCase())
+    }
+    
     if (typeOption) {
       return typeOption.label
     }
     
-    // 如果字典中没有，尝试从筛选树中查找
-    const categoryNode = filterTree.find(item => item.value === category)
-    if (categoryNode?.children) {
-      const typeNode = categoryNode.children.find(child => child.value === type)
-      if (typeNode) {
-        return typeNode.label
-      }
-    }
-    
-    // 都找不到的话返回原值
+    // 如果都找不到，返回原始值
     return type
   }
 
@@ -304,7 +329,7 @@ export default function NotificationsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                {unreadCountByPriority.CRITICAL || 0}
+                {unreadCountByPriority.critical || 0}
               </div>
             </CardContent>
           </Card>
@@ -316,7 +341,7 @@ export default function NotificationsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {unreadCountByPriority.URGENT || 0}
+                {unreadCountByPriority.urgent || 0}
               </div>
             </CardContent>
           </Card>
@@ -328,7 +353,7 @@ export default function NotificationsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">
-                {unreadCountByPriority.HIGH || 0}
+                {unreadCountByPriority.high || 0}
               </div>
             </CardContent>
           </Card>
@@ -340,18 +365,20 @@ export default function NotificationsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                {unreadCountByPriority.NORMAL || 0}
+                {unreadCountByPriority.normal || 0}
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">总计</CardTitle>
-              <Bell className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">低优先级</CardTitle>
+              <Info className="h-4 w-4 text-gray-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{notifications.length}</div>
+              <div className="text-2xl font-bold text-gray-600">
+                {unreadCountByPriority.low || 0}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -498,7 +525,7 @@ export default function NotificationsPage() {
                       <TableHead className="w-12"></TableHead>
                       <TableHead>通知内容</TableHead>
                       <TableHead className="w-24">分类</TableHead>
-                      <TableHead className="w-32">具体类型</TableHead>
+                      <TableHead className="w-48">具体类型</TableHead>
                       <TableHead className="w-20">优先级</TableHead>
                       <TableHead className="w-20">状态</TableHead>
                       <TableHead className="w-32">时间</TableHead>
@@ -507,7 +534,7 @@ export default function NotificationsPage() {
                   </TableHeader>
                   <TableBody>
                     {notifications.map((notification) => {
-                      const isUnread = notification.status === 'UNREAD'
+                      const isUnread = notification.readAt === null
                       const priorityDisplay = getPriorityDisplay(notification.priority)
                       const priorityColor = getPriorityColor(notification.priority)
 
@@ -564,7 +591,7 @@ export default function NotificationsPage() {
                           <TableCell>
                             {isUnread ? (
                               <Badge className="bg-primary">未读</Badge>
-                            ) : notification.status === 'ARCHIVED' ? (
+                            ) : notification.archivedAt ? (
                               <Badge variant="outline">已归档</Badge>
                             ) : (
                               <Badge variant="secondary">已读</Badge>
