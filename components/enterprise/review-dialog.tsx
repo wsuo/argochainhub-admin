@@ -316,9 +316,9 @@ export function ReviewDialog({
             <AlertDialogDescription>
               您确定要{reviewType === 'approve' ? '通过' : '拒绝'} <strong>{company.name['zh-CN'] || company.name.zh}</strong> 的企业审核吗？
               {reason && (
-                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                <span className="block mt-2 p-2 bg-muted rounded text-sm">
                   <strong>审核理由：</strong>{reason}
-                </div>
+                </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

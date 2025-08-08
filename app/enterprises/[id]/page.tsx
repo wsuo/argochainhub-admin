@@ -1238,10 +1238,12 @@ export default function CompanyDetailPage() {
                             </div>
                           )}
                           
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span>入职: {new Date(user.joinedAt).toLocaleDateString('zh-CN')}</span>
-                          </div>
+                          {user.joinedAt && (
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span>入职: {new Date(user.joinedAt).toLocaleDateString('zh-CN')}</span>
+                            </div>
+                          )}
                           
                           {user.position && (
                             <div className="flex items-center gap-2">
