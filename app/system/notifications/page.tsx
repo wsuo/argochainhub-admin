@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { 
@@ -52,7 +52,8 @@ import {
 import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorDisplay } from '@/components/ui/error-display'
 import { cn } from '@/lib/utils'
-import { useNotifications } from '@/hooks/use-notifications'
+import { useNotificationContext } from '@/contexts/notification-context'
+import { useAdminNotifications } from '@/hooks/use-api'
 import {
   useMarkAllNotificationsAsRead,
   useArchiveNotification,
@@ -73,52 +74,69 @@ export default function NotificationsPage() {
   
   // 获取筛选树数据
   const { data: filterTreeData, isLoading: filterTreeLoading, error: filterTreeError } = useFilterTree()
-  const filterTree = filterTreeData?.data || []
   
-  // 调试筛选树数据加载
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('筛选树数据状态:')
-      console.log('- isLoading:', filterTreeLoading)
-      console.log('- error:', filterTreeError)
-      console.log('- rawData:', filterTreeData)
-      console.log('- processedData:', filterTree)
+  // 安全处理筛选树数据
+  const filterTree = useMemo(() => {
+    if (!filterTreeData) return []
+    
+    // 如果直接是数组，直接使用
+    if (Array.isArray(filterTreeData)) {
+      return filterTreeData
     }
-  }, [filterTreeData, filterTreeLoading, filterTreeError, filterTree])
+    
+    // 如果有data字段且是数组，使用data
+    if (filterTreeData.data && Array.isArray(filterTreeData.data)) {
+      return filterTreeData.data
+    }
+    
+    // 兜底返回空数组
+    return []
+  }, [filterTreeData])
+  
 
+  // 获取全局通知状态（用于WebSocket连接、统计数据等）
+  const globalNotifications = useNotificationContext()
+
+  // 获取页面级通知数据（用于列表显示、筛选等）
   const {
-    notifications,
+    data: notificationsResponse,
+    isLoading,
+    error,
+    refetch: refetchPageNotifications, // 页面级数据刷新
+  } = useAdminNotifications(query)
+
+  // 从响应中提取数据
+  const notifications = notificationsResponse?.data || []
+  const meta = notificationsResponse?.meta
+
+  // 使用全局状态的其他数据
+  const {
     unreadCount,
     unreadCountByPriority,
     isConnected,
     connectionError,
-    isLoading,
-    error,
-    refresh,
+    refresh: globalRefresh,
     markAsRead,
     getPriorityColor,
     getCategoryIcon,
-    meta,
     wsStatus,
-  } = useNotifications({
-    enableRealtime: true,
-    showToast: true,
-    query,
-  })
+  } = globalNotifications
 
   // API操作hooks
   const markAllAsReadMutation = useMarkAllNotificationsAsRead()
   const archiveNotificationMutation = useArchiveNotification()
   const deleteNotificationMutation = useDeleteNotification()
   
-  // 获取通知类型选项（使用字典系统）
+  // 获取字典选项（使用新的字典系统）
+  const notificationPriorities = useDictionaryOptions('admin_notification_priority')
+  const notificationStatuses = useDictionaryOptions('admin_notification_status')
+  const notificationCategories = useDictionaryOptions('admin_notification_category')
   const notificationTypes = useDictionaryOptions('admin_notification_type')
 
   // 处理搜索
   const handleSearch = (keyword: string) => {
     setSearchKeyword(keyword)
     setQuery(prev => ({ ...prev, page: 1 }))
-    // TODO: 实现后端搜索功能后添加搜索参数
   }
 
   // 处理筛选
@@ -193,9 +211,7 @@ export default function NotificationsPage() {
   }
 
   const handleDelete = (id: number | string) => {
-    if (confirm('确定要删除这条通知吗？')) {
-      deleteNotificationMutation.mutate(id)
-    }
+    deleteNotificationMutation.mutate(id)
   }
 
   const handleNotificationClick = (notification: AdminNotification) => {
@@ -213,17 +229,33 @@ export default function NotificationsPage() {
   // 获取优先级显示文本和图标
   const getPriorityDisplay = (priority: string) => {
     const config = {
+      'critical': { text: '严重', icon: AlertCircle, color: 'text-red-600' },
+      'urgent': { text: '紧急', icon: AlertTriangle, color: 'text-orange-600' },
+      'high': { text: '高', icon: AlertTriangle, color: 'text-yellow-600' },
+      'normal': { text: '普通', icon: Info, color: 'text-blue-600' },
+      'low': { text: '低', icon: Info, color: 'text-gray-600' },
+      // 兼容大写（后端可能返回大写）
       'CRITICAL': { text: '严重', icon: AlertCircle, color: 'text-red-600' },
       'URGENT': { text: '紧急', icon: AlertTriangle, color: 'text-orange-600' },
       'HIGH': { text: '高', icon: AlertTriangle, color: 'text-yellow-600' },
       'NORMAL': { text: '普通', icon: Info, color: 'text-blue-600' },
       'LOW': { text: '低', icon: Info, color: 'text-gray-600' },
     }
-    return config[priority as keyof typeof config] || config.NORMAL
+    return config[priority as keyof typeof config] || config.normal
   }
 
-  // 获取分类显示文本
+  // 获取分类显示文本 - 使用字典系统
   const getCategoryText = (category: string) => {
+    // 优先从字典中查找
+    const categoryOption = notificationCategories.find(option => 
+      option.value === category || option.value.toLowerCase() === category.toLowerCase()
+    )
+    
+    if (categoryOption) {
+      return categoryOption.label
+    }
+    
+    // 如果字典中没有，使用备用映射
     const categoryMap: Record<string, string> = {
       'review': '审核',
       'business': '业务',
@@ -303,7 +335,10 @@ export default function NotificationsPage() {
               </span>
             </div>
             
-            <Button onClick={refresh} disabled={isLoading} size="sm">
+            <Button onClick={() => {
+              // 使用全局刷新，会同步所有相关数据
+              globalRefresh()
+            }} disabled={isLoading} size="sm">
               <RefreshCw size={16} className={cn('mr-2', isLoading && 'animate-spin')} />
               刷新
             </Button>
@@ -433,9 +468,11 @@ export default function NotificationsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="UNREAD">未读</SelectItem>
-                <SelectItem value="read">已读</SelectItem>
-                <SelectItem value="ARCHIVED">已归档</SelectItem>
+                {notificationStatuses.map(status => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -449,11 +486,11 @@ export default function NotificationsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部优先级</SelectItem>
-                <SelectItem value="CRITICAL">严重</SelectItem>
-                <SelectItem value="URGENT">紧急</SelectItem>
-                <SelectItem value="HIGH">高</SelectItem>
-                <SelectItem value="NORMAL">普通</SelectItem>
-                <SelectItem value="LOW">低</SelectItem>
+                {notificationPriorities.map(priority => (
+                  <SelectItem key={priority.value} value={priority.value}>
+                    {priority.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -501,7 +538,7 @@ export default function NotificationsPage() {
           {error ? (
             <ErrorDisplay 
               error={error} 
-              onRetry={refresh}
+              onRetry={globalRefresh}
               className="py-8"
             />
           ) : isLoading ? (
@@ -526,8 +563,8 @@ export default function NotificationsPage() {
                       <TableHead>通知内容</TableHead>
                       <TableHead className="w-24">分类</TableHead>
                       <TableHead className="w-48">具体类型</TableHead>
-                      <TableHead className="w-20">优先级</TableHead>
-                      <TableHead className="w-20">状态</TableHead>
+                      <TableHead className="w-24">优先级</TableHead>
+                      <TableHead className="w-32">状态</TableHead>
                       <TableHead className="w-32">时间</TableHead>
                       <TableHead className="w-20">操作</TableHead>
                     </TableRow>
