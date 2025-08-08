@@ -76,7 +76,6 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
     const token = getAuthToken()
     
     if (!token) {
-      console.log('Not authenticated, skipping Socket.IO connection')
       return
     }
 
@@ -87,7 +86,9 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
 
       // 断开已有连接
       if (socketRef.current) {
+        socketRef.current.removeAllListeners() // 移除所有监听器
         socketRef.current.disconnect()
+        socketRef.current = null
       }
 
       // 创建新的Socket.IO连接
@@ -96,9 +97,11 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
         : 'http://localhost:3050/notifications'
 
       socketRef.current = io(serverUrl, {
+        auth: {
+          token  // 管理员JWT token
+        },
         query: {
-          token,
-          type: 'admin'
+          type: 'admin'  // 重要：指定为admin类型
         },
         transports: ['websocket'],
         autoConnect: true,
@@ -106,7 +109,6 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
 
       // 连接成功事件
       socketRef.current.on('connect', () => {
-        console.log('✅ Socket.IO 连接成功')
         setStatus('connected')
         setIsAuthenticated(false) // 等待服务器确认
         reconnectAttemptsRef.current = 0
@@ -115,41 +117,77 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
 
       // 服务器连接确认事件
       socketRef.current.on('connected', (data) => {
-        console.log('🎉 服务器确认连接:', data)
         setIsAuthenticated(true)
         events?.onConnected?.(data)
       })
 
-      // 接收通知消息
-      socketRef.current.on('notification', (notification) => {
-        console.log('📢 收到通知:', notification)
+      // 🎯 管理员专用通知事件 - 主要事件（移除通用监听避免重复）
+      socketRef.current.on('admin_notification', (notification) => {
         events?.onNotification?.(notification)
       })
 
-      // 未读数量更新
+      // 🎯 系统广播通知
+      socketRef.current.on('system_notification', (notification) => {
+        events?.onNotification?.(notification)
+      })
+
+      // 监听所有可能的通知事件 - 仅开发环境
+      if (process.env.NODE_ENV === 'development') {
+        // 监听所有Socket.IO事件
+        socketRef.current.onAny((eventName, ...args) => {
+          if (eventName !== 'pong') { // 过滤心跳響应日志
+            console.log(`🔍 Socket.IO事件: ${eventName}`, args)
+          }
+        })
+      }
+
+      // 未读数量更新 - 保留通用监听
       socketRef.current.on('unread_count_update', (data) => {
-        console.log('📊 未读数量更新:', data.count)
         events?.onUnreadCountUpdate?.(data.count)
       })
 
+      // 🎯 管理员未读数量更新 - 主要事件
+      socketRef.current.on('admin_unread_count', (data) => {
+        if (data && typeof data.count === 'number') {
+          events?.onUnreadCountUpdate?.(data.count)
+        }
+      })
+
+      // 🎯 心跳检测响应
+      socketRef.current.on('pong', (data) => {
+        // 静默处理心跳响应
+      })
+
+      // 启动心跳检测 (每30秒发送一次ping)
+      const pingInterval = setInterval(() => {
+        if (socketRef.current?.connected) {
+          socketRef.current.emit('ping')
+        }
+      }, 30000)
+
+      // 清理心跳检测
+      const cleanupPing = () => {
+        if (pingInterval) {
+          clearInterval(pingInterval)
+        }
+      }
+
       // 通知状态变更事件（标记已读、删除等）
       socketRef.current.on('notification_status_changed', (data) => {
-        console.log('📝 通知状态变更:', data)
         events?.onNotificationStatusChanged?.(data)
       })
 
       // 批量操作事件（如全部标记为已读）
       socketRef.current.on('notifications_bulk_updated', (data) => {
-        console.log('📋 批量通知更新:', data)
         events?.onNotificationsBulkUpdated?.(data)
       })
 
       // 连接断开事件
       socketRef.current.on('disconnect', (reason) => {
-        console.log('❌ Socket.IO 连接断开:', reason)
         setStatus('disconnected')
         setIsAuthenticated(false)
         clearTimers()
+        cleanupPing() // 清理心跳检测
         events?.onDisconnected?.()
 
         // 自动重连逻辑 (除非是手动断开或服务器主动断开)
@@ -159,12 +197,10 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
             reconnectAttemptsRef.current < mergedConfig.maxReconnectAttempts) {
           
           reconnectAttemptsRef.current++
-          console.log(`Socket.IO 重连中... 尝试 ${reconnectAttemptsRef.current}`)
           
           const delay = mergedConfig.reconnectInterval * Math.pow(1.5, reconnectAttemptsRef.current - 1)
           reconnectTimeoutRef.current = setTimeout(connect, delay)
         } else if (reconnectAttemptsRef.current >= mergedConfig.maxReconnectAttempts) {
-          console.error('达到最大重连次数')
           setError(new Error('连接失败，已达到最大重连次数'))
           events?.onError?.(new Error('连接失败'))
         }
@@ -172,14 +208,12 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
 
       // 连接错误事件
       socketRef.current.on('connect_error', (error) => {
-        console.error('❌ Socket.IO 连接错误:', error)
         setStatus('error')
         setError(error)
         events?.onError?.(error)
       })
 
     } catch (error) {
-      console.error('Socket.IO 连接初始化失败:', error)
       setStatus('error')
       setError(error as Error)
       events?.onError?.(error as Error)

@@ -1838,7 +1838,7 @@ export const useAdminNotifications = (query?: AdminNotificationQuery) => {
   return useQuery({
     queryKey: queryKeys.adminNotifications(query),
     queryFn: () => api.adminNotification.getNotifications(query),
-    staleTime: 30 * 1000,
+    staleTime: 0, // 实时数据，立即失效以便WebSocket触发时能重新获取
   })
 }
 
@@ -1847,7 +1847,7 @@ export const useUnreadNotificationCount = () => {
   return useQuery({
     queryKey: queryKeys.unreadNotificationCount,
     queryFn: () => api.adminNotification.getUnreadCount(),
-    staleTime: 5 * 60 * 1000, // 5分钟内认为数据新鲜
+    staleTime: 0, // 实时数据，立即失效以便WebSocket触发时能重新获取
     gcTime: 10 * 60 * 1000, // 10分钟后回收缓存
     // 移除 refetchInterval，改为通过 Socket.IO 事件触发刷新
   })
@@ -1858,7 +1858,7 @@ export const useUnreadCountByPriority = () => {
   return useQuery({
     queryKey: queryKeys.unreadCountByPriority,
     queryFn: () => api.adminNotification.getUnreadCountByPriority(),
-    staleTime: 5 * 60 * 1000, // 5分钟内认为数据新鲜
+    staleTime: 0, // 实时数据，立即失效以便WebSocket触发时能重新获取
     gcTime: 10 * 60 * 1000, // 10分钟后回收缓存
     // 移除 refetchInterval，改为通过 Socket.IO 事件触发刷新
   })
