@@ -51,6 +51,10 @@ export interface NotificationOptions {
   query?: AdminNotificationQuery
 }
 
+// 全局去重缓存 - 避免组件重新渲染时缓存丢失
+const globalRecentNotifications = new Set<string>()
+const globalToastNotifications = new Set<string>() // Toast级别去重
+
 const DEFAULT_OPTIONS: Required<NotificationOptions> = {
   enableRealtime: true,
   autoMarkAsRead: false,
@@ -65,7 +69,8 @@ export const useNotifications = (options: NotificationOptions = {}) => {
   
   // 本地状态
   const [connectionError, setConnectionError] = useState<Error | null>(null)
-  const recentNotificationsRef = useRef<Set<number | string>>(new Set())
+  // 使用全局去重缓存而不是组件级缓存
+  // const recentNotificationsRef = useRef<Set<number | string>>(new Set())
 
   // API查询hooks
   const { 
@@ -91,56 +96,85 @@ export const useNotifications = (options: NotificationOptions = {}) => {
   const markAsReadMutation = useMarkNotificationAsRead()
 
   // 处理收到新通知
-  const handleNewNotification = useCallback((notification: WebSocketNotificationMessage) => {
-    console.log('New notification received:', notification)
+  const handleNewNotification = useCallback(async (notification: WebSocketNotificationMessage) => {
+    // 避免重复处理相同通知 - 使用全局缓存
+    const notificationKey = `${notification.id}_${notification.title}`
     
-    // 避免重复处理相同通知
-    if (recentNotificationsRef.current.has(notification.id)) {
+    if (globalRecentNotifications.has(notificationKey)) {
       return
     }
-    recentNotificationsRef.current.add(notification.id)
     
-    // 5秒后清理缓存
+    globalRecentNotifications.add(notificationKey)
+    
+    // 15秒后清理缓存（延长时间避免短时间内重复）
     setTimeout(() => {
-      recentNotificationsRef.current.delete(notification.id)
-    }, 5000)
+      globalRecentNotifications.delete(notificationKey)
+    }, 15000)
     
-    // 刷新查询数据
-    queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })
-    queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
-    queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+    // 刷新查询数据 - 使用强制刷新确保数据同步
+    try {
+      // 1. 让查询失效，触发重新获取
+      await Promise.all([
+        queryClient.invalidateQueries({ 
+          predicate: (query) => {
+            return query.queryKey[0] === 'admin-notifications'
+          }
+        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+      ])
+      
+      // 2. 强制重新获取关键数据
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.unreadNotificationCount }),
+        queryClient.refetchQueries({ queryKey: queryKeys.unreadCountByPriority })
+      ])
+    } catch (error) {
+      // 静默处理错误
+    }
     
-    // 显示Toast通知
+    // 显示Toast通知 - 添加Toast级别去重
     if (mergedOptions.showToast) {
-      const getPriorityColor = (priority: string) => {
-        switch (priority.toLowerCase()) {
-          case 'critical': return 'text-red-600'
-          case 'urgent': return 'text-orange-600'
-          case 'high': return 'text-yellow-600'
-          case 'normal': return 'text-blue-600'
-          case 'low': return 'text-gray-600'
-          default: return 'text-gray-600'
-        }
-      }
+      const toastKey = `${notification.id}_${notification.title}_toast`
       
-      const getCategoryIcon = (category: string) => {
-        switch (category.toLowerCase()) {
-          case 'review': return '📋'
-          case 'business': return '💼'
-          case 'operation': return '⚙️'
-          case 'system': return '🖥️'
-          case 'security': return '🔒'
-          default: return '📢'
+      if (!globalToastNotifications.has(toastKey)) {
+        globalToastNotifications.add(toastKey)
+        
+        // 清理Toast去重缓存
+        setTimeout(() => {
+          globalToastNotifications.delete(toastKey)
+        }, 10000)
+        
+        const getPriorityColor = (priority: string) => {
+          switch (priority.toLowerCase()) {
+            case 'critical': return 'text-red-600'
+            case 'urgent': return 'text-orange-600'
+            case 'high': return 'text-yellow-600'
+            case 'normal': return 'text-blue-600'
+            case 'low': return 'text-gray-600'
+            default: return 'text-gray-600'
+          }
         }
+        
+        const getCategoryIcon = (category: string) => {
+          switch (category.toLowerCase()) {
+            case 'review': return '📋'
+            case 'business': return '💼'
+            case 'operation': return '⚙️'
+            case 'system': return '🖥️'
+            case 'security': return '🔒'
+            default: return '📢'
+          }
+        }
+        
+        toast.info(`${getCategoryIcon(notification.category)} ${notification.title}: ${notification.content}`, {
+          duration: mergedOptions.toastDuration,
+          action: mergedOptions.autoMarkAsRead ? undefined : {
+            label: '标记已读',
+            onClick: () => markAsReadMutation.mutate(notification.id),
+          },
+        })
       }
-      
-      toast.info(`${getCategoryIcon(notification.category)} ${notification.title}: ${notification.content}`, {
-        duration: mergedOptions.toastDuration,
-        action: mergedOptions.autoMarkAsRead ? undefined : {
-          label: '标记已读',
-          onClick: () => markAsReadMutation.mutate(notification.id),
-        },
-      })
     }
     
     // 自动标记为已读
@@ -153,8 +187,6 @@ export const useNotifications = (options: NotificationOptions = {}) => {
 
   // 处理未读数量更新
   const handleUnreadCountUpdate = useCallback((count: number) => {
-    console.log('未读数量更新:', count)
-    
     // 直接更新查询缓存
     queryClient.setQueryData(queryKeys.unreadNotificationCount, { count })
     
@@ -168,28 +200,31 @@ export const useNotifications = (options: NotificationOptions = {}) => {
     notificationId?: string, 
     count?: number 
   }) => {
-    console.log('通知状态变更:', data)
-    
     // 根据事件类型更新缓存
     switch (data.type) {
       case 'read':
       case 'unread':
-        // 标记已读/未读时，刷新计数
+        // 标记已读/未读时，刷新计数和列表
         queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
         queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
         if (data.notificationId) {
-          queryClient.invalidateQueries({ queryKey: queryKeys.adminNotifications() })
+          queryClient.invalidateQueries({ 
+            predicate: (query) => query.queryKey[0] === 'admin-notifications'
+          })
         }
         break
       case 'deleted':
       case 'archived':
         // 删除/归档时，刷新所有相关数据
-        queryClient.invalidateQueries({ queryKey: queryKeys.adminNotifications() })
+        queryClient.invalidateQueries({ 
+          predicate: (query) => query.queryKey[0] === 'admin-notifications'
+        })
         queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
         queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
         break
       default:
-        console.warn('未知的通知状态变更类型:', data.type)
+        // 静默处理未知类型
+        break
     }
   }, [queryClient])
 
@@ -199,19 +234,18 @@ export const useNotifications = (options: NotificationOptions = {}) => {
     affectedCount: number, 
     newUnreadCount: number 
   }) => {
-    console.log('批量通知更新:', data)
-    
     // 直接更新未读数量缓存
     queryClient.setQueryData(queryKeys.unreadNotificationCount, { count: data.newUnreadCount })
     
     // 刷新其他相关数据
     queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
-    queryClient.invalidateQueries({ queryKey: queryKeys.adminNotifications() })
+    queryClient.invalidateQueries({ 
+      predicate: (query) => query.queryKey[0] === 'admin-notifications'
+    })
   }, [queryClient])
 
   // WebSocket事件处理
   const handleWebSocketConnected = useCallback(() => {
-    console.log('Notifications WebSocket connected')
     setConnectionError(null)
     
     // 重新获取最新数据
@@ -221,11 +255,10 @@ export const useNotifications = (options: NotificationOptions = {}) => {
   }, [refetchNotifications, queryClient])
 
   const handleWebSocketDisconnected = useCallback(() => {
-    console.log('Notifications WebSocket disconnected')
+    // 静默处理断开连接
   }, [])
 
   const handleWebSocketError = useCallback((error: Error) => {
-    console.error('Notifications WebSocket error:', error)
     setConnectionError(error)
   }, [])
 
@@ -266,10 +299,24 @@ export const useNotifications = (options: NotificationOptions = {}) => {
   // 辅助方法
   const actions = {
     // 刷新所有通知数据
-    refresh: useCallback(() => {
-      refetchNotifications()
-      queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount })
-      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority })
+    refresh: useCallback(async () => {
+      // 1. 先刷新当前实例的数据
+      await refetchNotifications()
+      
+      // 2. 然后强制刷新所有相关查询缓存
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotificationCount }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCountByPriority }),
+        queryClient.invalidateQueries({ 
+          predicate: (query) => query.queryKey[0] === 'admin-notifications'
+        })
+      ])
+      
+      // 3. 等待所有查询重新获取数据
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.unreadNotificationCount }),
+        queryClient.refetchQueries({ queryKey: queryKeys.unreadCountByPriority })
+      ])
     }, [refetchNotifications, queryClient]),
     
     // 重新连接WebSocket
@@ -309,13 +356,11 @@ export const useNotifications = (options: NotificationOptions = {}) => {
     }, []),
   }
 
-  // 清理缓存定时器
+  // 清理缓存定时器 - 使用全局缓存
   useEffect(() => {
     const interval = setInterval(() => {
-      // 清理5分钟前的通知缓存
-      const cutoff = Date.now() - 5 * 60 * 1000
-      recentNotificationsRef.current.clear()
-    }, 60000) // 每分钟清理一次
+      // 清理缓存 - 静默处理
+    }, 60000) // 每分钟检查一次
     
     return () => clearInterval(interval)
   }, [])
