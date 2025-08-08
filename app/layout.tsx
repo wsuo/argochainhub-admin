@@ -5,6 +5,7 @@ import "./globals.css"
 
 import { QueryProvider } from "@/components/query-provider"
 import { AuthProvider } from "@/components/auth-provider"
+import { NotificationProvider } from "@/contexts/notification-context"
 import { MainLayout } from "@/components/main-layout"
 import { Toaster } from "@/components/ui/sonner"
 
@@ -26,7 +27,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <QueryProvider>
           <AuthProvider>
-            <MainLayout>{children}</MainLayout>
+            <NotificationProvider>
+              <MainLayout>{children}</MainLayout>
+            </NotificationProvider>
             <Toaster />
           </AuthProvider>
         </QueryProvider>
