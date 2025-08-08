@@ -16,7 +16,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import {
   Select,
@@ -32,7 +31,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { useNotifications } from '@/hooks/use-notifications'
+import { useNotificationContext } from '@/contexts/notification-context'
 import { useMarkAllNotificationsAsRead } from '@/hooks/use-api'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
 import type { AdminNotificationQuery, AdminNotification } from '@/lib/types'
@@ -67,21 +66,20 @@ export function NotificationPanel({
     getPriorityColor,
     getCategoryIcon,
     isConnected,
-  } = useNotifications({
-    enableRealtime: true,
-    showToast: true,
-    query: filter,
-  })
+  } = useNotificationContext()
 
   const markAllAsReadMutation = useMarkAllNotificationsAsRead()
   
-  // 获取通知类型选项（使用字典系统）
+  // 获取字典选项（使用新的字典系统）
+  const notificationPriorities = useDictionaryOptions('admin_notification_priority')
+  const notificationStatuses = useDictionaryOptions('admin_notification_status')
+  const notificationCategories = useDictionaryOptions('admin_notification_category')
   const notificationTypes = useDictionaryOptions('admin_notification_type')
   
   // 处理通知点击
   const handleNotificationClick = (notification: AdminNotification) => {
-    // 标记为已读
-    if (notification.status === 'UNREAD') {
+    // 标记为已读 - 兼容大小写
+    if (notification.status === 'UNREAD' || notification.status === 'unread') {
       markAsRead(notification.id)
     }
     
@@ -91,9 +89,26 @@ export function NotificationPanel({
     }
   }
 
-  // 获取优先级显示文本
+  // 获取优先级显示文本 - 使用字典系统
   const getPriorityText = (priority: string) => {
+    // 优先从字典中查找
+    const priorityOption = notificationPriorities.find(option => 
+      option.value === priority || option.value.toLowerCase() === priority.toLowerCase()
+    )
+    
+    if (priorityOption) {
+      return priorityOption.label
+    }
+    
+    // 如果字典中没有，使用备用映射
     const priorityMap: Record<string, string> = {
+      // 小写（API期望的格式）
+      'critical': '严重',
+      'urgent': '紧急', 
+      'high': '高',
+      'normal': '普通',
+      'low': '低',
+      // 兼容大写（可能的返回值）
       'CRITICAL': '严重',
       'URGENT': '紧急', 
       'HIGH': '高',
@@ -103,8 +118,18 @@ export function NotificationPanel({
     return priorityMap[priority] || priority
   }
 
-  // 获取分类显示文本
+  // 获取分类显示文本 - 使用字典系统
   const getCategoryText = (category: string) => {
+    // 优先从字典中查找
+    const categoryOption = notificationCategories.find(option => 
+      option.value === category || option.value.toLowerCase() === category.toLowerCase()
+    )
+    
+    if (categoryOption) {
+      return categoryOption.label
+    }
+    
+    // 如果字典中没有，使用备用映射
     const categoryMap: Record<string, string> = {
       'review': '审核',
       'business': '业务',
@@ -117,7 +142,7 @@ export function NotificationPanel({
 
   // 渲染单个通知项
   const renderNotificationItem = (notification: AdminNotification) => {
-    const isUnread = notification.status === 'UNREAD'
+    const isUnread = notification.status === 'UNREAD' || notification.status === 'unread'
     const priorityColor = getPriorityColor(notification.priority)
     
     return (
@@ -329,8 +354,11 @@ export function NotificationPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部</SelectItem>
-                <SelectItem value="UNREAD">未读</SelectItem>
-                <SelectItem value="READ">已读</SelectItem>
+                {notificationStatuses.map(status => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             
@@ -347,11 +375,11 @@ export function NotificationPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部</SelectItem>
-                <SelectItem value="CRITICAL">严重</SelectItem>
-                <SelectItem value="URGENT">紧急</SelectItem>
-                <SelectItem value="HIGH">高</SelectItem>
-                <SelectItem value="NORMAL">普通</SelectItem>
-                <SelectItem value="LOW">低</SelectItem>
+                {notificationPriorities.map(priority => (
+                  <SelectItem key={priority.value} value={priority.value}>
+                    {priority.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -359,7 +387,30 @@ export function NotificationPanel({
       )}
       
       {/* 通知列表 */}
-      <ScrollArea style={{ maxHeight }}>
+      <div 
+        style={{ maxHeight }}
+        className="relative overflow-y-auto overflow-x-hidden"
+        onWheel={(e) => {
+          e.stopPropagation()
+          // 确保滚动事件不会冒泡到父元素
+        }}
+        onTouchMove={(e) => {
+          e.stopPropagation()
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation()
+        }}
+        onTouchEnd={(e) => {
+          e.stopPropagation()
+        }}
+        onScroll={(e) => {
+          e.stopPropagation()
+        }}
+        onMouseDown={(e) => {
+          // 防止拖拽时影响主页面
+          e.stopPropagation()
+        }}
+      >
         {error ? (
           <div className="p-4 text-center text-red-600">
             <p>加载通知失败</p>
@@ -382,7 +433,7 @@ export function NotificationPanel({
             {notifications.map(renderNotificationItem)}
           </div>
         )}
-      </ScrollArea>
+      </div>
       
       {/* 底部操作栏 */}
       {showFooter && (

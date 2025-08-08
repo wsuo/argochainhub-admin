@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { useNotifications } from '@/hooks/use-notifications'
+import { useNotificationContext } from '@/contexts/notification-context'
 import { NotificationPanel } from './notification-panel'
 
 interface NotificationBellProps {
@@ -41,11 +41,7 @@ export function NotificationBell({
     connectionError,
     wsStatus,
     isLoading,
-  } = useNotifications({
-    enableRealtime: true,
-    showToast: true,
-    autoMarkAsRead: false,
-  })
+  } = useNotificationContext()
 
   // 获取按钮尺寸样式
   const getSizeClass = () => {
@@ -192,11 +188,7 @@ export function NotificationBellIcon({
   className?: string
   size?: number 
 }) {
-  const { unreadCount, isConnected } = useNotifications({
-    enableRealtime: true,
-    showToast: false,
-    autoMarkAsRead: false,
-  })
+  const { unreadCount, isConnected } = useNotificationContext()
 
   return (
     <div className={cn('relative', className)}>
