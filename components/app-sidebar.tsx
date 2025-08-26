@@ -174,7 +174,11 @@ export function AppSidebar() {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">{user?.username || 'Admin'}</span>
-                  <span className="truncate text-xs">{user?.role === 'super_admin' ? '超级管理员' : user?.role === 'operations_manager' ? '运营管理员' : '客服'}</span>
+                  <span className="truncate text-xs">
+                    {user?.role === 'super_admin' ? '超级管理员' : 
+                     user?.role === 'operations_manager' ? '运营管理员' : 
+                     user?.role === 'demo_viewer' ? '演示账号' : '客服'}
+                  </span>
                 </div>
               </div>
             </SidebarMenuButton>

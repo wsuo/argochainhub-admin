@@ -136,13 +136,19 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            <p className="font-medium mb-2">测试账户信息：</p>
-            <div className="bg-gray-50 p-3 rounded-md text-xs space-y-1">
-              <p><strong>超级管理员</strong></p>
-              <p>用户名: superadmin</p>
-              <p>密码: Admin123!</p>
-              <p className="text-green-600">权限: 系统最高权限</p>
+            <p className="font-medium mb-2">演示账户信息：</p>
+            <div className="bg-blue-50 p-3 rounded-md text-xs space-y-1 border border-blue-200">
+              <p><strong>演示账号 (只读模式)</strong></p>
+              <p>用户名: demo</p>
+              <p>密码: Demo123!</p>
+              <p className="text-blue-600">权限: 仅可查看数据，无法进行增删改操作</p>
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              如需完整功能体验，请联系作者：
+              <a href="mailto:wangsuoo@qq.com" className="text-blue-600 hover:underline">
+                wangsuoo@qq.com
+              </a>
+            </p>
           </div>
         </CardContent>
       </Card>

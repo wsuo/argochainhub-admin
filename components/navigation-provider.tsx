@@ -287,6 +287,7 @@ export const navigationConfig = {
   rolePermissions: {
     super_admin: ['dashboard', 'enterprise', 'content', 'business', 'finance', 'system'],
     operations_manager: ['dashboard', 'enterprise', 'content', 'business'],
-    customer_support: ['dashboard', 'enterprise', 'business']
+    customer_support: ['dashboard', 'enterprise', 'business'],
+    demo_viewer: ['dashboard', 'enterprise', 'content', 'business', 'finance', 'system']
   }
 }

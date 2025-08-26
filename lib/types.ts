@@ -29,7 +29,7 @@ export interface AdminLoginResponse {
 export interface Admin {
   id: number
   username: string
-  role: 'super_admin' | 'operations_manager' | 'customer_support'
+  role: 'super_admin' | 'operations_manager' | 'customer_support' | 'demo_viewer'
   lastLoginAt?: string
 }
 
@@ -533,6 +533,7 @@ export interface ApiError {
   statusCode: number
   message: string
   error: string
+  handled?: boolean  // 标记错误是否已被处理（如已显示toast）
 }
 
 // 查询参数类型
