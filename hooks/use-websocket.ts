@@ -92,9 +92,11 @@ export const useWebSocket = (events?: WebSocketEvents, config?: WebSocketConfig)
       }
 
       // 创建新的Socket.IO连接
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1'
+      const socketUrl = baseUrl.replace('/api/v1', '/notifications')
       const serverUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://your-production-domain.com/notifications'
-        : 'http://localhost:3050/notifications'
+        ? 'https://agroapi.wsuo.top/notifications'
+        : socketUrl
 
       socketRef.current = io(serverUrl, {
         auth: {

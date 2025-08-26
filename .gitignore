@@ -12,6 +12,8 @@
 # next.js
 /.next/
 /out/
+/docs
+/deploy
 
 # production
 /build
@@ -29,6 +31,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.prod
 
 # vercel
 .vercel
@@ -49,3 +52,5 @@ Thumbs.db
 # package manager lock files (keeping pnpm-lock.yaml as it's being used)
 yarn.lock
 package-lock.json
+
+CLAUDE.md
