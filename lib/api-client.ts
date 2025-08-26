@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios'
 import Cookies from 'js-cookie'
 import { ApiError, ApiErrorResponse, ApiResponse } from './types'
 import { APP_CONFIG } from './config'
+import { showRoleBasedPermissionToast } from './permission-toast'
 
 class ApiClient {
   private client: AxiosInstance
@@ -46,6 +47,39 @@ class ApiClient {
           if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
             window.location.href = '/login'
           }
+        }
+
+        // 处理权限不足 - 403错误
+        if (error.response?.status === 403) {
+          // 获取当前用户角色（从token中解析或者从localStorage获取）
+          let userRole: string | undefined
+          try {
+            const token = Cookies.get(APP_CONFIG.AUTH.TOKEN_KEY)
+            if (token) {
+              const payload = JSON.parse(atob(token.split('.')[1]))
+              userRole = payload.role
+            }
+          } catch (e) {
+            // 忽略token解析错误
+          }
+          
+          // 使用toast显示权限提示，不抛出错误阻止后续处理
+          const errorMessage = error.response?.data?.message || '权限不足'
+          if (typeof window !== 'undefined') {
+            // 延迟显示toast，确保组件已挂载
+            setTimeout(() => {
+              showRoleBasedPermissionToast(userRole, errorMessage)
+            }, 100)
+          }
+          
+          // 仍然返回错误，但不会触发默认的错误处理
+          const apiError: ApiError = {
+            statusCode: 403,
+            message: errorMessage,
+            error: 'Permission Denied',
+            handled: true, // 标记为已处理
+          }
+          return Promise.reject(apiError)
         }
 
         // 处理新的统一响应格式
