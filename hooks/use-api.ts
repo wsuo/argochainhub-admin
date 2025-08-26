@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import api from '@/lib/api'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
+import { handleMutationError } from '@/lib/error-handler'
 import type {
   CompanyQuery,
   ProductQuery,
@@ -221,7 +222,7 @@ export const useLogin = () => {
       toast.success('登录成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '登录失败')
+      handleMutationError(error, '登录失败')
     },
   })
 }
@@ -278,7 +279,7 @@ export const useReviewCompany = () => {
       toast.success('企业审核操作完成')
     },
     onError: (error: any) => {
-      toast.error(error.message || '审核操作失败')
+      handleMutationError(error, '审核操作失败')
     },
   })
 }
@@ -293,7 +294,7 @@ export const useToggleCompanyStatus = () => {
       toast.success('企业状态已更新')
     },
     onError: (error: any) => {
-      toast.error(error.message || '状态更新失败')
+      handleMutationError(error, '状态更新失败')
     },
   })
 }
@@ -308,7 +309,7 @@ export const useCreateCompany = () => {
       toast.success('企业创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '企业创建失败')
+      handleMutationError(error, '企业创建失败')
     },
   })
 }
@@ -324,7 +325,7 @@ export const useUpdateCompany = () => {
       toast.success('企业信息已更新')
     },
     onError: (error: any) => {
-      toast.error(error.message || '企业信息更新失败')
+      handleMutationError(error, '企业信息更新失败')
     },
   })
 }
@@ -362,7 +363,7 @@ export const useCreateProduct = () => {
       toast.success('产品创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '产品创建失败')
+      handleMutationError(error, '产品创建失败')
     },
   })
 }
@@ -378,7 +379,7 @@ export const useUpdateProduct = () => {
       toast.success('产品信息已更新')
     },
     onError: (error: any) => {
-      toast.error(error.message || '产品信息更新失败')
+      handleMutationError(error, '产品信息更新失败')
     },
   })
 }
@@ -393,7 +394,7 @@ export const useDeleteProduct = () => {
       toast.success('产品删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '产品删除失败')
+      handleMutationError(error, '产品删除失败')
     },
   })
 }
@@ -409,7 +410,7 @@ export const useReviewProduct = () => {
       toast.success('产品审核操作完成')
     },
     onError: (error: any) => {
-      toast.error(error.message || '审核操作失败')
+      handleMutationError(error, '审核操作失败')
     },
   })
 }
@@ -430,7 +431,7 @@ export const useBatchReviewProduct = () => {
       }
     },
     onError: (error: any) => {
-      toast.error(error.message || '批量审核操作失败')
+      handleMutationError(error, '批量审核操作失败')
     },
   })
 }
@@ -445,7 +446,7 @@ export const useListProduct = () => {
       toast.success('产品已上架')
     },
     onError: (error: any) => {
-      toast.error(error.message || '产品上架失败')
+      handleMutationError(error, '产品上架失败')
     },
   })
 }
@@ -460,7 +461,7 @@ export const useUnlistProduct = () => {
       toast.success('产品已下架')
     },
     onError: (error: any) => {
-      toast.error(error.message || '产品下架失败')
+      handleMutationError(error, '产品下架失败')
     },
   })
 }
@@ -486,7 +487,7 @@ export const useCreateControlMethod = () => {
       toast.success('防治方法创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '防治方法创建失败')
+      handleMutationError(error, '防治方法创建失败')
     },
   })
 }
@@ -503,7 +504,7 @@ export const useBatchCreateControlMethods = () => {
       toast.success('防治方法批量创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '防治方法批量创建失败')
+      handleMutationError(error, '防治方法批量创建失败')
     },
   })
 }
@@ -520,7 +521,7 @@ export const useUpdateControlMethod = () => {
       toast.success('防治方法更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '防治方法更新失败')
+      handleMutationError(error, '防治方法更新失败')
     },
   })
 }
@@ -536,7 +537,7 @@ export const useDeleteControlMethod = () => {
       toast.success('防治方法删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '防治方法删除失败')
+      handleMutationError(error, '防治方法删除失败')
     },
   })
 }
@@ -552,7 +553,7 @@ export const useUpdateControlMethodOrder = () => {
       toast.success('防治方法排序更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '防治方法排序更新失败')
+      handleMutationError(error, '防治方法排序更新失败')
     },
   })
 }
@@ -607,7 +608,7 @@ export const useCreatePlan = () => {
       toast.success('会员计划创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '创建失败')
+      handleMutationError(error, '创建失败')
     },
   })
 }
@@ -623,7 +624,7 @@ export const useUpdatePlan = () => {
       toast.success('会员计划更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '更新失败')
+      handleMutationError(error, '更新失败')
     },
   })
 }
@@ -639,7 +640,7 @@ export const useCreateSubscription = () => {
       toast.success('订阅赠送成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '订阅赠送失败')
+      handleMutationError(error, '订阅赠送失败')
     },
   })
 }
@@ -649,7 +650,7 @@ export const useTranslate = () => {
   return useMutation({
     mutationFn: (data: TranslateRequest) => api.utility.translate(data),
     onError: (error: any) => {
-      toast.error(error.message || '翻译失败')
+      handleMutationError(error, '翻译失败')
     },
   })
 }
@@ -658,7 +659,7 @@ export const useDetectLanguage = () => {
   return useMutation({
     mutationFn: (data: DetectLanguageRequest) => api.utility.detectLanguage(data),
     onError: (error: any) => {
-      toast.error(error.message || '语言检测失败')
+      handleMutationError(error, '语言检测失败')
     },
   })
 }
@@ -712,7 +713,7 @@ export const useCreateDictionaryCategory = () => {
       toast.success('字典分类创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '字典分类创建失败')
+      handleMutationError(error, '字典分类创建失败')
     },
   })
 }
@@ -728,7 +729,7 @@ export const useUpdateDictionaryCategory = () => {
       toast.success('字典分类更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '字典分类更新失败')
+      handleMutationError(error, '字典分类更新失败')
     },
   })
 }
@@ -743,7 +744,7 @@ export const useDeleteDictionaryCategory = () => {
       toast.success('字典分类删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '字典分类删除失败')
+      handleMutationError(error, '字典分类删除失败')
     },
   })
 }
@@ -760,7 +761,7 @@ export const useCreateDictionaryItem = () => {
       toast.success('字典项创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '字典项创建失败')
+      handleMutationError(error, '字典项创建失败')
     },
   })
 }
@@ -777,7 +778,7 @@ export const useUpdateDictionaryItem = () => {
       toast.success('字典项更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '字典项更新失败')
+      handleMutationError(error, '字典项更新失败')
     },
   })
 }
@@ -793,7 +794,7 @@ export const useDeleteDictionaryItem = () => {
       toast.success('字典项删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '字典项删除失败')
+      handleMutationError(error, '字典项删除失败')
     },
   })
 }
@@ -810,7 +811,7 @@ export const useBatchImportDictionaryItems = () => {
       toast.success('字典项批量导入成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '字典项批量导入失败')
+      handleMutationError(error, '字典项批量导入失败')
     },
   })
 }
@@ -844,7 +845,7 @@ export const useCreateCompanyUser = () => {
       toast.success('企业用户创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '企业用户创建失败')
+      handleMutationError(error, '企业用户创建失败')
     },
   })
 }
@@ -861,7 +862,7 @@ export const useUpdateCompanyUser = () => {
       toast.success('企业用户信息已更新')
     },
     onError: (error: any) => {
-      toast.error(error.message || '企业用户信息更新失败')
+      handleMutationError(error, '企业用户信息更新失败')
     },
   })
 }
@@ -878,7 +879,7 @@ export const useDeleteCompanyUser = () => {
       toast.success('企业用户删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '企业用户删除失败')
+      handleMutationError(error, '企业用户删除失败')
     },
   })
 }
@@ -895,7 +896,7 @@ export const useToggleCompanyUserStatus = () => {
       toast.success('企业用户状态已更新')
     },
     onError: (error: any) => {
-      toast.error(error.message || '企业用户状态更新失败')
+      handleMutationError(error, '企业用户状态更新失败')
     },
   })
 }
@@ -952,7 +953,7 @@ export const useUpdateInquiryStatus = () => {
       toast.success('询盘状态已更新')
     },
     onError: (error: any) => {
-      toast.error(error.message || '询盘状态更新失败')
+      handleMutationError(error, '询盘状态更新失败')
     },
   })
 }
@@ -969,7 +970,7 @@ export const useDeleteInquiry = () => {
       toast.success('询盘删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '询盘删除失败')
+      handleMutationError(error, '询盘删除失败')
     },
   })
 }
@@ -1016,7 +1017,7 @@ export const useUpdateSampleRequestStatus = () => {
       toast.success('状态更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '状态更新失败')
+      handleMutationError(error, '状态更新失败')
     },
   })
 }
@@ -1033,7 +1034,7 @@ export const useDeleteSampleRequest = () => {
       toast.success('样品申请删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '样品申请删除失败')
+      handleMutationError(error, '样品申请删除失败')
     },
   })
 }
@@ -1079,7 +1080,7 @@ export const useUpdateRegistrationRequestStatus = () => {
       toast.success('状态更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '状态更新失败')
+      handleMutationError(error, '状态更新失败')
     },
   })
 }
@@ -1096,7 +1097,7 @@ export const useDeleteRegistrationRequest = () => {
       toast.success('登记申请删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '登记申请删除失败')
+      handleMutationError(error, '登记申请删除失败')
     },
   })
 }
@@ -1150,7 +1151,7 @@ export const useCreateVipConfig = () => {
       toast.success('VIP配置创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || 'VIP配置创建失败')
+      handleMutationError(error, 'VIP配置创建失败')
     },
   })
 }
@@ -1168,7 +1169,7 @@ export const useUpdateVipConfig = () => {
       toast.success('VIP配置更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || 'VIP配置更新失败')
+      handleMutationError(error, 'VIP配置更新失败')
     },
   })
 }
@@ -1185,7 +1186,7 @@ export const useDeleteVipConfig = () => {
       toast.success('VIP配置删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || 'VIP配置删除失败')
+      handleMutationError(error, 'VIP配置删除失败')
     },
   })
 }
@@ -1202,7 +1203,7 @@ export const useToggleVipConfigStatus = () => {
       toast.success('状态切换成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '状态切换失败')
+      handleMutationError(error, '状态切换失败')
     },
   })
 }
@@ -1219,7 +1220,7 @@ export const useBatchToggleVipConfigStatus = () => {
       toast.success('批量操作成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '批量操作失败')
+      handleMutationError(error, '批量操作失败')
     },
   })
 }
@@ -1236,7 +1237,7 @@ export const useUpdateVipConfigSortOrder = () => {
       toast.success('排序更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '排序更新失败')
+      handleMutationError(error, '排序更新失败')
     },
   })
 }
@@ -1272,7 +1273,7 @@ export const useCreateNews = () => {
       toast.success('新闻创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '新闻创建失败')
+      handleMutationError(error, '新闻创建失败')
     },
   })
 }
@@ -1289,7 +1290,7 @@ export const useUpdateNews = () => {
       toast.success('新闻更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '新闻更新失败')
+      handleMutationError(error, '新闻更新失败')
     },
   })
 }
@@ -1305,7 +1306,7 @@ export const useDeleteNews = () => {
       toast.success('新闻删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '新闻删除失败')
+      handleMutationError(error, '新闻删除失败')
     },
   })
 }
@@ -1321,7 +1322,7 @@ export const usePublishNews = () => {
       toast.success('新闻发布成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '新闻发布失败')
+      handleMutationError(error, '新闻发布失败')
     },
   })
 }
@@ -1337,7 +1338,7 @@ export const useUnpublishNews = () => {
       toast.success('新闻取消发布成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '新闻取消发布失败')
+      handleMutationError(error, '新闻取消发布失败')
     },
   })
 }
@@ -1373,7 +1374,7 @@ export const useCreateEmailConfig = () => {
       toast.success('邮件配置创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件配置创建失败')
+      handleMutationError(error, '邮件配置创建失败')
     },
   })
 }
@@ -1390,7 +1391,7 @@ export const useUpdateEmailConfig = () => {
       toast.success('邮件配置更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件配置更新失败')
+      handleMutationError(error, '邮件配置更新失败')
     },
   })
 }
@@ -1406,7 +1407,7 @@ export const useDeleteEmailConfig = () => {
       toast.success('邮件配置删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件配置删除失败')
+      handleMutationError(error, '邮件配置删除失败')
     },
   })
 }
@@ -1420,7 +1421,7 @@ export const useTestEmailConfig = () => {
       toast.success(result.message || '邮件配置测试成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件配置测试失败')
+      handleMutationError(error, '邮件配置测试失败')
     },
   })
 }
@@ -1472,7 +1473,7 @@ export const useCreateEmailTemplate = () => {
       toast.success('邮件模板创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件模板创建失败')
+      handleMutationError(error, '邮件模板创建失败')
     },
   })
 }
@@ -1489,7 +1490,7 @@ export const useUpdateEmailTemplate = () => {
       toast.success('邮件模板更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件模板更新失败')
+      handleMutationError(error, '邮件模板更新失败')
     },
   })
 }
@@ -1505,7 +1506,7 @@ export const useDeleteEmailTemplate = () => {
       toast.success('邮件模板删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件模板删除失败')
+      handleMutationError(error, '邮件模板删除失败')
     },
   })
 }
@@ -1516,7 +1517,7 @@ export const usePreviewEmailTemplate = () => {
     mutationFn: ({ id, data }: { id: number; data: PreviewEmailTemplateRequest }) => 
       api.emailTemplate.previewEmailTemplate(id, data),
     onError: (error: any) => {
-      toast.error(error.message || '邮件模板预览失败')
+      handleMutationError(error, '邮件模板预览失败')
     },
   })
 }
@@ -1562,7 +1563,7 @@ export const useResendEmail = () => {
       toast.success(result.message || '邮件重新发送成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件重新发送失败')
+      handleMutationError(error, '邮件重新发送失败')
     },
   })
 }
@@ -1578,7 +1579,7 @@ export const useSendEmail = () => {
       toast.success('邮件发送成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件发送失败')
+      handleMutationError(error, '邮件发送失败')
     },
   })
 }
@@ -1594,7 +1595,7 @@ export const useSendDirectEmail = () => {
       toast.success('邮件发送成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '邮件发送失败')
+      handleMutationError(error, '邮件发送失败')
     },
   })
 }
@@ -1630,7 +1631,7 @@ export const useCreatePesticide = () => {
       toast.success('农药创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '农药创建失败')
+      handleMutationError(error, '农药创建失败')
     },
   })
 }
@@ -1647,7 +1648,7 @@ export const useUpdatePesticide = () => {
       toast.success('农药更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '农药更新失败')
+      handleMutationError(error, '农药更新失败')
     },
   })
 }
@@ -1663,7 +1664,7 @@ export const useDeletePesticide = () => {
       toast.success('农药删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '农药删除失败')
+      handleMutationError(error, '农药删除失败')
     },
   })
 }
@@ -1709,7 +1710,7 @@ export const useCreatePriceTrend = () => {
       toast.success('价格记录创建成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '价格记录创建失败')
+      handleMutationError(error, '价格记录创建失败')
     },
   })
 }
@@ -1726,7 +1727,7 @@ export const useUpdatePriceTrend = () => {
       toast.success('价格记录更新成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '价格记录更新失败')
+      handleMutationError(error, '价格记录更新失败')
     },
   })
 }
@@ -1742,7 +1743,7 @@ export const useDeletePriceTrend = () => {
       toast.success('价格记录删除成功')
     },
     onError: (error: any) => {
-      toast.error(error.message || '价格记录删除失败')
+      handleMutationError(error, '价格记录删除失败')
     },
   })
 }
@@ -1759,7 +1760,7 @@ export const useParsePriceImage = () => {
       toast.success(`图片解析任务已创建：${result.taskId}`)
     },
     onError: (error: any) => {
-      toast.error(error.message || '图片解析任务创建失败')
+      handleMutationError(error, '图片解析任务创建失败')
     },
   })
 }
@@ -1826,7 +1827,7 @@ export const useSavePriceData = () => {
       }
     },
     onError: (error: any) => {
-      toast.error(error.message || '价格数据保存失败')
+      handleMutationError(error, '价格数据保存失败')
     },
   })
 }
@@ -1877,7 +1878,7 @@ export const useMarkNotificationAsRead = () => {
       toast.success('通知已标记为已读')
     },
     onError: (error: any) => {
-      toast.error(error.message || '标记失败')
+      handleMutationError(error, '标记失败')
     },
   })
 }
@@ -1895,7 +1896,7 @@ export const useMarkAllNotificationsAsRead = () => {
       toast.success('所有通知已标记为已读')
     },
     onError: (error: any) => {
-      toast.error(error.message || '批量标记失败')
+      handleMutationError(error, '批量标记失败')
     },
   })
 }
@@ -1913,7 +1914,7 @@ export const useArchiveNotification = () => {
       toast.success('通知已归档')
     },
     onError: (error: any) => {
-      toast.error(error.message || '归档失败')
+      handleMutationError(error, '归档失败')
     },
   })
 }
@@ -1931,7 +1932,7 @@ export const useDeleteNotification = () => {
       toast.success('通知已删除')
     },
     onError: (error: any) => {
-      toast.error(error.message || '删除失败')
+      handleMutationError(error, '删除失败')
     },
   })
 }
@@ -1949,7 +1950,7 @@ export const useSendBroadcastNotification = () => {
       toast.success(`广播通知发送成功，共 ${result.count} 个管理员收到通知`)
     },
     onError: (error: any) => {
-      toast.error(error.message || '广播通知发送失败')
+      handleMutationError(error, '广播通知发送失败')
     },
   })
 }
@@ -1967,7 +1968,7 @@ export const useSendPermissionNotification = () => {
       toast.success(`权限通知发送成功，共 ${result.count} 个管理员收到通知`)
     },
     onError: (error: any) => {
-      toast.error(error.message || '权限通知发送失败')
+      handleMutationError(error, '权限通知发送失败')
     },
   })
 }
@@ -1985,7 +1986,7 @@ export const useSendSystemAlert = () => {
       toast.success(`系统告警发送成功，共 ${result.count} 个管理员收到通知`)
     },
     onError: (error: any) => {
-      toast.error(error.message || '系统告警发送失败')
+      handleMutationError(error, '系统告警发送失败')
     },
   })
 }
@@ -2003,7 +2004,7 @@ export const useCleanupExpiredNotifications = () => {
       toast.success(`清理完成，共清理 ${result.count} 个过期通知`)
     },
     onError: (error: any) => {
-      toast.error(error.message || '清理过期通知失败')
+      handleMutationError(error, '清理过期通知失败')
     },
   })
 }

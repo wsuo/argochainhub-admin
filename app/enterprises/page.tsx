@@ -41,6 +41,7 @@ import type { Company, CompanyQuery } from '@/lib/types'
 import { SimpleCountrySelect, CountryDisplay } from '@/components/enhanced-country-select'
 import { CompanySizeSelect, CompanyStatusSelect, BusinessTypeSelect } from '@/components/dictionary-components'
 import { useDictionaryOptions } from '@/lib/dictionary-utils'
+import { toast } from 'sonner'
 
 export default function EnterprisesPage() {
   const router = useRouter()
@@ -104,23 +105,21 @@ export default function EnterprisesPage() {
   const handleToggleStatus = async (companyId: number, currentStatus: Company['status']) => {
     // 检查是否可以切换状态
     if (currentStatus === 'pending_review') {
-      alert('待审核状态的企业不能直接切换状态，请先审核通过。')
+      toast.error(
+        "操作限制",
+        {
+          description: "待审核状态的企业不能直接切换状态，请先审核通过。",
+        }
+      )
       return
     }
 
     try {
       await toggleStatusMutation.mutateAsync(companyId)
     } catch (error: any) {
+      // 不再手动处理错误，让API拦截器和React Query的onError处理
+      // 这里的catch主要是为了阻止错误继续传播
       console.error('Toggle status failed:', error)
-      
-      // 根据错误信息显示不同的提示
-      const errorMessage = error?.response?.data?.message || error?.message || '操作失败'
-      
-      if (errorMessage.includes('Cannot toggle status')) {
-        alert('无法切换该企业状态，可能原因：企业正在审核中、有活跃订单或存在其他业务依赖关系。')
-      } else {
-        alert(`操作失败：${errorMessage}`)
-      }
     }
   }
 
